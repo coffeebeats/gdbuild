@@ -1,0 +1,34 @@
+{
+  "git.branchProtection": ["main"],
+
+  /* ------------------------------ Language: Go ------------------------------ */
+
+  "[go]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+  "[go.mod]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+
+  /* ----------------------------- Extensions: Go ----------------------------- */
+
+  "go.lintTool": "golangci-lint",
+  "gopls": {
+    "formatting.gofumpt": false,
+    "formatting.local": "github.com/coffeebeats/gdbuild"
+  },
+
+  /* ------------------------ Extensions: markdownlint ------------------------ */
+
+  "markdownlint.config": {
+    "MD024": {
+      "siblings_only": true
+    }
+  }
+}
