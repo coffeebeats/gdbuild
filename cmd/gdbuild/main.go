@@ -27,7 +27,7 @@ const (
 
 var ErrUnrecognizedLevel = errors.New("unrecognized level")
 
-func main() { //nolint:funlen
+func main() {
 	cli.VersionPrinter = versionPrinter
 
 	app := &cli.App{
