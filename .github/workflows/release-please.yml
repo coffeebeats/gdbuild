@@ -1,0 +1,76 @@
+name: "🚀 Release: 'gdbuild'"
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  # This is required to use the 'gh' CLI in actions.
+  GH_TOKEN: ${{ github.token }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+
+    outputs:
+      release-created: ${{ steps.release.outputs.releases_created }}
+      release-tag: ${{ steps.release.outputs.tag_name }}
+
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+          # NOTE: A PAT is used so that workflows can run on the new, automatically
+          # created pull requests. This circumvents GitHub's recursive workflow
+          # protections, which block automated pull requests from triggering workflows
+          # under the same default GitHub Actions token.
+          token: ${{ secrets.RELEASE_PLEASE }}
+
+          # NOTE: To handle releases on specific branches (e.g. a '1.X' release branch),
+          # simply change the "branches" filter in the workflow's on-"push" trigger.
+          target-branch: ${{ github.ref_name }}
+
+  publish:
+    needs: ["release-please"]
+    if: needs.release-please.outputs.release-created == 'true'
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Required by 'goreleaser' so tags are fetched; see
+          # https://goreleaser.com/ci/actions/#workflow.
+          fetch-depth: 0
+          ref: ${{ needs.release-please.outputs.release-tag }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - uses: goreleaser/goreleaser-action@v5
+        with:
+          args: release --clean --skip=publish
+          distribution: goreleaser
+          version: latest
+
+      - name: Attach assets to release
+        shell: bash
+        run: |
+          ASSETS=(dist/gdbuild-${{ needs.release-please.outputs.release-tag }}* dist/checksums.txt)
+          for asset in "${ASSETS[@]}"; do
+            gh release upload \
+              --clobber \
+              ${{ needs.release-please.outputs.release-tag }} \
+              $asset
+          done
