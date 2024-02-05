@@ -9,6 +9,8 @@
   "pull-request-title-pattern": "chore: release v${version}",
   "changelog-type": "github",
 
+  "release-as": "0.0.1",
+
   "packages": {
     ".": {
       "release-type": "go",
