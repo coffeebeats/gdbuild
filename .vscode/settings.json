@@ -15,9 +15,6 @@
       "source.organizeImports": "explicit"
     }
   },
-
-  /* ----------------------------- Extensions: Go ----------------------------- */
-
   "go.lintTool": "golangci-lint",
   "gopls": {
     "formatting.gofumpt": false,
