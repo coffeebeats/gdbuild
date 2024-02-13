@@ -46,6 +46,7 @@ linters-settings:
       - "^github.com/urfave/cli/v2.App$"
       - "^github.com/urfave/cli/v2.BoolFlag$"
       - "^github.com/urfave/cli/v2.Command$"
+      - "^github.com/urfave/cli/v2.PathFlag$"
       - "^github.com/urfave/cli/v2.StringFlag$"
 
   gomnd:

@@ -25,7 +25,11 @@ const (
 	colorYellowBright  = 11
 )
 
-var ErrUnrecognizedLevel = errors.New("unrecognized level")
+var (
+	ErrInvalidInput      = errors.New("invalid input")
+	ErrMissingInput      = errors.New("missing required argument")
+	ErrUnrecognizedLevel = errors.New("unrecognized level")
+)
 
 func main() {
 	cli.VersionPrinter = versionPrinter
@@ -37,7 +41,11 @@ func main() {
 		Suggest:                true,
 		UseShortOptionHandling: true,
 
-		Commands: []*cli.Command{},
+		Commands: []*cli.Command{
+			/* -------------------------------- Export ------------------------------- */
+
+			NewExport(),
+		},
 	}
 
 	// Call 'os.Exit' as the first-in/last-out defer; ensures an exit code is
