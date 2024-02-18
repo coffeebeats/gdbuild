@@ -2,7 +2,7 @@
 
 ## **gdbuild `template`**
 
-TODO
+Compile an export template for the specified Godot platform `PLATFORM`.
 
 ### Usage
 
@@ -10,37 +10,43 @@ TODO
 
 ### Options
 
-- `-f`, `--force` — forcibly overwrite an existing cache entry
-- `-g`, `--global` — update the global pin (if `VERSION` is specified) or resolve `VERSION` from the global pin
-- `-p`, `--path <PATH>` — resolve the pinned `VERSION` at `PATH`
-- `-s`, `--src`, `--source` — install source code instead of an executable (cannot be used with `-g`)
+- `-p`, `--path <PATH>` — use the Godot project found at `PATH`
+  - Default value: `$PWD` (current working directory)
+- `-o`, `--out <PATH>` — write generated artifacts to `PATH`
+  - Default value: `$PWD` (current working directory)
+
+- `--release` — use a release export template (cannot be used with '--release_debug')
+- `--release_debug` — use a release export template with debug symbols (cannot be used with '--release')
 
 ### Arguments
 
-- `<PLATFORM>` — the specific template platform to build
-  - Example values:
-    - `TODO`
+- `<PLATFORM>` — build for the specified Godot platform `PLATFORM`
+  - Default value: `runtime.GOOS` (host platform)
 
-## **gdbuild `project`**
+## **gdbuild `target`**
 
-TODO
+Compile any required export template(s) and then export the specified `TARGET`.
 
 ### Usage
 
-`gdbuild project [OPTIONS] <VERSION>`
+`gdbuild target [OPTIONS] <TARGET>`
 
 ### Options
 
-- `-g`, `--global` — pin the system version (cannot be used with `-p`)
-- `-i`, `--install` — install the specified version of _Godot_ if missing
-- `-f`, `--force` — forcibly overwrite an existing cache entry (only used with `-i`)
-- `-p`, `--path <PATH>` — pin the specified path (cannot be used with `-g`)
+- `-p`, `--path <PATH>` — use the Godot project found at `PATH`
   - Default value: `$PWD` (current working directory)
+- `-o`, `--out <PATH>` — write generated artifacts to `PATH`
+  - Default value: `$PWD` (current working directory)
+
+- `-f`, `--feature <FEATURE>` — enable the provided feature tag `FEATURE` (can be specified more than once)
+- `-p`, `--platform <PLATFORM>` — build for the specified Godot platform `PLATFORM`
+  - Default value: `runtime.GOOS` (host platform)
+- `--release` — use a release export template (cannot be used with '--release_debug')
+- `--release_debug` — use a release export template with debug symbols (cannot be used with '--release')
 
 ### Arguments
 
-- `<VERSION>` — the specific version string to install (must be exact)
-  - Example values:
-    - `3.5.1` (if missing, the label will default to `stable`)
-    - `4.0.4-stable`
-    - `4.2-beta2`
+- `<TARGET>` — the name of a target specified in the GDBuild manifest (must be exact).
+  - Example values (assuming they are present in GDBuild manifest):
+    - `client` (define under `target.client` heading)
+    - `dlc` (define under `target.dlc` heading; no export template required)
