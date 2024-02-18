@@ -3,13 +3,17 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
+
+	"github.com/coffeebeats/gdbuild/pkg/manifest"
 )
 
 const (
@@ -26,9 +30,11 @@ const (
 )
 
 var (
-	ErrInvalidInput      = errors.New("invalid input")
-	ErrMissingInput      = errors.New("missing required argument")
-	ErrUnrecognizedLevel = errors.New("unrecognized level")
+	ErrInvalidInput        = errors.New("invalid input")
+	ErrInvalidManifestPath = fmt.Errorf("%w: expected 'path' to be a gdbuild.toml manifest file", ErrInvalidInput)
+	ErrMissingInput        = errors.New("missing required argument")
+	ErrTooManyArguments    = errors.New("too many arguments (were options passed after args?)")
+	ErrUnrecognizedLevel   = errors.New("unrecognized level")
 )
 
 func main() {
@@ -42,9 +48,14 @@ func main() {
 		UseShortOptionHandling: true,
 
 		Commands: []*cli.Command{
-			/* -------------------------------- Export ------------------------------- */
+			/* ----------------------------- Build/Export ---------------------------- */
 
-			NewExport(),
+			NewTarget(),
+			NewTemplate(),
+
+			/* ------------------------------- Inspect ------------------------------- */
+
+			NewInfo(),
 		},
 	}
 
@@ -167,4 +178,23 @@ func newStyleWithColor(name string, ansiColor int) lipgloss.Style {
 // versionPrinter prints a 'gdbuild' version string to the terminal.
 func versionPrinter(cCtx *cli.Context) {
 	log.Printf("gdbuild %s", cCtx.App.Version)
+}
+
+/* -------------------------------------------------------------------------- */
+/*                           Function: parseManifest                          */
+/* -------------------------------------------------------------------------- */
+
+func parseManifest(path string) (*manifest.Manifest, error) {
+	path = filepath.Clean(path)
+
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s: %w", ErrInvalidManifestPath, path, err)
+	}
+
+	if info.IsDir() {
+		path = filepath.Join(path, manifest.Filename())
+	}
+
+	return manifest.ParseFile(path)
 }
