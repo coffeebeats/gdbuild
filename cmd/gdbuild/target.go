@@ -28,9 +28,10 @@ func NewTarget() *cli.Command { //nolint:funlen
 
 		Flags: []cli.Flag{
 			&cli.PathFlag{
-				Name:     "path",
-				FilePath: ".",
-				Usage:    "use the Godot project found at 'PATH'",
+				Name:    "path",
+				Aliases: []string{"p"},
+				Value:   ".",
+				Usage:   "use the Godot project found at 'PATH'",
 			},
 			&cli.PathFlag{
 				Name:    "out",
