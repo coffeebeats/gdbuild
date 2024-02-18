@@ -17,9 +17,9 @@ type Target struct {
 	Server bool `json:"server" toml:"server"`
 	// DefaultFeatures contains the slice of Godot project feature tags to build
 	// with.
-	DefaultFeatures []string `json:"defaultFeatures" toml:"default_features"`
+	DefaultFeatures []string `json:"default_features" toml:"default_features"` //nolint:tagliatelle
 	// PackFiles defines the game files exported as part of this artifact.
-	PackFiles []*PackFile `json:"packFiles" toml:"pack_files"`
+	PackFiles []*PackFile `json:"pack_files" toml:"pack_files"` //nolint:tagliatelle
 
 	// Hook defines commands to be run before or after the target artifact is
 	// generated.
