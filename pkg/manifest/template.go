@@ -25,9 +25,9 @@ import (
 type Template struct {
 	*build.Template
 
-	Feature  map[string]*TemplateWithoutFeature        `toml:"feature"`
-	Platform map[platform.OS]*TemplateWithoutPlatform  `toml:"platform"`
-	Profile  map[build.Profile]*TemplateWithoutProfile `toml:"profile"`
+	Feature  map[string]*TemplateWithoutFeature        `json:"feature"  toml:"feature"`
+	Platform map[platform.OS]*TemplateWithoutPlatform  `json:"platform" toml:"platform"`
+	Profile  map[build.Profile]*TemplateWithoutProfile `json:"profile"  toml:"profile"`
 }
 
 /* --------------------- Struct: TemplateWithoutFeature --------------------- */
@@ -35,8 +35,8 @@ type Template struct {
 type TemplateWithoutFeature struct {
 	*build.Template
 
-	Platform map[platform.OS]*TemplateWithoutFeatureAndPlatform  `toml:"platform"`
-	Profile  map[build.Profile]*TemplateWithoutFeatureAndProfile `toml:"profile"`
+	Platform map[platform.OS]*TemplateWithoutFeatureAndPlatform  `json:"platform" toml:"platform"`
+	Profile  map[build.Profile]*TemplateWithoutFeatureAndProfile `json:"profile"  toml:"profile"`
 }
 
 /* --------------------- Struct: TemplateWithoutPlatform -------------------- */
@@ -44,8 +44,8 @@ type TemplateWithoutFeature struct {
 type TemplateWithoutPlatform struct {
 	*build.Template
 
-	Feature map[string]*TemplateWithoutFeatureAndPlatform        `toml:"feature"`
-	Profile map[build.Profile]*TemplateWithoutPlatformAndProfile `toml:"profile"`
+	Feature map[string]*TemplateWithoutFeatureAndPlatform        `json:"feature" toml:"feature"`
+	Profile map[build.Profile]*TemplateWithoutPlatformAndProfile `json:"profile" toml:"profile"`
 }
 
 /* --------------------- Struct: TemplateWithoutProfile --------------------- */
@@ -53,8 +53,8 @@ type TemplateWithoutPlatform struct {
 type TemplateWithoutProfile struct {
 	*build.Template
 
-	Feature  map[string]*TemplateWithoutFeatureAndProfile       `toml:"feature"`
-	Platform map[platform.OS]*TemplateWithoutPlatformAndProfile `toml:"platform"`
+	Feature  map[string]*TemplateWithoutFeatureAndProfile       `json:"feature"  toml:"feature"`
+	Platform map[platform.OS]*TemplateWithoutPlatformAndProfile `json:"platform" toml:"platform"`
 }
 
 /* ---------------- Struct: TemplateWithoutFeatureAndPlatform --------------- */
@@ -62,7 +62,7 @@ type TemplateWithoutProfile struct {
 type TemplateWithoutFeatureAndPlatform struct {
 	*build.Template
 
-	Profile map[build.Profile]*build.Template `toml:"profile"`
+	Profile map[build.Profile]*build.Template `json:"profile" toml:"profile"`
 }
 
 /* ---------------- Struct: TemplateWithoutFeatureAndProfile ---------------- */
@@ -70,7 +70,7 @@ type TemplateWithoutFeatureAndPlatform struct {
 type TemplateWithoutFeatureAndProfile struct {
 	*build.Template
 
-	Platform map[platform.OS]*build.Template `toml:"platform"`
+	Platform map[platform.OS]*build.Template `json:"platform" toml:"platform"`
 }
 
 /* ---------------- Struct: TemplateWithoutPlatformAndProfile --------------- */
@@ -78,5 +78,5 @@ type TemplateWithoutFeatureAndProfile struct {
 type TemplateWithoutPlatformAndProfile struct {
 	*build.Template
 
-	Feature map[string]*build.Template `toml:"feature"`
+	Feature map[string]*build.Template `json:"feature" toml:"feature"`
 }

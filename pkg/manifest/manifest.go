@@ -7,11 +7,11 @@ package manifest
 // Manifest defines the supported structure of the GDBuild manifest file.
 type Manifest struct {
 	// Project contains project-wide settings, like the Godot version.
-	Project *Project `toml:"project"`
+	Project *Project `json:"project" toml:"project"`
 	// Target contains all exportable artifact specifications.
-	Target map[string]*Target `toml:"target"`
+	Target map[string]*Target `json:"target" toml:"target"`
 	// Template includes settings for building custom export templates.
-	Template *Template `toml:"template"`
+	Template *Template `json:"template" toml:"template"`
 }
 
 /* ---------------------------- Method: Validate ---------------------------- */

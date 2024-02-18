@@ -11,9 +11,9 @@ import (
 // Project defines the project-wide configuration which affects all exportable
 // artifacts.
 type Project struct {
-	Icon        string  `toml:"icon"`
-	Version     Version `toml:"version"`
-	VersionFile string  `toml:"version_file"`
+	Icon        string  `json:"icon"        toml:"icon"`
+	Version     Version `json:"version"     toml:"version"`
+	VersionFile string  `json:"versionFile" toml:"version_file"`
 }
 
 /* -------------------------------------------------------------------------- */
