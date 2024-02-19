@@ -81,24 +81,7 @@ func NewTarget() *cli.Command { //nolint:funlen
 				return err
 			}
 
-			log.Debugf("moving template artifacts to path: %s", pathOut)
-
-			// Collect build modifiers.
-
-			features := c.StringSlice("feature")
-
-			log.Debugf("enabling features for target: %s", strings.Join(features, ","))
-
-			pr := parseProfile(c.Bool("release"), c.Bool("release_debug"))
-
-			log.Debugf("using template profile: %s", pr)
-
-			pl, err := parsePlatform(c.String("platform"))
-			if err != nil {
-				return err
-			}
-
-			log.Debugf("building for platform: %s", pl)
+			log.Debugf("placing template artifacts at path: %s", pathOut)
 
 			// Parse manifest.
 			pathManifest := c.Path("path")
@@ -108,6 +91,23 @@ func NewTarget() *cli.Command { //nolint:funlen
 			}
 
 			log.Debugf("using manifest at path: %s", pathManifest)
+
+			// Collect build modifiers.
+
+			features := c.StringSlice("feature")
+
+			log.Infof("features: %s", strings.Join(features, ","))
+
+			pr := parseProfile(c.Bool("release"), c.Bool("release_debug"))
+
+			log.Infof("profile: %s", pr)
+
+			pl, err := parsePlatform(c.String("platform"))
+			if err != nil {
+				return err
+			}
+
+			log.Infof("platform: %s", pl)
 
 			log.Print(m.BuildTarget(target, pl, pr, features...))
 
