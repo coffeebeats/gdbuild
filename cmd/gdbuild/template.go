@@ -82,7 +82,7 @@ func NewTemplate() *cli.Command { //nolint:funlen
 
 			log.Debugf("using template profile: %s", pr)
 
-			pl, err := parsePlatform(c.String("platform"))
+			pl, err := parsePlatform(platformInput)
 			if err != nil {
 				return err
 			}
