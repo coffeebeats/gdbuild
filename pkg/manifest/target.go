@@ -30,6 +30,8 @@ type Target struct {
 	Profile  map[build.Profile]*TargetWithoutProfile `json:"profile"  toml:"profile"`
 }
 
+// TODO: Improve merging logic to detect conflicts instead of silently, and
+// unpredictably, overriding.
 func (t *Target) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Target {
 	out := t.Target
 
