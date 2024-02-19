@@ -32,9 +32,6 @@ type Target struct {
 
 func (t *Target) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Target {
 	out := t.Target
-	if out == nil {
-		out = &build.Target{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Profile[pr]; ok {
 		out = out.CombineWith(cfg.merge(pl, pr, ff...))
@@ -64,9 +61,6 @@ type TargetWithoutFeature struct {
 
 func (t *TargetWithoutFeature) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Target {
 	out := t.Target
-	if out == nil {
-		out = &build.Target{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Profile[pr]; ok {
 		out = out.CombineWith(cfg.merge(pl, pr, ff...))
@@ -90,9 +84,6 @@ type TargetWithoutPlatform struct {
 
 func (t *TargetWithoutPlatform) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Target {
 	out := t.Target
-	if out == nil {
-		out = &build.Target{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Profile[pr]; ok {
 		out = out.CombineWith(cfg.merge(pl, pr, ff...))
@@ -118,9 +109,6 @@ type TargetWithoutProfile struct {
 
 func (t *TargetWithoutProfile) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Target {
 	out := t.Target
-	if out == nil {
-		out = &build.Target{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Platform[pl]; ok {
 		out = out.CombineWith(cfg.merge(pl, pr, ff...))
@@ -145,9 +133,6 @@ type TargetWithoutFeatureAndPlatform struct {
 
 func (t *TargetWithoutFeatureAndPlatform) merge(_ platform.OS, pr build.Profile, _ ...string) *build.Target {
 	out := t.Target
-	if out == nil {
-		out = &build.Target{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Profile[pr]; ok {
 		out = out.CombineWith(cfg)
@@ -166,9 +151,6 @@ type TargetWithoutFeatureAndProfile struct {
 
 func (t *TargetWithoutFeatureAndProfile) merge(pl platform.OS, _ build.Profile, _ ...string) *build.Target {
 	out := t.Target
-	if out == nil {
-		out = &build.Target{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Platform[pl]; ok {
 		out = out.CombineWith(cfg)
@@ -187,9 +169,6 @@ type TargetWithoutPlatformAndProfile struct {
 
 func (t *TargetWithoutPlatformAndProfile) merge(_ platform.OS, _ build.Profile, ff ...string) *build.Target {
 	out := t.Target
-	if out == nil {
-		out = &build.Target{} //nolint:exhaustruct
-	}
 
 	for _, f := range ff {
 		if cfg, ok := t.Feature[f]; ok {

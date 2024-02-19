@@ -32,9 +32,6 @@ type Template struct {
 
 func (t *Template) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
 	out := t.Template
-	if out == nil {
-		out = &build.Template{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Profile[pr]; ok {
 		out = out.CombineWith(cfg.merge(pl, pr, ff...))
@@ -64,9 +61,6 @@ type TemplateWithoutFeature struct {
 
 func (t *TemplateWithoutFeature) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
 	out := t.Template
-	if out == nil {
-		out = &build.Template{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Profile[pr]; ok {
 		out = out.CombineWith(cfg.merge(pl, pr, ff...))
@@ -90,9 +84,6 @@ type TemplateWithoutPlatform struct {
 
 func (t *TemplateWithoutPlatform) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
 	out := t.Template
-	if out == nil {
-		out = &build.Template{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Profile[pr]; ok {
 		out = out.CombineWith(cfg.merge(pl, pr, ff...))
@@ -118,9 +109,6 @@ type TemplateWithoutProfile struct {
 
 func (t *TemplateWithoutProfile) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
 	out := t.Template
-	if out == nil {
-		out = &build.Template{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Platform[pl]; ok {
 		out = out.CombineWith(cfg.merge(pl, pr, ff...))
@@ -145,9 +133,6 @@ type TemplateWithoutFeatureAndPlatform struct {
 
 func (t *TemplateWithoutFeatureAndPlatform) merge(_ platform.OS, pr build.Profile, _ ...string) *build.Template {
 	out := t.Template
-	if out == nil {
-		out = &build.Template{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Profile[pr]; ok {
 		out = out.CombineWith(cfg)
@@ -166,9 +151,6 @@ type TemplateWithoutFeatureAndProfile struct {
 
 func (t *TemplateWithoutFeatureAndProfile) merge(pl platform.OS, _ build.Profile, _ ...string) *build.Template {
 	out := t.Template
-	if out == nil {
-		out = &build.Template{} //nolint:exhaustruct
-	}
 
 	if cfg, ok := t.Platform[pl]; ok {
 		out = out.CombineWith(cfg)
@@ -187,9 +169,6 @@ type TemplateWithoutPlatformAndProfile struct {
 
 func (t *TemplateWithoutPlatformAndProfile) merge(_ platform.OS, _ build.Profile, ff ...string) *build.Template {
 	out := t.Template
-	if out == nil {
-		out = &build.Template{} //nolint:exhaustruct
-	}
 
 	for _, f := range ff {
 		if cfg, ok := t.Feature[f]; ok {
