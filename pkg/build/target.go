@@ -1,5 +1,9 @@
 package build
 
+import (
+	"github.com/coffeebeats/gdbuild/internal/merge"
+)
+
 /* -------------------------------------------------------------------------- */
 /*                               Struct: Target                               */
 /* -------------------------------------------------------------------------- */
@@ -23,10 +27,39 @@ type Target struct {
 
 	// Hook defines commands to be run before or after the target artifact is
 	// generated.
-	Hook Hook `json:"hook" toml:"hook"`
+	Hook *Hook `json:"hook" toml:"hook"`
 	// Options are 'export_presets.cfg' overrides, specifically the preset
 	// 'options' table, for the exported artifact.
 	Options map[string]any `json:"options" toml:"options"`
+}
+
+/* ------------------------------ Impl: Merger ------------------------------ */
+
+func (t *Target) CombineWith(targets ...*Target) *Target {
+	base := t
+	if t == nil {
+		base = &Target{} //nolint:exhaustruct
+	}
+
+	for _, other := range targets {
+		if other == nil {
+			continue
+		}
+
+		t.Name = merge.String(t.Name, other.Name)
+
+		t.Runnable = merge.Bool(t.Runnable, other.Runnable)
+		t.Server = merge.Bool(t.Server, other.Server)
+
+		// t.DefaultFeatures = append(t.DefaultFeatures, other.DefaultFeatures...)
+		// t.PackFiles = append(t.PackFiles, other.PackFiles...)
+
+		t.Hook = t.Hook.CombineWith(other.Hook)
+
+		t.Options = merge.Map(t.Options, other.Options)
+	}
+
+	return base
 }
 
 /* -------------------------------------------------------------------------- */
