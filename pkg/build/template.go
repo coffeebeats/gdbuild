@@ -36,7 +36,7 @@ type Template struct {
 	Hook *Hook `json:"hook" toml:"hook"`
 }
 
-/* ------------------------------ Impl: Merger ------------------------------ */
+/* --------------------------- Method: CombineWith -------------------------- */
 
 func (t *Template) CombineWith(templates ...*Template) *Template {
 	base := t

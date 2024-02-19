@@ -21,7 +21,7 @@ type Manifest struct {
 
 /* --------------------------- Function: Filename --------------------------- */
 
-// Filename returns the name of the GDBuil manifest file.
+// Filename returns the name of the GDBuild manifest file.
 func Filename() string {
 	return "gdbuild.toml"
 }

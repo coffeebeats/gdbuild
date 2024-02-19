@@ -33,7 +33,7 @@ type Target struct {
 	Options map[string]any `json:"options" toml:"options"`
 }
 
-/* ------------------------------ Impl: Merger ------------------------------ */
+/* --------------------------- Method: CombineWith -------------------------- */
 
 func (t *Target) CombineWith(targets ...*Target) *Target {
 	base := t
@@ -51,8 +51,8 @@ func (t *Target) CombineWith(targets ...*Target) *Target {
 		t.Runnable = merge.Bool(t.Runnable, other.Runnable)
 		t.Server = merge.Bool(t.Server, other.Server)
 
-		// t.DefaultFeatures = append(t.DefaultFeatures, other.DefaultFeatures...)
-		// t.PackFiles = append(t.PackFiles, other.PackFiles...)
+		t.DefaultFeatures = append(t.DefaultFeatures, other.DefaultFeatures...)
+		t.PackFiles = append(t.PackFiles, other.PackFiles...)
 
 		t.Hook = t.Hook.CombineWith(other.Hook)
 

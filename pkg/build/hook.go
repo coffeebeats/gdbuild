@@ -12,7 +12,7 @@ type Hook struct {
 	Post []string `json:"postbuild" toml:"postbuild"`
 }
 
-/* ------------------------------ Impl: Merger ------------------------------ */
+/* --------------------------- Method: CombineWith -------------------------- */
 
 func (h *Hook) CombineWith(hooks ...*Hook) *Hook {
 	base := h
