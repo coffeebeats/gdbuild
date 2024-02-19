@@ -19,7 +19,8 @@ var (
 type Arch uint
 
 const (
-	ArchAmd64 Arch = iota + 1
+	ArchUnknown Arch = iota
+	ArchAmd64
 	ArchArm32
 	ArchArm64
 	ArchI386
