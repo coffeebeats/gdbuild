@@ -30,6 +30,29 @@ type Target struct {
 	Profile  map[build.Profile]*TargetWithoutProfile `json:"profile"  toml:"profile"`
 }
 
+func (t *Target) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Target {
+	out := t.Target
+	if out == nil {
+		out = &build.Target{} //nolint:exhaustruct
+	}
+
+	if cfg, ok := t.Profile[pr]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	if cfg, ok := t.Platform[pl]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	for _, f := range ff {
+		if cfg, ok := t.Feature[f]; ok {
+			out = out.CombineWith(cfg.merge(pl, pr, ff...))
+		}
+	}
+
+	return out
+}
+
 /* ---------------------- Struct: TargetWithoutFeature ---------------------- */
 
 type TargetWithoutFeature struct {
@@ -37,6 +60,23 @@ type TargetWithoutFeature struct {
 
 	Platform map[platform.OS]*TargetWithoutFeatureAndPlatform  `json:"platform" toml:"platform"`
 	Profile  map[build.Profile]*TargetWithoutFeatureAndProfile `json:"profile"  toml:"profile"`
+}
+
+func (t *TargetWithoutFeature) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Target {
+	out := t.Target
+	if out == nil {
+		out = &build.Target{} //nolint:exhaustruct
+	}
+
+	if cfg, ok := t.Profile[pr]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	if cfg, ok := t.Platform[pl]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	return out
 }
 
 /* ---------------------- Struct: TargetWithoutPlatform --------------------- */
@@ -48,6 +88,25 @@ type TargetWithoutPlatform struct {
 	Profile map[build.Profile]*TargetWithoutPlatformAndProfile `json:"profile" toml:"profile"`
 }
 
+func (t *TargetWithoutPlatform) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Target {
+	out := t.Target
+	if out == nil {
+		out = &build.Target{} //nolint:exhaustruct
+	}
+
+	if cfg, ok := t.Profile[pr]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	for _, f := range ff {
+		if cfg, ok := t.Feature[f]; ok {
+			out = out.CombineWith(cfg.merge(pl, pr, ff...))
+		}
+	}
+
+	return out
+}
+
 /* ---------------------- Struct: TargetWithoutProfile ---------------------- */
 
 type TargetWithoutProfile struct {
@@ -55,6 +114,25 @@ type TargetWithoutProfile struct {
 
 	Feature  map[string]*TargetWithoutFeatureAndProfile       `json:"feature"  toml:"feature"`
 	Platform map[platform.OS]*TargetWithoutPlatformAndProfile `json:"platform" toml:"platform"`
+}
+
+func (t *TargetWithoutProfile) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Target {
+	out := t.Target
+	if out == nil {
+		out = &build.Target{} //nolint:exhaustruct
+	}
+
+	if cfg, ok := t.Platform[pl]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	for _, f := range ff {
+		if cfg, ok := t.Feature[f]; ok {
+			out = out.CombineWith(cfg.merge(pl, pr, ff...))
+		}
+	}
+
+	return out
 }
 
 /* ----------------- Struct: TargetWithoutFeatureAndPlatform ---------------- */
@@ -65,6 +143,19 @@ type TargetWithoutFeatureAndPlatform struct {
 	Profile map[build.Profile]*build.Target `json:"profile" toml:"profile"`
 }
 
+func (t *TargetWithoutFeatureAndPlatform) merge(_ platform.OS, pr build.Profile, _ ...string) *build.Target {
+	out := t.Target
+	if out == nil {
+		out = &build.Target{} //nolint:exhaustruct
+	}
+
+	if cfg, ok := t.Profile[pr]; ok {
+		out = out.CombineWith(cfg)
+	}
+
+	return out
+}
+
 /* ----------------- Struct: TargetWithoutFeatureAndProfile ----------------- */
 
 type TargetWithoutFeatureAndProfile struct {
@@ -73,10 +164,38 @@ type TargetWithoutFeatureAndProfile struct {
 	Platform map[platform.OS]*build.Target `json:"platform" toml:"platform"`
 }
 
+func (t *TargetWithoutFeatureAndProfile) merge(pl platform.OS, _ build.Profile, _ ...string) *build.Target {
+	out := t.Target
+	if out == nil {
+		out = &build.Target{} //nolint:exhaustruct
+	}
+
+	if cfg, ok := t.Platform[pl]; ok {
+		out = out.CombineWith(cfg)
+	}
+
+	return out
+}
+
 /* ----------------- Struct: TargetWithoutPlatformAndProfile ---------------- */
 
 type TargetWithoutPlatformAndProfile struct {
 	*build.Target
 
 	Feature map[string]*build.Target `json:"feature" toml:"feature"`
+}
+
+func (t *TargetWithoutPlatformAndProfile) merge(_ platform.OS, _ build.Profile, ff ...string) *build.Target {
+	out := t.Target
+	if out == nil {
+		out = &build.Target{} //nolint:exhaustruct
+	}
+
+	for _, f := range ff {
+		if cfg, ok := t.Feature[f]; ok {
+			out = out.CombineWith(cfg)
+		}
+	}
+
+	return out
 }
