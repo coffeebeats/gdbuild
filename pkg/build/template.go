@@ -1,6 +1,9 @@
 package build
 
-import "github.com/coffeebeats/gdbuild/pkg/platform"
+import (
+	"github.com/coffeebeats/gdbuild/internal/merge"
+	"github.com/coffeebeats/gdbuild/pkg/platform"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                              Struct: Template                              */
@@ -30,5 +33,32 @@ type Template struct {
 
 	// Hook defines commands to be run before or after the template is
 	// generated.
-	Hook Hook `json:"hook" toml:"hook"`
+	Hook *Hook `json:"hook" toml:"hook"`
+}
+
+/* --------------------------- Method: CombineWith -------------------------- */
+
+func (t *Template) CombineWith(templates ...*Template) *Template {
+	base := t
+	if t == nil {
+		base = &Template{} //nolint:exhaustruct
+	}
+
+	for _, other := range templates {
+		if other == nil {
+			continue
+		}
+
+		t.Arch = merge.Number(t.Arch, other.Arch)
+		t.OS = merge.Number(t.OS, other.OS)
+
+		t.Custom = merge.String(t.Custom, other.Custom)
+		t.Icon = merge.String(t.Icon, other.Icon)
+
+		t.SConsExtraArgs = append(t.SConsExtraArgs, other.SConsExtraArgs...)
+
+		t.Hook = t.Hook.CombineWith(other.Hook)
+	}
+
+	return base
 }

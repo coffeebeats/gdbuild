@@ -19,7 +19,8 @@ var (
 type OS int
 
 const (
-	OSAndroid OS = iota + 1
+	OSUnknown OS = iota
+	OSAndroid
 	OSIOS
 	OSLinux
 	OSMacOS

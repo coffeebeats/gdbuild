@@ -21,17 +21,14 @@ func NewTarget() *cli.Command { //nolint:funlen
 		Name:     "target",
 		Category: "Build",
 
-		Aliases: []string{"x"},
-
 		Usage:     "compile required Godot export template(s) and then export the specified 'TARGET'",
 		UsageText: "gdbuild target [OPTIONS] <TARGET>",
 
 		Flags: []cli.Flag{
 			&cli.PathFlag{
-				Name:    "path",
-				Aliases: []string{"p"},
-				Value:   ".",
-				Usage:   "use the Godot project found at 'PATH'",
+				Name:  "path",
+				Value: ".",
+				Usage: "use the Godot project found at 'PATH'",
 			},
 			&cli.PathFlag{
 				Name:    "out",
@@ -84,24 +81,7 @@ func NewTarget() *cli.Command { //nolint:funlen
 				return err
 			}
 
-			log.Debugf("moving template artifacts to path: %s", pathOut)
-
-			// Collect build modifiers.
-
-			features := c.StringSlice("feature")
-
-			log.Debugf("enabling features for target: %s", strings.Join(features, ","))
-
-			profile := parseProfile(c.Bool("release"), c.Bool("release_debug"))
-
-			log.Debugf("using template profile: %s", profile)
-
-			platform, err := parsePlatform(c.String("platform"))
-			if err != nil {
-				return err
-			}
-
-			log.Debugf("building for platform: %s", platform)
+			log.Debugf("placing template artifacts at path: %s", pathOut)
 
 			// Parse manifest.
 			pathManifest := c.Path("path")
@@ -112,7 +92,24 @@ func NewTarget() *cli.Command { //nolint:funlen
 
 			log.Debugf("using manifest at path: %s", pathManifest)
 
-			log.Print(m)
+			// Collect build modifiers.
+
+			features := c.StringSlice("feature")
+
+			log.Infof("features: %s", strings.Join(features, ","))
+
+			pr := parseProfile(c.Bool("release"), c.Bool("release_debug"))
+
+			log.Infof("profile: %s", pr)
+
+			pl, err := parsePlatform(c.String("platform"))
+			if err != nil {
+				return err
+			}
+
+			log.Infof("platform: %s", pl)
+
+			log.Print(m.BuildTarget(target, pl, pr, features...))
 
 			return nil
 		},

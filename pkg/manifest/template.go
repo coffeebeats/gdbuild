@@ -30,6 +30,28 @@ type Template struct {
 	Profile  map[build.Profile]*TemplateWithoutProfile `json:"profile"  toml:"profile"`
 }
 
+// TODO: Improve merging logic to detect conflicts instead of silently, and
+// unpredictably, overriding.
+func (t *Template) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+	out := t.Template
+
+	if cfg, ok := t.Profile[pr]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	if cfg, ok := t.Platform[pl]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	for _, f := range ff {
+		if cfg, ok := t.Feature[f]; ok {
+			out = out.CombineWith(cfg.merge(pl, pr, ff...))
+		}
+	}
+
+	return out
+}
+
 /* --------------------- Struct: TemplateWithoutFeature --------------------- */
 
 type TemplateWithoutFeature struct {
@@ -37,6 +59,20 @@ type TemplateWithoutFeature struct {
 
 	Platform map[platform.OS]*TemplateWithoutFeatureAndPlatform  `json:"platform" toml:"platform"`
 	Profile  map[build.Profile]*TemplateWithoutFeatureAndProfile `json:"profile"  toml:"profile"`
+}
+
+func (t *TemplateWithoutFeature) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+	out := t.Template
+
+	if cfg, ok := t.Profile[pr]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	if cfg, ok := t.Platform[pl]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	return out
 }
 
 /* --------------------- Struct: TemplateWithoutPlatform -------------------- */
@@ -48,6 +84,22 @@ type TemplateWithoutPlatform struct {
 	Profile map[build.Profile]*TemplateWithoutPlatformAndProfile `json:"profile" toml:"profile"`
 }
 
+func (t *TemplateWithoutPlatform) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+	out := t.Template
+
+	if cfg, ok := t.Profile[pr]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	for _, f := range ff {
+		if cfg, ok := t.Feature[f]; ok {
+			out = out.CombineWith(cfg.merge(pl, pr, ff...))
+		}
+	}
+
+	return out
+}
+
 /* --------------------- Struct: TemplateWithoutProfile --------------------- */
 
 type TemplateWithoutProfile struct {
@@ -55,6 +107,22 @@ type TemplateWithoutProfile struct {
 
 	Feature  map[string]*TemplateWithoutFeatureAndProfile       `json:"feature"  toml:"feature"`
 	Platform map[platform.OS]*TemplateWithoutPlatformAndProfile `json:"platform" toml:"platform"`
+}
+
+func (t *TemplateWithoutProfile) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+	out := t.Template
+
+	if cfg, ok := t.Platform[pl]; ok {
+		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	}
+
+	for _, f := range ff {
+		if cfg, ok := t.Feature[f]; ok {
+			out = out.CombineWith(cfg.merge(pl, pr, ff...))
+		}
+	}
+
+	return out
 }
 
 /* ---------------- Struct: TemplateWithoutFeatureAndPlatform --------------- */
@@ -65,6 +133,16 @@ type TemplateWithoutFeatureAndPlatform struct {
 	Profile map[build.Profile]*build.Template `json:"profile" toml:"profile"`
 }
 
+func (t *TemplateWithoutFeatureAndPlatform) merge(_ platform.OS, pr build.Profile, _ ...string) *build.Template {
+	out := t.Template
+
+	if cfg, ok := t.Profile[pr]; ok {
+		out = out.CombineWith(cfg)
+	}
+
+	return out
+}
+
 /* ---------------- Struct: TemplateWithoutFeatureAndProfile ---------------- */
 
 type TemplateWithoutFeatureAndProfile struct {
@@ -73,10 +151,32 @@ type TemplateWithoutFeatureAndProfile struct {
 	Platform map[platform.OS]*build.Template `json:"platform" toml:"platform"`
 }
 
+func (t *TemplateWithoutFeatureAndProfile) merge(pl platform.OS, _ build.Profile, _ ...string) *build.Template {
+	out := t.Template
+
+	if cfg, ok := t.Platform[pl]; ok {
+		out = out.CombineWith(cfg)
+	}
+
+	return out
+}
+
 /* ---------------- Struct: TemplateWithoutPlatformAndProfile --------------- */
 
 type TemplateWithoutPlatformAndProfile struct {
 	*build.Template
 
 	Feature map[string]*build.Template `json:"feature" toml:"feature"`
+}
+
+func (t *TemplateWithoutPlatformAndProfile) merge(_ platform.OS, _ build.Profile, ff ...string) *build.Template {
+	out := t.Template
+
+	for _, f := range ff {
+		if cfg, ok := t.Feature[f]; ok {
+			out = out.CombineWith(cfg)
+		}
+	}
+
+	return out
 }

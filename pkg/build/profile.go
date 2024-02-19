@@ -19,7 +19,8 @@ var (
 type Profile uint
 
 const (
-	ProfileDebug Profile = iota + 1
+	ProfileUnknown Profile = iota
+	ProfileDebug
 	ProfileReleaseDebug
 	ProfileRelease
 )

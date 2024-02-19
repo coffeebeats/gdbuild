@@ -1,5 +1,10 @@
 package manifest
 
+import (
+	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/platform"
+)
+
 /* -------------------------------------------------------------------------- */
 /*                              Struct: Manifest                              */
 /* -------------------------------------------------------------------------- */
@@ -14,6 +19,30 @@ type Manifest struct {
 	Template *Template `json:"template" toml:"template"`
 }
 
+/* --------------------------- Function: Filename --------------------------- */
+
+// Filename returns the name of the GDBuild manifest file.
+func Filename() string {
+	return "gdbuild.toml"
+}
+
+/* --------------------------- Method: BuildTarget -------------------------- */
+
+func (m *Manifest) BuildTarget(name string, pl platform.OS, pr build.Profile, ff ...string) *build.Target {
+	target := m.Target[name]
+	if target != nil {
+		ff = append(target.DefaultFeatures, ff...)
+	}
+
+	return target.merge(pl, pr, ff...)
+}
+
+/* -------------------------- Method: BuildTemplate ------------------------- */
+
+func (m *Manifest) BuildTemplate(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+	return m.Template.merge(pl, pr, ff...)
+}
+
 /* ---------------------------- Method: Validate ---------------------------- */
 
 // Validate checks that the 'Manifest' contents are valid.
@@ -21,11 +50,4 @@ type Manifest struct {
 // TODO: Implement this method, as well as for all contained types.
 func (m *Manifest) Validate() error {
 	return nil
-}
-
-/* --------------------------- Function: Filename --------------------------- */
-
-// Filename returns the name of the GDBuil manifest file.
-func Filename() string {
-	return "gdbuild.toml"
 }
