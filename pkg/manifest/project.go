@@ -1,8 +1,6 @@
 package manifest
 
-import (
-	"github.com/coffeebeats/gdenv/pkg/godot/version"
-)
+import "github.com/coffeebeats/gdenv/pkg/godot/version"
 
 /* -------------------------------------------------------------------------- */
 /*                               Struct: Project                              */

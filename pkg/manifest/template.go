@@ -1,9 +1,6 @@
 package manifest //nolint:dupl
 
-import (
-	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/platform"
-)
+import "github.com/coffeebeats/gdbuild/pkg/build"
 
 /* -------------------------------------------------------------------------- */
 /*                              Struct: Template                              */
@@ -26,13 +23,13 @@ type Template struct {
 	*build.Template
 
 	Feature  map[string]*TemplateWithoutFeature        `json:"feature"  toml:"feature"`
-	Platform map[platform.OS]*TemplateWithoutPlatform  `json:"platform" toml:"platform"`
+	Platform map[build.OS]*TemplateWithoutPlatform     `json:"platform" toml:"platform"`
 	Profile  map[build.Profile]*TemplateWithoutProfile `json:"profile"  toml:"profile"`
 }
 
 // TODO: Improve merging logic to detect conflicts instead of silently, and
 // unpredictably, overriding.
-func (t *Template) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+func (t *Template) merge(pl build.OS, pr build.Profile, ff ...string) *build.Template {
 	out := t.Template
 
 	if cfg, ok := t.Profile[pr]; ok {
@@ -57,11 +54,11 @@ func (t *Template) merge(pl platform.OS, pr build.Profile, ff ...string) *build.
 type TemplateWithoutFeature struct {
 	*build.Template
 
-	Platform map[platform.OS]*TemplateWithoutFeatureAndPlatform  `json:"platform" toml:"platform"`
+	Platform map[build.OS]*TemplateWithoutFeatureAndPlatform     `json:"platform" toml:"platform"`
 	Profile  map[build.Profile]*TemplateWithoutFeatureAndProfile `json:"profile"  toml:"profile"`
 }
 
-func (t *TemplateWithoutFeature) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+func (t *TemplateWithoutFeature) merge(pl build.OS, pr build.Profile, ff ...string) *build.Template {
 	out := t.Template
 
 	if cfg, ok := t.Profile[pr]; ok {
@@ -84,7 +81,7 @@ type TemplateWithoutPlatform struct {
 	Profile map[build.Profile]*TemplateWithoutPlatformAndProfile `json:"profile" toml:"profile"`
 }
 
-func (t *TemplateWithoutPlatform) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+func (t *TemplateWithoutPlatform) merge(pl build.OS, pr build.Profile, ff ...string) *build.Template {
 	out := t.Template
 
 	if cfg, ok := t.Profile[pr]; ok {
@@ -105,11 +102,11 @@ func (t *TemplateWithoutPlatform) merge(pl platform.OS, pr build.Profile, ff ...
 type TemplateWithoutProfile struct {
 	*build.Template
 
-	Feature  map[string]*TemplateWithoutFeatureAndProfile       `json:"feature"  toml:"feature"`
-	Platform map[platform.OS]*TemplateWithoutPlatformAndProfile `json:"platform" toml:"platform"`
+	Feature  map[string]*TemplateWithoutFeatureAndProfile    `json:"feature"  toml:"feature"`
+	Platform map[build.OS]*TemplateWithoutPlatformAndProfile `json:"platform" toml:"platform"`
 }
 
-func (t *TemplateWithoutProfile) merge(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+func (t *TemplateWithoutProfile) merge(pl build.OS, pr build.Profile, ff ...string) *build.Template {
 	out := t.Template
 
 	if cfg, ok := t.Platform[pl]; ok {
@@ -133,7 +130,7 @@ type TemplateWithoutFeatureAndPlatform struct {
 	Profile map[build.Profile]*build.Template `json:"profile" toml:"profile"`
 }
 
-func (t *TemplateWithoutFeatureAndPlatform) merge(_ platform.OS, pr build.Profile, _ ...string) *build.Template {
+func (t *TemplateWithoutFeatureAndPlatform) merge(_ build.OS, pr build.Profile, _ ...string) *build.Template {
 	out := t.Template
 
 	if cfg, ok := t.Profile[pr]; ok {
@@ -148,10 +145,10 @@ func (t *TemplateWithoutFeatureAndPlatform) merge(_ platform.OS, pr build.Profil
 type TemplateWithoutFeatureAndProfile struct {
 	*build.Template
 
-	Platform map[platform.OS]*build.Template `json:"platform" toml:"platform"`
+	Platform map[build.OS]*build.Template `json:"platform" toml:"platform"`
 }
 
-func (t *TemplateWithoutFeatureAndProfile) merge(pl platform.OS, _ build.Profile, _ ...string) *build.Template {
+func (t *TemplateWithoutFeatureAndProfile) merge(pl build.OS, _ build.Profile, _ ...string) *build.Template {
 	out := t.Template
 
 	if cfg, ok := t.Platform[pl]; ok {
@@ -169,7 +166,7 @@ type TemplateWithoutPlatformAndProfile struct {
 	Feature map[string]*build.Template `json:"feature" toml:"feature"`
 }
 
-func (t *TemplateWithoutPlatformAndProfile) merge(_ platform.OS, _ build.Profile, ff ...string) *build.Template {
+func (t *TemplateWithoutPlatformAndProfile) merge(_ build.OS, _ build.Profile, ff ...string) *build.Template {
 	out := t.Template
 
 	for _, f := range ff {

@@ -1,9 +1,6 @@
 package manifest
 
-import (
-	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/platform"
-)
+import "github.com/coffeebeats/gdbuild/pkg/build"
 
 /* -------------------------------------------------------------------------- */
 /*                              Struct: Manifest                              */
@@ -28,7 +25,7 @@ func Filename() string {
 
 /* --------------------------- Method: BuildTarget -------------------------- */
 
-func (m *Manifest) BuildTarget(name string, pl platform.OS, pr build.Profile, ff ...string) *build.Target {
+func (m *Manifest) BuildTarget(name string, pl build.OS, pr build.Profile, ff ...string) *build.Target {
 	target := m.Target[name]
 	if target != nil {
 		ff = append(target.DefaultFeatures, ff...)
@@ -39,7 +36,7 @@ func (m *Manifest) BuildTarget(name string, pl platform.OS, pr build.Profile, ff
 
 /* -------------------------- Method: BuildTemplate ------------------------- */
 
-func (m *Manifest) BuildTemplate(pl platform.OS, pr build.Profile, ff ...string) *build.Template {
+func (m *Manifest) BuildTemplate(pl build.OS, pr build.Profile, ff ...string) *build.Template {
 	return m.Template.merge(pl, pr, ff...)
 }
 
