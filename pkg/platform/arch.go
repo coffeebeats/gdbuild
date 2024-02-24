@@ -63,6 +63,9 @@ func ParseArch(input string) (Arch, error) {
 	case "amd64", "x86_64", "x86-64":
 		return ArchAmd64, nil
 
+	case "arm32":
+		return ArchArm32, nil
+
 	case "arm64", "arm64be":
 		return ArchArm64, nil
 
