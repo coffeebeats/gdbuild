@@ -1,9 +1,6 @@
 package build
 
-import (
-	"github.com/coffeebeats/gdbuild/internal/merge"
-	"github.com/coffeebeats/gdbuild/pkg/platform"
-)
+import "github.com/coffeebeats/gdbuild/internal/merge"
 
 /* -------------------------------------------------------------------------- */
 /*                              Struct: Template                              */
@@ -14,10 +11,10 @@ import (
 type Template struct {
 	// Arch is the CPU architecture of the Godot export template, as used by
 	// SCons, the Godot build system.
-	Arch platform.Arch `json:"arch" toml:"arch"`
+	Arch Arch `json:"arch" toml:"arch"`
 	// Arch is the operating system of the Godot export template, as used by
 	// SCons, the Godot build system.
-	OS platform.OS `json:"os" toml:"os"`
+	OS OS `json:"os" toml:"os"`
 
 	// Custom is a path to a 'custom.py' file defining Godot build options. If
 	// omitted, a 'custom.py' file next to the GDBuild manifest file will be
