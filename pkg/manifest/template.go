@@ -14,7 +14,7 @@ import (
 // 'feature', 'platform', and 'profile' labels used in the property names. Note
 // that each specifier label can only be used once per property name (i.e.
 // 'target.profile.release.profile.debug' is not allowed). Additionally, the
-// order of specifies is strict: 'platform' > 'feature' > 'profile'.
+// order of specifiers is strict: 'platform' < 'feature' < 'profile'.
 //
 // For example, the following are all valid table names:
 //
@@ -75,7 +75,9 @@ type TemplatePlatform struct {
 	Windows TemplateWindows `toml:"windows"`
 }
 
-/* ---------------------------- Platform: Android --------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                              Platform: Android                             */
+/* -------------------------------------------------------------------------- */
 
 type TemplateAndroid struct {
 	*template.Android
@@ -84,21 +86,38 @@ type TemplateAndroid struct {
 	Profile map[build.Profile]template.Android       `toml:"profile"`
 }
 
-func (t *TemplateAndroid) Features() map[string]TemplateAndroidWithoutFeature {
-	if t == nil || t.Feature == nil {
-		return map[string]TemplateAndroidWithoutFeature{}
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateAndroid) Configure(inv *build.Invocation) error {
+	if t == nil {
+		return nil
 	}
 
-	return t.Feature
-}
-
-func (t *TemplateAndroid) Profiles() map[build.Profile]template.Android {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Android{}
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := t.Android.Merge(&p); err != nil {
+		return err
 	}
 
-	return t.Profile
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if err := t.Android.Merge(f.Android); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := t.Android.Merge(&p); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
 
 type TemplateAndroidWithoutFeature struct {
 	*template.Android
@@ -106,15 +125,9 @@ type TemplateAndroidWithoutFeature struct {
 	Profile map[build.Profile]template.Android `toml:"profile"`
 }
 
-func (t *TemplateAndroidWithoutFeature) Profiles() map[build.Profile]template.Android {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Android{}
-	}
-
-	return t.Profile
-}
-
-/* ------------------------------ Platform: IOS ----------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                                Platform: IOS                               */
+/* -------------------------------------------------------------------------- */
 
 type TemplateIOS struct {
 	*template.IOS
@@ -123,21 +136,38 @@ type TemplateIOS struct {
 	Profile map[build.Profile]template.IOS       `toml:"profile"`
 }
 
-func (t *TemplateIOS) Features() map[string]TemplateIOSWithoutFeature {
-	if t == nil || t.Feature == nil {
-		return map[string]TemplateIOSWithoutFeature{}
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateIOS) Configure(inv *build.Invocation) error {
+	if t == nil {
+		return nil
 	}
 
-	return t.Feature
-}
-
-func (t *TemplateIOS) Profiles() map[build.Profile]template.IOS {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.IOS{}
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := t.IOS.Merge(&p); err != nil {
+		return err
 	}
 
-	return t.Profile
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if err := t.IOS.Merge(f.IOS); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := t.IOS.Merge(&p); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
 
 type TemplateIOSWithoutFeature struct {
 	*template.IOS
@@ -145,15 +175,9 @@ type TemplateIOSWithoutFeature struct {
 	Profile map[build.Profile]template.IOS `toml:"profile"`
 }
 
-func (t *TemplateIOSWithoutFeature) Profiles() map[build.Profile]template.IOS {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.IOS{}
-	}
-
-	return t.Profile
-}
-
-/* ----------------------------- Platform: Linux ---------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                               Platform: Linux                              */
+/* -------------------------------------------------------------------------- */
 
 type TemplateLinux struct {
 	*template.Linux
@@ -162,21 +186,38 @@ type TemplateLinux struct {
 	Profile map[build.Profile]template.Linux       `toml:"profile"`
 }
 
-func (t *TemplateLinux) Features() map[string]TemplateLinuxWithoutFeature {
-	if t == nil || t.Feature == nil {
-		return map[string]TemplateLinuxWithoutFeature{}
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateLinux) Configure(inv *build.Invocation) error {
+	if t == nil {
+		return nil
 	}
 
-	return t.Feature
-}
-
-func (t *TemplateLinux) Profiles() map[build.Profile]template.Linux {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Linux{}
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := t.Linux.Merge(&p); err != nil {
+		return err
 	}
 
-	return t.Profile
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if err := t.Linux.Merge(f.Linux); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := t.Linux.Merge(&p); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
 
 type TemplateLinuxWithoutFeature struct {
 	*template.Linux
@@ -184,15 +225,9 @@ type TemplateLinuxWithoutFeature struct {
 	Profile map[build.Profile]template.Linux `toml:"profile"`
 }
 
-func (t *TemplateLinuxWithoutFeature) Profiles() map[build.Profile]template.Linux {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Linux{}
-	}
-
-	return t.Profile
-}
-
-/* ----------------------------- Platform: MacOS ---------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                               Platform: MacOS                              */
+/* -------------------------------------------------------------------------- */
 
 type TemplateMacOS struct {
 	*template.MacOS
@@ -201,21 +236,38 @@ type TemplateMacOS struct {
 	Profile map[build.Profile]template.MacOS       `toml:"profile"`
 }
 
-func (t *TemplateMacOS) Features() map[string]TemplateMacOSWithoutFeature {
-	if t == nil || t.Feature == nil {
-		return map[string]TemplateMacOSWithoutFeature{}
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateMacOS) Configure(inv *build.Invocation) error {
+	if t == nil {
+		return nil
 	}
 
-	return t.Feature
-}
-
-func (t *TemplateMacOS) Profiles() map[build.Profile]template.MacOS {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.MacOS{}
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := t.MacOS.Merge(&p); err != nil {
+		return err
 	}
 
-	return t.Profile
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if err := t.MacOS.Merge(f.MacOS); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := t.MacOS.Merge(&p); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
 
 type TemplateMacOSWithoutFeature struct {
 	*template.MacOS
@@ -223,15 +275,9 @@ type TemplateMacOSWithoutFeature struct {
 	Profile map[build.Profile]template.MacOS `toml:"profile"`
 }
 
-func (t *TemplateMacOSWithoutFeature) Profiles() map[build.Profile]template.MacOS {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.MacOS{}
-	}
-
-	return t.Profile
-}
-
-/* ------------------------------ Platform: Web ----------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                                Platform: Web                               */
+/* -------------------------------------------------------------------------- */
 
 type TemplateWeb struct {
 	*template.Web
@@ -240,21 +286,38 @@ type TemplateWeb struct {
 	Profile map[build.Profile]template.Web       `toml:"profile"`
 }
 
-func (t *TemplateWeb) Features() map[string]TemplateWebWithoutFeature {
-	if t == nil || t.Feature == nil {
-		return map[string]TemplateWebWithoutFeature{}
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateWeb) Configure(inv *build.Invocation) error {
+	if t == nil {
+		return nil
 	}
 
-	return t.Feature
-}
-
-func (t *TemplateWeb) Profiles() map[build.Profile]template.Web {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Web{}
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := t.Web.Merge(&p); err != nil {
+		return err
 	}
 
-	return t.Profile
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if err := t.Web.Merge(f.Web); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := t.Web.Merge(&p); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
 
 type TemplateWebWithoutFeature struct {
 	*template.Web
@@ -262,15 +325,9 @@ type TemplateWebWithoutFeature struct {
 	Profile map[build.Profile]template.Web `toml:"profile"`
 }
 
-func (t *TemplateWebWithoutFeature) Profiles() map[build.Profile]template.Web {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Web{}
-	}
-
-	return t.Profile
-}
-
-/* ---------------------------- Platform: Windows --------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                              Platform: Windows                             */
+/* -------------------------------------------------------------------------- */
 
 type TemplateWindows struct {
 	*template.Windows
@@ -279,32 +336,41 @@ type TemplateWindows struct {
 	Profile map[build.Profile]template.Windows       `toml:"profile"`
 }
 
-func (t *TemplateWindows) Features() map[string]TemplateWindowsWithoutFeature {
-	if t == nil || t.Feature == nil {
-		return map[string]TemplateWindowsWithoutFeature{}
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateWindows) Configure(inv *build.Invocation) error {
+	if t == nil {
+		return nil
 	}
 
-	return t.Feature
-}
-
-func (t *TemplateWindows) Profiles() map[build.Profile]template.Windows {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Windows{}
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := t.Windows.Merge(&p); err != nil {
+		return err
 	}
 
-	return t.Profile
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if err := t.Windows.Merge(f.Windows); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := t.Windows.Merge(&p); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
 
 type TemplateWindowsWithoutFeature struct {
 	*template.Windows
 
 	Profile map[build.Profile]template.Windows `toml:"profile"`
-}
-
-func (t *TemplateWindowsWithoutFeature) Profiles() map[build.Profile]template.Windows {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Windows{}
-	}
-
-	return t.Profile
 }

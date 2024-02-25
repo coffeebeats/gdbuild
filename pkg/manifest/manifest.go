@@ -19,11 +19,11 @@ var ErrInvalidInput = errors.New("invalid input")
 // Manifest defines the supported structure of the GDBuild manifest file.
 type Manifest struct {
 	// Project contains project-wide settings, like the Godot version.
-	Project Project `json:"project" toml:"project"`
+	Project Project `toml:"project"`
 	// Target contains all exportable artifact specifications.
-	Target map[string]Target `json:"target" toml:"target"`
+	Target map[string]Target `toml:"target"`
 	// Template includes settings for building custom export templates.
-	Template Template `json:"template" toml:"template"`
+	Template Template `toml:"template"`
 }
 
 /* --------------------------- Function: Filename --------------------------- */
@@ -35,7 +35,7 @@ func Filename() string {
 
 /* -------------------------- Method: BuildTemplate ------------------------- */
 
-func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,ireturn,maintidx
+func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,ireturn
 	pathManifest,
 	pathBuild string,
 	pl build.OS,
@@ -99,186 +99,78 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 	case build.OSAndroid:
 		base := template.Android{Base: base} //nolint:exhaustruct
 
-		t := m.Template.Platform.Android
-
-		if err := base.Merge(t.Android); err != nil {
+		template := m.Template.Platform.Android
+		if err := template.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		p := t.Profiles()[pr]
-		if err := base.Merge(&p); err != nil {
+		if err := base.Merge(template.Android); err != nil {
 			return nil, err
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			if err := base.Merge(f.Android); err != nil {
-				return nil, err
-			}
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			p := f.Profiles()[pr]
-
-			if err := base.Merge(&p); err != nil {
-				return nil, err
-			}
 		}
 
 		cmd = &base
 	case build.OSIOS:
 		base := template.IOS{Base: base} //nolint:exhaustruct
 
-		t := m.Template.Platform.IOS
-
-		if err := base.Merge(t.IOS); err != nil {
+		template := m.Template.Platform.IOS
+		if err := template.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		p := t.Profiles()[pr]
-		if err := base.Merge(&p); err != nil {
+		if err := base.Merge(template.IOS); err != nil {
 			return nil, err
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			if err := base.Merge(f.IOS); err != nil {
-				return nil, err
-			}
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			p := f.Profiles()[pr]
-
-			if err := base.Merge(&p); err != nil {
-				return nil, err
-			}
 		}
 
 		cmd = &base
 	case build.OSLinux:
 		base := template.Linux{Base: base}
 
-		t := m.Template.Platform.Linux
-
-		if err := base.Merge(t.Linux); err != nil {
+		template := m.Template.Platform.Linux
+		if err := template.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		p := t.Profiles()[pr]
-		if err := base.Merge(&p); err != nil {
+		if err := base.Merge(template.Linux); err != nil {
 			return nil, err
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			if err := base.Merge(f.Linux); err != nil {
-				return nil, err
-			}
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			p := f.Profiles()[pr]
-
-			if err := base.Merge(&p); err != nil {
-				return nil, err
-			}
 		}
 
 		cmd = &base
 	case build.OSMacOS:
 		base := template.MacOS{Base: base} //nolint:exhaustruct
 
-		t := m.Template.Platform.MacOS
-
-		if err := base.Merge(t.MacOS); err != nil {
+		template := m.Template.Platform.MacOS
+		if err := template.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		p := t.Profiles()[pr]
-		if err := base.Merge(&p); err != nil {
+		if err := base.Merge(template.MacOS); err != nil {
 			return nil, err
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			if err := base.Merge(f.MacOS); err != nil {
-				return nil, err
-			}
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			p := f.Profiles()[pr]
-
-			if err := base.Merge(&p); err != nil {
-				return nil, err
-			}
 		}
 
 		cmd = &base
 	case build.OSWeb:
 		base := template.Web{Base: base} //nolint:exhaustruct
 
-		t := m.Template.Platform.Web
-
-		if err := base.Merge(t.Web); err != nil {
+		template := m.Template.Platform.Web
+		if err := template.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		p := t.Profiles()[pr]
-		if err := base.Merge(&p); err != nil {
+		if err := base.Merge(template.Web); err != nil {
 			return nil, err
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			if err := base.Merge(f.Web); err != nil {
-				return nil, err
-			}
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			p := f.Profiles()[pr]
-
-			if err := base.Merge(&p); err != nil {
-				return nil, err
-			}
 		}
 
 		cmd = &base
 	case build.OSWindows:
 		base := template.Windows{Base: base} //nolint:exhaustruct
 
-		t := m.Template.Platform.Windows
-
-		if err := base.Merge(t.Windows); err != nil {
+		template := m.Template.Platform.Windows
+		if err := template.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		p := t.Profiles()[pr]
-		if err := base.Merge(&p); err != nil {
+		if err := base.Merge(template.Windows); err != nil {
 			return nil, err
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			if err := base.Merge(f.Windows); err != nil {
-				return nil, err
-			}
-		}
-
-		for _, f := range ff {
-			f := t.Features()[f]
-			p := f.Profiles()[pr]
-
-			if err := base.Merge(&p); err != nil {
-				return nil, err
-			}
 		}
 
 		cmd = &base
@@ -299,4 +191,16 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 	}
 
 	return cmd, nil
+}
+
+/* ------------------------- Function: getOrDefault ------------------------- */
+
+// getOrDefault is a convenience method to safely access a value from a
+// potentially nil map.
+func getOrDefault[K comparable, V any](m map[K]V, key K) V { //nolint:ireturn
+	if m == nil {
+		return *new(V)
+	}
+
+	return m[key]
 }
