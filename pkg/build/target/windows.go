@@ -18,13 +18,7 @@ func (c *Windows) Command() []string {
 /* --------------------------- Impl: merge.Merger --------------------------- */
 
 func (c *Windows) Merge(other *Windows) error {
-	if other == nil {
-		return nil
-	}
-
-	if c == nil {
-		*c = *other
-
+	if c == nil || other == nil {
 		return nil
 	}
 

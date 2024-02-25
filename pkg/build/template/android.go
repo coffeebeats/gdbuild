@@ -60,13 +60,7 @@ func (c *Android) Validate() error {
 /* --------------------------- Impl: merge.Merger --------------------------- */
 
 func (c *Android) Merge(other *Android) error {
-	if other == nil {
-		return nil
-	}
-
-	if c == nil {
-		*c = *other
-
+	if c == nil || other == nil {
 		return nil
 	}
 

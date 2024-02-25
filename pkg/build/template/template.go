@@ -32,7 +32,7 @@ type Base struct {
 	// Env is a map of environment variables to set during the build step.
 	Env map[string]string `toml:"env"`
 	// Hook defines commands to be run before or after a build step.
-	Hook build.Hook `json:"hook" toml:"hook"`
+	Hook build.Hook `toml:"hook"`
 	// Optimize is the specific optimization level for the template.
 	Optimize build.Optimize `toml:"optimize"`
 	// PathCustomPy is a path to a 'custom.py' file which defines export
@@ -40,7 +40,7 @@ type Base struct {
 	// one isn't found.
 	PathCustomPy build.Path `toml:"custom_py_path"`
 	// SCons contains build command-related settings.
-	SCons build.SCons `json:"scons" toml:"scons"`
+	SCons build.SCons `toml:"scons"`
 	// Shell is a shell name to run the commands with. Defaults to 'sh'.
 	Shell command.Shell `toml:"shell"`
 
@@ -203,13 +203,7 @@ func (c *Base) Validate() error {
 /* --------------------------- Impl: merge.Merger --------------------------- */
 
 func (c *Base) Merge(other *Base) error {
-	if other == nil {
-		return nil
-	}
-
-	if c == nil {
-		*c = *other
-
+	if c == nil || other == nil {
 		return nil
 	}
 

@@ -18,13 +18,7 @@ func (c *IOS) Command() []string {
 /* --------------------------- Impl: merge.Merger --------------------------- */
 
 func (c *IOS) Merge(other *IOS) error {
-	if other == nil {
-		return nil
-	}
-
-	if c == nil {
-		*c = *other
-
+	if c == nil || other == nil {
 		return nil
 	}
 

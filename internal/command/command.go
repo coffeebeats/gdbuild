@@ -91,13 +91,7 @@ func (c *Command) args() ([]string, error) {
 /* --------------------------- Impl: merge.Merger --------------------------- */
 
 func (c *Command) Merge(other *Command) error {
-	if other == nil {
-		return nil
-	}
-
-	if c == nil {
-		*c = *other
-
+	if c == nil || other == nil {
 		return nil
 	}
 

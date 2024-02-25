@@ -33,13 +33,7 @@ type SCons struct {
 /* --------------------------- Impl: merge.Merger --------------------------- */
 
 func (c *SCons) Merge(other *SCons) error {
-	if other == nil {
-		return nil
-	}
-
-	if c == nil {
-		*c = *other
-
+	if c == nil || other == nil {
 		return nil
 	}
 

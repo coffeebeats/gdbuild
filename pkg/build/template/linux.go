@@ -63,13 +63,7 @@ func (c *Linux) Validate() error {
 /* --------------------------- Impl: merge.Merger --------------------------- */
 
 func (c *Linux) Merge(other *Linux) error {
-	if other == nil {
-		return nil
-	}
-
-	if c == nil {
-		*c = *other
-
+	if c == nil || other == nil {
 		return nil
 	}
 

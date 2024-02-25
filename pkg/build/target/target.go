@@ -46,13 +46,7 @@ type Base struct {
 /* --------------------------- Impl: merge.Merger --------------------------- */
 
 func (c *Base) Merge(other *Base) error {
-	if other == nil {
-		return nil
-	}
-
-	if c == nil {
-		*c = *other
-
+	if c == nil || other == nil {
 		return nil
 	}
 

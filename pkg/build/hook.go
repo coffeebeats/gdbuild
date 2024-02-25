@@ -17,13 +17,7 @@ type Hook struct {
 /* --------------------------- Impl: merge.Merger --------------------------- */
 
 func (c *Hook) Merge(other *Hook) error {
-	if other == nil {
-		return nil
-	}
-
-	if c == nil {
-		*c = *other
-
+	if c == nil || other == nil {
 		return nil
 	}
 
