@@ -10,8 +10,6 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-var ErrInvalidInput = errors.New("invalid input")
-
 // Parse parses a 'Manifest' struct from a 'toml' document.
 func Parse(bb []byte) (*Manifest, error) {
 	d := toml.NewDecoder(bytes.NewReader(bb))
