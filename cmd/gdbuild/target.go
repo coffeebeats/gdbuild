@@ -84,7 +84,7 @@ func NewTarget() *cli.Command { //nolint:funlen
 
 			// Parse manifest.
 			pathManifest := c.Path("path")
-			m, err := parseManifest(pathManifest)
+			_, err = parseManifest(pathManifest)
 			if err != nil {
 				return err
 			}
@@ -107,8 +107,6 @@ func NewTarget() *cli.Command { //nolint:funlen
 			}
 
 			log.Infof("platform: %s", pl)
-
-			log.Print(m.BuildTarget(target, pl, pr, features...))
 
 			return nil
 		},
