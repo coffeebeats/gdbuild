@@ -3,9 +3,11 @@ package manifest
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/command"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 	"github.com/coffeebeats/gdbuild/pkg/build/template"
 )
@@ -50,6 +52,21 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 	pathManifest, err := filepath.Abs(pathManifest)
 	if err != nil {
 		return nil, err
+	}
+
+	info, err := os.Stat(pathManifest)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
+
+		if err := os.MkdirAll(pathManifest, osutil.ModeUserRWXGroupRX); err != nil {
+			return nil, err
+		}
+	}
+
+	if !info.IsDir() {
+		pathManifest = filepath.Dir(pathManifest)
 	}
 
 	pathBuild, err = filepath.Abs(pathBuild)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
+
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
 // A 'urfave/cli' command to compile a Godot export template.
@@ -65,7 +68,7 @@ func NewTemplate() *cli.Command { //nolint:funlen
 				return UsageError{ctx: c, err: ErrTargetUsageProfiles}
 			}
 
-			pathOut, err := parseDirectory(c.Path("out"))
+			pathOut, err := parseWorkDir(c.Path("out"))
 			if err != nil {
 				return err
 			}
@@ -73,7 +76,11 @@ func NewTemplate() *cli.Command { //nolint:funlen
 			log.Debugf("placing template artifacts at path: %s", pathOut)
 
 			// Parse manifest.
-			pathManifest := c.Path("path")
+			pathManifest, err := parseWorkDir(c.Path("path"))
+			if err != nil {
+				return err
+			}
+
 			m, err := parseManifest(pathManifest)
 			if err != nil {
 				return err
@@ -108,28 +115,34 @@ func NewTemplate() *cli.Command { //nolint:funlen
 				return err
 			}
 
-			log.Printf("%v", cmd)
+			log.Printf("%s", cmd)
 
 			return nil
 		},
 	}
 }
 
-/* ------------------------ Function: parseDirectory ------------------------ */
+/* ------------------------- Function: parseWorkDir ------------------------- */
 
-func parseDirectory(path string) (string, error) {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-
+func parseWorkDir(path string) (string, error) {
 	info, err := os.Stat(path)
 	if err != nil {
-		return "", err
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+
+		if err := os.MkdirAll(path, osutil.ModeUserRWXGroupRX); err != nil {
+			return "", err
+		}
 	}
 
-	if !info.IsDir() {
-		return "", fmt.Errorf("%w: expected a directory: %s", ErrInvalidInput, path)
+	if info != nil && !info.IsDir() {
+		path = filepath.Dir(path)
+	}
+
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return "", err
 	}
 
 	return path, nil

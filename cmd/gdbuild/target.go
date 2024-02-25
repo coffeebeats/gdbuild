@@ -75,7 +75,7 @@ func NewTarget() *cli.Command { //nolint:funlen
 				return UsageError{ctx: c, err: ErrTargetUsageProfiles}
 			}
 
-			pathOut, err := parseDirectory(c.Path("out"))
+			pathOut, err := parseWorkDir(c.Path("out"))
 			if err != nil {
 				return err
 			}
@@ -83,7 +83,11 @@ func NewTarget() *cli.Command { //nolint:funlen
 			log.Debugf("placing template artifacts at path: %s", pathOut)
 
 			// Parse manifest.
-			pathManifest := c.Path("path")
+			pathManifest, err := parseWorkDir(c.Path("path"))
+			if err != nil {
+				return err
+			}
+
 			_, err = parseManifest(pathManifest)
 			if err != nil {
 				return err
