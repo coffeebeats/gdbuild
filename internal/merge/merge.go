@@ -1,5 +1,21 @@
 package merge
 
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	// ErrConflictingValue is returned when mergeable types have conflicting
+	// values for the same property.
+	ErrConflictingValue = errors.New("conflicting value")
+)
+
+// Merger is a type which can merge with other instances of itself.
+type Merger[T any] interface {
+	Merge(other T) error
+}
+
 /* -------------------------------------------------------------------------- */
 /*                               Function: Bool                               */
 /* -------------------------------------------------------------------------- */
@@ -42,32 +58,57 @@ type number interface {
 /*                                Function: Map                               */
 /* -------------------------------------------------------------------------- */
 
-func Map[K comparable, V any](others ...map[K]V) map[K]V {
-	out := make(map[K]V)
-
-	for _, other := range others {
-		for k, v := range other {
-			out[k] = v
-		}
+func Map[K comparable, V comparable](base *map[K]V, other map[K]V) error {
+	if other == nil {
+		return nil
 	}
 
-	return out
+	if base == nil {
+		*base = other
+	}
+
+	b := *base
+	for k, v := range other {
+		if _, ok := b[k]; ok {
+			return fmt.Errorf("%w: map key: %v", ErrConflictingValue, k)
+		}
+
+		(*base)[k] = v
+	}
+
+	return nil
 }
 
-/* -------------------------------------------------------------------------- */
-/*                              Function: String                              */
-/* -------------------------------------------------------------------------- */
+func Primitive[T comparable](base *T, other T) error {
+	var t T
 
-func String(others ...string) string {
-	var out string
-
-	for _, o := range others {
-		if o == "" {
-			continue
-		}
-
-		out = o
+	if other == t {
+		return nil
 	}
 
-	return out
+	if base != nil && *base != t {
+		return fmt.Errorf("%w: %v,%v", ErrConflictingValue, *base, other)
+	}
+
+	*base = other
+
+	return nil
+}
+
+func Pointer[T comparable](base *T, other *T) error {
+	if other == nil {
+		return nil
+	}
+
+	if base == nil {
+		*base = *other
+	}
+
+	if base != nil && base != other {
+		return fmt.Errorf("%w: %v,%v", ErrConflictingValue, *base, other)
+	}
+
+	*base = *other
+
+	return nil
 }
