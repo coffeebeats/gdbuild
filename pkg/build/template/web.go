@@ -5,6 +5,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/command"
 	"github.com/coffeebeats/gdbuild/internal/merge"
+	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -20,10 +21,30 @@ type Web struct {
 	EnableEval *bool `toml:"enable_eval"`
 }
 
-/* ----------------------------- Impl: Commander ---------------------------- */
+/* ------------------------- Impl: command.Commander ------------------------ */
 
 func (c *Web) Command() (*command.Command, error) {
 	return nil, ErrUnimplemented
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (c *Web) Configure(inv *build.Invocation) error {
+	if err := c.Base.Configure(inv); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* -------------------------- Impl: build.Validate -------------------------- */
+
+func (c *Web) Validate() error {
+	if err := c.Base.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

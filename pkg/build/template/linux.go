@@ -17,7 +17,7 @@ type Linux struct {
 	*Base
 }
 
-/* ----------------------------- Impl: Commander ---------------------------- */
+/* ------------------------- Impl: command.Commander ------------------------ */
 
 func (c *Linux) Command() (*command.Command, error) {
 	base, err := c.Base.Command()
@@ -38,6 +38,26 @@ func (c *Linux) Command() (*command.Command, error) {
 	}
 
 	return base, nil
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (c *Linux) Configure(inv *build.Invocation) error {
+	if err := c.Base.Configure(inv); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* -------------------------- Impl: build.Validate -------------------------- */
+
+func (c *Linux) Validate() error {
+	if err := c.Base.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

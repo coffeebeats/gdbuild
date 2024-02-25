@@ -5,11 +5,13 @@ package build
 /* -------------------------------------------------------------------------- */
 
 // Hook contains commands to execute before and after a build step.
+//
+// TODO: Allow per-hook shell settings.
 type Hook struct {
 	// Pre contains a command to run *before* a build step.
-	Pre []string `json:"prebuild" toml:"prebuild"`
+	Pre []string `toml:"prebuild"`
 	// Post contains a command to run *after* a build step.
-	Post []string `json:"postbuild" toml:"postbuild"`
+	Post []string `toml:"postbuild"`
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

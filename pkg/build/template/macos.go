@@ -5,6 +5,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/command"
 	"github.com/coffeebeats/gdbuild/internal/merge"
+	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -18,15 +19,43 @@ type MacOS struct {
 
 	// PathLipo is the path to the 'lipo' executable. Only used if 'arch' is set
 	// to 'build.ArchUniversal' and defaults to 'lipo'.
-	PathLipo string `toml:"lipo_path"`
+	PathLipo build.Path `toml:"lipo_path"`
 
 	Vulkan Vulkan `toml:"vulkan"`
 }
 
-/* ----------------------------- Impl: Commander ---------------------------- */
+/* ------------------------- Impl: command.Commander ------------------------ */
 
 func (c *MacOS) Command() (*command.Command, error) {
 	return nil, ErrUnimplemented
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (c *MacOS) Configure(inv *build.Invocation) error {
+	if err := c.Base.Configure(inv); err != nil {
+		return err
+	}
+
+	if err := c.Vulkan.Configure(inv); err != nil {
+		return err
+	}
+
+	if err := c.PathLipo.RelTo(inv.PathManifest); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* -------------------------- Impl: build.Validate -------------------------- */
+
+func (c *MacOS) Validate() error {
+	if err := c.Base.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */
@@ -67,7 +96,17 @@ type Vulkan struct {
 	// Dynamic enables dynamically linking Vulkan to the template.
 	Dynamic *bool `toml:"dynamic"`
 	// PathSDK is the path to the Vulkan SDK root.
-	PathSDK string `toml:"sdk_path"`
+	PathSDK build.Path `toml:"sdk_path"`
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (c *Vulkan) Configure(inv *build.Invocation) error {
+	if err := c.PathSDK.RelTo(inv.PathManifest); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

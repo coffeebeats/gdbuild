@@ -25,10 +25,6 @@ func Parse(bb []byte) (*Manifest, error) {
 		return nil, err
 	}
 
-	if err := m.Validate(); err != nil {
-		return nil, err
-	}
-
 	return &m, nil
 }
 

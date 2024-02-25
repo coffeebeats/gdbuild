@@ -5,6 +5,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/command"
 	"github.com/coffeebeats/gdbuild/internal/merge"
+	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -17,15 +18,43 @@ type Android struct {
 	*Base
 
 	// PathGradle is the path to a Gradle wrapper executable.
-	PathGradlew string `toml:"gradlew_path"`
+	PathGradlew build.Path `toml:"gradlew_path"`
 	// PathSDK is the path to the Android SDK root.
-	PathSDK string `toml:"sdk_path"`
+	PathSDK build.Path `toml:"sdk_path"`
 }
 
-/* ----------------------------- Impl: Commander ---------------------------- */
+/* ------------------------- Impl: command.Commander ------------------------ */
 
 func (c *Android) Command() (*command.Command, error) {
 	return nil, ErrUnimplemented
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (c *Android) Configure(inv *build.Invocation) error {
+	if err := c.Base.Configure(inv); err != nil {
+		return err
+	}
+
+	if err := c.PathGradlew.RelTo(inv.PathManifest); err != nil {
+		return err
+	}
+
+	if err := c.PathSDK.RelTo(inv.PathManifest); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* -------------------------- Impl: build.Validate -------------------------- */
+
+func (c *Android) Validate() error {
+	if err := c.Base.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

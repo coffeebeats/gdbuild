@@ -65,6 +65,8 @@ func Map[K comparable, V comparable](base *map[K]V, other map[K]V) error {
 
 	if base == nil {
 		*base = other
+
+		return nil
 	}
 
 	b := *base

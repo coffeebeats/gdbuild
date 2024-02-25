@@ -5,6 +5,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/command"
 	"github.com/coffeebeats/gdbuild/internal/merge"
+	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -17,13 +18,37 @@ type Windows struct {
 	*Base
 
 	// PathIcon is a path to a Windows application icon.
-	PathIcon string `toml:"icon_path"`
+	PathIcon build.Path `toml:"icon_path"`
 }
 
-/* ----------------------------- Impl: Commander ---------------------------- */
+/* ------------------------- Impl: command.Commander ------------------------ */
 
 func (c *Windows) Command() (*command.Command, error) {
 	return nil, ErrUnimplemented
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (c *Windows) Configure(inv *build.Invocation) error {
+	if err := c.Base.Configure(inv); err != nil {
+		return err
+	}
+
+	if err := c.PathIcon.RelTo(inv.PathManifest); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* -------------------------- Impl: build.Validate -------------------------- */
+
+func (c *Windows) Validate() error {
+	if err := c.Base.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

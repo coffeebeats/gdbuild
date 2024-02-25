@@ -98,7 +98,7 @@ func NewTemplate() *cli.Command { //nolint:funlen
 
 			log.Infof("platform: %s", pl)
 
-			cmder, err := m.BuildTemplate(pathManifest, pl, pr, features...)
+			cmder, err := m.BuildTemplate(pathManifest, pathOut, pl, pr, features...)
 			if err != nil {
 				return err
 			}

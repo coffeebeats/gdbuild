@@ -1,6 +1,10 @@
 package manifest
 
-import "github.com/coffeebeats/gdenv/pkg/godot/version"
+import (
+	"github.com/coffeebeats/gdenv/pkg/godot/version"
+
+	"github.com/coffeebeats/gdbuild/pkg/build"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                               Struct: Project                              */
@@ -9,9 +13,8 @@ import "github.com/coffeebeats/gdenv/pkg/godot/version"
 // Project defines the project-wide configuration which affects all exportable
 // artifacts.
 type Project struct {
-	Icon        string  `json:"icon"         toml:"icon"`
-	Version     Version `json:"version"      toml:"version"`
-	VersionFile string  `json:"version_file" toml:"version_file"` //nolint:tagliatelle
+	// Godot contains a specification for which Godot version to use.
+	Godot build.Godot `toml:"godot"`
 }
 
 /* -------------------------------------------------------------------------- */

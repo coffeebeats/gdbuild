@@ -15,7 +15,7 @@ var (
 /*                               Enum: Optimize                               */
 /* -------------------------------------------------------------------------- */
 
-// Optimize is the level of optimization for a _Godot_ export template.
+// Optimize is the level of optimization for a Godot export template.
 type Optimize uint
 
 const (

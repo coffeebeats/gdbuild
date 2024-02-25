@@ -5,6 +5,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/command"
 	"github.com/coffeebeats/gdbuild/internal/merge"
+	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -17,15 +18,39 @@ type IOS struct {
 	*Base
 
 	// PathSDK is the path to the IOS SDK root.
-	PathSDK string `toml:"sdk_path"`
+	PathSDK build.Path `toml:"sdk_path"`
 	// Simulator denotes whether to build for the iOS simulator.
 	Simulator *bool `toml:"use_simulator"`
 }
 
-/* ----------------------------- Impl: Commander ---------------------------- */
+/* ------------------------- Impl: command.Commander ------------------------ */
 
 func (c *IOS) Command() (*command.Command, error) {
 	return nil, ErrUnimplemented
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (c *IOS) Configure(inv *build.Invocation) error {
+	if err := c.Base.Configure(inv); err != nil {
+		return err
+	}
+
+	if err := c.PathSDK.RelTo(inv.PathManifest); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* -------------------------- Impl: build.Validate -------------------------- */
+
+func (c *IOS) Validate() error {
+	if err := c.Base.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

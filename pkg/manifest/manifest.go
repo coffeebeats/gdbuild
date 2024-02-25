@@ -36,7 +36,8 @@ func Filename() string {
 /* -------------------------- Method: BuildTemplate ------------------------- */
 
 func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,ireturn,maintidx
-	path string,
+	pathManifest,
+	pathBuild string,
 	pl build.OS,
 	pr build.Profile,
 	ff ...string,
@@ -46,13 +47,27 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 		base = &template.Base{} //nolint:exhaustruct
 	}
 
-	base.Execution = template.Execution{
+	pathManifest, err := filepath.Abs(pathManifest)
+	if err != nil {
+		return nil, err
+	}
+
+	pathBuild, err = filepath.Abs(pathBuild)
+	if err != nil {
+		return nil, err
+	}
+
+	base.Invocation = build.Invocation{
 		Features:     ff,
-		PathBuild:    filepath.Join(path, "build"), // TODO: Allow customizing.
-		PathManifest: path,
+		PathBuild:    build.Path(pathBuild),
+		PathManifest: build.Path(pathManifest),
 		Platform:     pl,
 		Profile:      pr,
-		Shell:        command.ShellSh, // TODO: Add support for other shells.
+	}
+
+	base.Godot = m.Project.Godot
+	if err := base.Godot.Validate(); err != nil {
+		return nil, err
 	}
 
 	// Merge template base.
@@ -77,6 +92,9 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 		}
 	}
 
+	var cmd command.Commander
+
+	// Merge platform-specific template.
 	switch pl {
 	case build.OSAndroid:
 		base := template.Android{Base: base} //nolint:exhaustruct
@@ -108,7 +126,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			}
 		}
 
-		return &base, nil
+		cmd = &base
 	case build.OSIOS:
 		base := template.IOS{Base: base} //nolint:exhaustruct
 
@@ -139,7 +157,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			}
 		}
 
-		return &base, nil
+		cmd = &base
 	case build.OSLinux:
 		base := template.Linux{Base: base}
 
@@ -170,7 +188,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			}
 		}
 
-		return &base, nil
+		cmd = &base
 	case build.OSMacOS:
 		base := template.MacOS{Base: base} //nolint:exhaustruct
 
@@ -201,7 +219,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			}
 		}
 
-		return &base, nil
+		cmd = &base
 	case build.OSWeb:
 		base := template.Web{Base: base} //nolint:exhaustruct
 
@@ -232,7 +250,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			}
 		}
 
-		return &base, nil
+		cmd = &base
 	case build.OSWindows:
 		base := template.Windows{Base: base} //nolint:exhaustruct
 
@@ -263,18 +281,22 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			}
 		}
 
-		return &base, nil
+		cmd = &base
 	default:
+		return nil, fmt.Errorf("%w: unsupported platform", ErrInvalidInput)
 	}
 
-	return nil, fmt.Errorf("%w: unsupported platform", ErrInvalidInput)
-}
+	if value, ok := cmd.(build.Validater); ok {
+		if err := value.Validate(); err != nil {
+			return nil, err
+		}
+	}
 
-/* ---------------------------- Method: Validate ---------------------------- */
+	if value, ok := cmd.(build.Configurer); ok {
+		if err := value.Configure(&base.Invocation); err != nil {
+			return nil, err
+		}
+	}
 
-// Validate checks that the 'Manifest' contents are valid.
-//
-// TODO: Implement this method, as well as for all contained types.
-func (m *Manifest) Validate() error {
-	return nil
+	return cmd, nil
 }
