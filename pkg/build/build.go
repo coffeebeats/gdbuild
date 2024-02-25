@@ -3,6 +3,7 @@ package build
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 )
 
@@ -40,6 +41,48 @@ type Validater interface {
 
 // Path is a string type that's expected to be a path.
 type Path string
+
+/* ------------------------ Method: CheckIsDirOrEmpty ----------------------- */
+
+// CheckIsDirOrEmpty verifies that the underlying path is either empty or a
+// valid directory.
+func (p Path) CheckIsDirOrEmpty() error {
+	if p == "" {
+		return nil
+	}
+
+	info, err := os.Stat(string(p))
+	if err != nil {
+		return fmt.Errorf("%w: path: %s: %w", ErrInvalidInput, p, err)
+	}
+
+	if !info.IsDir() {
+		return fmt.Errorf("%w: path: expected a directory: %s", ErrInvalidInput, p)
+	}
+
+	return nil
+}
+
+/* ----------------------- Method: CheckIsFileOrEmpty ----------------------- */
+
+// CheckIsFileOrEmpty verifies that the underlying path is either empty or a
+// valid file.
+func (p Path) CheckIsFileOrEmpty() error {
+	if p == "" {
+		return nil
+	}
+
+	info, err := os.Stat(string(p))
+	if err != nil {
+		return fmt.Errorf("%w: path: %s: %w", ErrInvalidInput, p, err)
+	}
+
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("%w: path: expected a file: %s", ErrInvalidInput, p)
+	}
+
+	return nil
+}
 
 /* ------------------------------ Method: RelTo ----------------------------- */
 
