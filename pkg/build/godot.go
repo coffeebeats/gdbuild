@@ -1,8 +1,6 @@
 package build
 
-import (
-	"fmt"
-)
+import "fmt"
 
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Godot                               */
@@ -43,6 +41,10 @@ func (c *Godot) Validate() error {
 				ErrConflictingValue,
 			)
 		}
+
+		if err := c.PathSource.CheckIsDirOrEmpty(); err != nil {
+			return err
+		}
 	}
 
 	if c.Version != "" {
@@ -60,6 +62,10 @@ func (c *Godot) Validate() error {
 				"%w: cannot specify 'src_path' or 'version' with 'version_file'",
 				ErrConflictingValue,
 			)
+		}
+
+		if err := c.VersionFile.CheckIsFileOrEmpty(); err != nil {
+			return err
 		}
 	}
 

@@ -54,6 +54,14 @@ func (c *Android) Validate() error {
 		return err
 	}
 
+	if err := c.PathGradlew.CheckIsFileOrEmpty(); err != nil {
+		return err
+	}
+
+	if err := c.PathSDK.CheckIsDirOrEmpty(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -55,6 +55,14 @@ func (c *MacOS) Validate() error {
 		return err
 	}
 
+	if err := c.PathLipo.CheckIsFileOrEmpty(); err != nil {
+		return err
+	}
+
+	if err := c.Vulkan.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -97,6 +105,16 @@ type Vulkan struct {
 
 func (c *Vulkan) Configure(inv *build.Invocation) error {
 	if err := c.PathSDK.RelTo(inv.PathManifest); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* -------------------------- Impl: build.Validate -------------------------- */
+
+func (c *Vulkan) Validate() error {
+	if err := c.PathSDK.CheckIsDirOrEmpty(); err != nil {
 		return err
 	}
 

@@ -50,6 +50,10 @@ func (c *IOS) Validate() error {
 		return err
 	}
 
+	if err := c.PathSDK.CheckIsDirOrEmpty(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

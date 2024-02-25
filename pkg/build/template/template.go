@@ -3,6 +3,7 @@ package template
 import (
 	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/coffeebeats/gdbuild/internal/command"
@@ -36,8 +37,7 @@ type Base struct {
 	// Optimize is the specific optimization level for the template.
 	Optimize build.Optimize `toml:"optimize"`
 	// PathCustomPy is a path to a 'custom.py' file which defines export
-	// template build options. Defaults to 'custom.py', but will be ignored if
-	// one isn't found.
+	// template build options.
 	PathCustomPy build.Path `toml:"custom_py_path"`
 	// SCons contains build command-related settings.
 	SCons build.SCons `toml:"scons"`
@@ -171,6 +171,10 @@ func (c *Base) Command() (*command.Command, error) { //nolint:cyclop,funlen
 /* ------------------------- Impl: build.Configurer ------------------------- */
 
 func (c *Base) Configure(inv *build.Invocation) error {
+	if c.Shell == command.ShellUnknown {
+		c.Shell = command.ShellSh
+	}
+
 	if err := c.SCons.PathCache.RelTo(inv.PathManifest); err != nil {
 		return err
 	}
@@ -197,6 +201,36 @@ func (c *Base) Configure(inv *build.Invocation) error {
 /* -------------------------- Impl: build.Validate -------------------------- */
 
 func (c *Base) Validate() error {
+	if err := c.Invocation.Validate(); err != nil {
+		return err
+	}
+
+	if _, err := command.ParseShell(c.Shell.String()); err != nil {
+		return fmt.Errorf("%w: %s", err, c.Shell)
+	}
+
+	if _, err := exec.LookPath(c.Shell.String()); err != nil {
+		return fmt.Errorf("%w: can't find shell on PATH: %s", ErrInvalidInput, c.Shell)
+	}
+
+	for _, m := range c.CustomModules {
+		if err := m.CheckIsDirOrEmpty(); err != nil {
+			return err
+		}
+	}
+
+	if err := c.PathCustomPy.CheckIsFileOrEmpty(); err != nil {
+		return err
+	}
+
+	if err := c.Godot.Validate(); err != nil {
+		return err
+	}
+
+	if err := c.SCons.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

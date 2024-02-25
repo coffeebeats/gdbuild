@@ -30,20 +30,39 @@ type Template struct {
 	Profile  map[build.Profile]template.Base       `toml:"profile"`
 }
 
-func (t *Template) Features() map[string]TemplateBaseWithoutFeature {
-	if t == nil || t.Feature == nil {
-		return map[string]TemplateBaseWithoutFeature{}
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *Template) Configure(inv *build.Invocation) error {
+	if t == nil {
+		return nil
 	}
 
-	return t.Feature
-}
-
-func (t *Template) Profiles() map[build.Profile]template.Base {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Base{}
+	if t.Base == nil {
+		t.Base = &template.Base{} //nolint:exhaustruct
 	}
 
-	return t.Profile
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := t.Base.Merge(&p); err != nil {
+		return err
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if err := t.Base.Merge(f.Base); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := t.Base.Merge(&p); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 /* ------------------- Struct: TemplateBaseWithoutFeature ------------------- */
@@ -52,14 +71,6 @@ type TemplateBaseWithoutFeature struct {
 	*template.Base
 
 	Profile map[build.Profile]template.Base `toml:"profile"`
-}
-
-func (t *TemplateBaseWithoutFeature) Profiles() map[build.Profile]template.Base {
-	if t == nil || t.Profile == nil {
-		return map[build.Profile]template.Base{}
-	}
-
-	return t.Profile
 }
 
 /* -------------------------------------------------------------------------- */
@@ -91,6 +102,10 @@ type TemplateAndroid struct {
 func (t *TemplateAndroid) Configure(inv *build.Invocation) error {
 	if t == nil {
 		return nil
+	}
+
+	if t.Android == nil {
+		t.Android = &template.Android{} //nolint:exhaustruct
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)
@@ -143,6 +158,10 @@ func (t *TemplateIOS) Configure(inv *build.Invocation) error {
 		return nil
 	}
 
+	if t.IOS == nil {
+		t.IOS = &template.IOS{} //nolint:exhaustruct
+	}
+
 	p := getOrDefault(t.Profile, inv.Profile)
 	if err := t.IOS.Merge(&p); err != nil {
 		return err
@@ -191,6 +210,10 @@ type TemplateLinux struct {
 func (t *TemplateLinux) Configure(inv *build.Invocation) error {
 	if t == nil {
 		return nil
+	}
+
+	if t.Linux == nil {
+		t.Linux = &template.Linux{} //nolint:exhaustruct
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)
@@ -243,6 +266,10 @@ func (t *TemplateMacOS) Configure(inv *build.Invocation) error {
 		return nil
 	}
 
+	if t.MacOS == nil {
+		t.MacOS = &template.MacOS{} //nolint:exhaustruct
+	}
+
 	p := getOrDefault(t.Profile, inv.Profile)
 	if err := t.MacOS.Merge(&p); err != nil {
 		return err
@@ -293,6 +320,10 @@ func (t *TemplateWeb) Configure(inv *build.Invocation) error {
 		return nil
 	}
 
+	if t.Web == nil {
+		t.Web = &template.Web{} //nolint:exhaustruct
+	}
+
 	p := getOrDefault(t.Profile, inv.Profile)
 	if err := t.Web.Merge(&p); err != nil {
 		return err
@@ -341,6 +372,10 @@ type TemplateWindows struct {
 func (t *TemplateWindows) Configure(inv *build.Invocation) error {
 	if t == nil {
 		return nil
+	}
+
+	if t.Windows == nil {
+		t.Windows = &template.Windows{} //nolint:exhaustruct
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)

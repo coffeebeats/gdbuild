@@ -1,7 +1,9 @@
 package build
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/coffeebeats/gdbuild/internal/merge"
 )
@@ -28,6 +30,19 @@ type SCons struct {
 	LinkFlags []string `toml:"link_flags"`
 	// PathCache is the path to the SCons cache, relative to the manifest.
 	PathCache Path `toml:"cache_path"`
+}
+
+/* ----------------------------- Impl: Validate ----------------------------- */
+
+func (c *SCons) Validate() error {
+	if err := c.PathCache.CheckIsDirOrEmpty(); err != nil {
+		// A missing SCons cache is not a problem.
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+
+	return nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

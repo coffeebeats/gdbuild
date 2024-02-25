@@ -48,6 +48,10 @@ func (c *Windows) Validate() error {
 		return err
 	}
 
+	if err := c.PathIcon.CheckIsFileOrEmpty(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

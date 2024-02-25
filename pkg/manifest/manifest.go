@@ -35,7 +35,7 @@ func Filename() string {
 
 /* -------------------------- Method: BuildTemplate ------------------------- */
 
-func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,ireturn
+func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 	pathManifest,
 	pathBuild string,
 	pl build.OS,
@@ -71,25 +71,8 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 	}
 
 	// Merge template base.
-	p := m.Template.Profiles()[pr]
-	if err := base.Merge(&p); err != nil {
+	if err := base.Configure(&base.Invocation); err != nil {
 		return nil, err
-	}
-
-	for _, f := range ff {
-		f := m.Template.Features()[f]
-		if err := base.Merge(f.Base); err != nil {
-			return nil, err
-		}
-	}
-
-	for _, f := range ff {
-		f := m.Template.Features()[f]
-		p := f.Profiles()[pr]
-
-		if err := base.Merge(&p); err != nil {
-			return nil, err
-		}
 	}
 
 	var cmd command.Commander
@@ -178,14 +161,14 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 		return nil, fmt.Errorf("%w: unsupported platform", ErrInvalidInput)
 	}
 
-	if value, ok := cmd.(build.Validater); ok {
-		if err := value.Validate(); err != nil {
+	if value, ok := cmd.(build.Configurer); ok {
+		if err := value.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 	}
 
-	if value, ok := cmd.(build.Configurer); ok {
-		if err := value.Configure(&base.Invocation); err != nil {
+	if value, ok := cmd.(build.Validater); ok {
+		if err := value.Validate(); err != nil {
 			return nil, err
 		}
 	}
