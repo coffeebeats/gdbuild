@@ -12,22 +12,21 @@ type Hook struct {
 	Post []string `json:"postbuild" toml:"postbuild"`
 }
 
-/* --------------------------- Method: CombineWith -------------------------- */
+/* --------------------------- Impl: merge.Merger --------------------------- */
 
-func (h *Hook) CombineWith(hooks ...*Hook) *Hook {
-	base := h
-	if h == nil {
-		base = &Hook{} //nolint:exhaustruct
+func (c *Hook) Merge(other *Hook) error {
+	if other == nil {
+		return nil
 	}
 
-	for _, other := range hooks {
-		if other == nil {
-			continue
-		}
+	if c == nil {
+		*c = *other
 
-		base.Pre = append(append(base.Pre, ";"), other.Pre...)
-		base.Post = append(append(base.Post, ";"), other.Post...)
+		return nil
 	}
 
-	return base
+	c.Pre = append(c.Pre, other.Pre...)
+	c.Post = append(c.Post, other.Post...)
+
+	return nil
 }
