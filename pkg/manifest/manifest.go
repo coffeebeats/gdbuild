@@ -48,10 +48,11 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 
 	base.Execution = template.Execution{
 		Features:     ff,
+		PathBuild:    filepath.Join(path, "build"), // TODO: Allow customizing.
+		PathManifest: path,
 		Platform:     pl,
 		Profile:      pr,
-		PathManifest: path,
-		PathBuild:    filepath.Join(path, "build"),
+		Shell:        command.ShellSh, // TODO: Add support for other shells.
 	}
 
 	// Merge template base.
