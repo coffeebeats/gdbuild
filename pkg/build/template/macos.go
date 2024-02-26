@@ -3,7 +3,7 @@ package template
 import (
 	"fmt"
 
-	"github.com/coffeebeats/gdbuild/internal/command"
+	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 )
@@ -24,10 +24,10 @@ type MacOS struct {
 	Vulkan Vulkan `toml:"vulkan"`
 }
 
-/* ------------------------- Impl: command.Commander ------------------------ */
+/* -------------------------- Impl: action.Actioner ------------------------- */
 
-func (c *MacOS) Command() (*command.Command, error) {
-	return nil, ErrUnimplemented
+func (c *MacOS) Action() (action.Action, error) { //nolint:ireturn
+	return nil, nil
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */

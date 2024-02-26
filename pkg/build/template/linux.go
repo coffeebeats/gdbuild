@@ -1,9 +1,7 @@
 package template
 
 import (
-	"fmt"
-
-	"github.com/coffeebeats/gdbuild/internal/command"
+	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
@@ -17,27 +15,29 @@ type Linux struct {
 	*Base
 }
 
-/* ------------------------- Impl: command.Commander ------------------------ */
+/* -------------------------- Impl: action.Actioner ------------------------- */
 
-func (c *Linux) Command() (*command.Command, error) {
-	base, err := c.Base.Command()
-	if err != nil {
-		return nil, err
-	}
+// base, err := c.Base.Command()
+// if err != nil {
+// 	return nil, err
+// }
 
-	arch := build.ArchAmd64
-	if c.Base.Arch != build.ArchUnknown {
-		arch = c.Base.Arch
-	}
+// arch := build.ArchAmd64
+// if c.Base.Arch != build.ArchUnknown {
+// 	arch = c.Base.Arch
+// }
 
-	switch arch {
-	case build.ArchAmd64:
-		base.Args = append(base.Args, "arch="+arch.String())
-	default:
-		return nil, fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, arch)
-	}
+// switch arch {
+// case build.ArchAmd64:
+// 	base.Args = append(base.Args, "arch="+arch.String())
+// default:
+// 	return nil, fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, arch)
+// }
 
-	return base, nil
+// return base, nil
+
+func (c *Linux) Action() (action.Action, error) { //nolint:ireturn
+	return nil, nil
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */

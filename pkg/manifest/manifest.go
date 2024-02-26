@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/coffeebeats/gdbuild/internal/command"
+	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 	"github.com/coffeebeats/gdbuild/pkg/build/template"
@@ -37,13 +37,13 @@ func Filename() string {
 
 /* -------------------------- Method: BuildTemplate ------------------------- */
 
-func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
+func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,ireturn
 	pathManifest,
 	pathBuild string,
 	pl build.OS,
 	pr build.Profile,
 	ff ...string,
-) (command.Commander, error) {
+) (action.Action, error) {
 	base := m.Template.Base
 	if base == nil {
 		base = &template.Base{} //nolint:exhaustruct
@@ -92,7 +92,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 		return nil, err
 	}
 
-	var cmd command.Commander
+	var cmd action.Actioner
 
 	// Merge platform-specific template.
 	switch pl {
@@ -190,7 +190,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 		}
 	}
 
-	return cmd, nil
+	return cmd.Action()
 }
 
 /* ------------------------- Function: getOrDefault ------------------------- */

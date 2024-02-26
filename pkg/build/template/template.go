@@ -3,10 +3,9 @@ package template
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 	"strings"
 
-	"github.com/coffeebeats/gdbuild/internal/command"
+	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 )
@@ -42,7 +41,7 @@ type Base struct {
 	// SCons contains build command-related settings.
 	SCons build.SCons `toml:"scons"`
 	// Shell is a shell name to run the commands with. Defaults to 'sh'.
-	Shell command.Shell `toml:"shell"`
+	Shell build.Shell `toml:"shell"`
 
 	// Invocation contains invocation-specific properties. These must be set
 	// manually prior to executing a template build.
@@ -51,10 +50,10 @@ type Base struct {
 	build.Godot
 }
 
-/* ------------------------- Impl: command.Commander ------------------------ */
+/* -------------------------- Impl: action.Actioner ------------------------- */
 
-func (c *Base) Command() (*command.Command, error) { //nolint:cyclop,funlen
-	var cmd command.Command
+func (c *Base) Action() (action.Action, error) { //nolint:cyclop,funlen,ireturn
+	var cmd action.Process
 
 	cmd.Directory = string(c.Invocation.PathBuild)
 
@@ -66,12 +65,6 @@ func (c *Base) Command() (*command.Command, error) { //nolint:cyclop,funlen
 	// Define the SCons cache path.
 	if path := c.SCons.PathCache; path != "" {
 		cmd.Environment["SCONS_CACHE"] = path.String()
-	}
-
-	// Define the shell to use.
-	cmd.Shell = command.ShellSh
-	if c.Shell != command.ShellUnknown {
-		cmd.Shell = c.Shell
 	}
 
 	cmd.Args = append(cmd.Args, "scons")
@@ -171,10 +164,6 @@ func (c *Base) Command() (*command.Command, error) { //nolint:cyclop,funlen
 /* ------------------------- Impl: build.Configurer ------------------------- */
 
 func (c *Base) Configure(inv *build.Invocation) error {
-	if c.Shell == command.ShellUnknown {
-		c.Shell = command.ShellSh
-	}
-
 	if err := c.SCons.PathCache.RelTo(inv.PathManifest); err != nil {
 		return err
 	}
@@ -205,12 +194,8 @@ func (c *Base) Validate() error {
 		return err
 	}
 
-	if _, err := command.ParseShell(c.Shell.String()); err != nil {
-		return fmt.Errorf("%w: %s", err, c.Shell)
-	}
-
-	if _, err := exec.LookPath(c.Shell.String()); err != nil {
-		return fmt.Errorf("%w: can't find shell on PATH: %s", ErrInvalidInput, c.Shell)
+	if c.Shell != build.ShellUnknown {
+		return fmt.Errorf("%w: unsupported shell: %s", ErrInvalidInput, c.Shell)
 	}
 
 	for _, m := range c.CustomModules {

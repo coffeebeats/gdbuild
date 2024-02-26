@@ -1,5 +1,7 @@
 package build
 
+import "github.com/coffeebeats/gdbuild/internal/action"
+
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Hook                                */
 /* -------------------------------------------------------------------------- */
@@ -9,9 +11,9 @@ package build
 // TODO: Allow per-hook shell settings.
 type Hook struct {
 	// Pre contains a command to run *before* a build step.
-	Pre []string `toml:"prebuild"`
+	Pre []action.Command `toml:"prebuild"`
 	// Post contains a command to run *after* a build step.
-	Post []string `toml:"postbuild"`
+	Post []action.Command `toml:"postbuild"`
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

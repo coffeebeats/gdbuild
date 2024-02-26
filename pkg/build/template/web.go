@@ -3,7 +3,7 @@ package template
 import (
 	"fmt"
 
-	"github.com/coffeebeats/gdbuild/internal/command"
+	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 )
@@ -21,10 +21,10 @@ type Web struct {
 	EnableEval *bool `toml:"enable_eval"`
 }
 
-/* ------------------------- Impl: command.Commander ------------------------ */
+/* -------------------------- Impl: action.Actioner ------------------------- */
 
-func (c *Web) Command() (*command.Command, error) {
-	return nil, ErrUnimplemented
+func (c *Web) Action() (action.Action, error) { //nolint:ireturn
+	return nil, nil
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
