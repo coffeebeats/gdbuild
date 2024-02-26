@@ -53,13 +53,13 @@ func (p Process) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped function.
 func (p Process) After(a Runner) Runner { //nolint:ireturn
-	return Sequence{Runners: append([]Runner{p}, a)}
+	return Sequence{Action: p, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped function and then the
 // provided action.
 func (p Process) AndThen(a Runner) Runner { //nolint:ireturn
-	return Sequence{Runners: append([]Runner{p}, a)}
+	return Sequence{Action: p, Post: a} //nolint:exhaustruct
 }
 
 /* ------------------------------ Impl: Printer ----------------------------- */
@@ -92,13 +92,13 @@ func (c Command) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped command.
 func (c Command) After(a Runner) Runner { //nolint:ireturn
-	return Sequence{Runners: append([]Runner{c}, a)}
+	return Sequence{Action: c, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped command and then the
 // provided action.
 func (c Command) AndThen(a Runner) Runner { //nolint:ireturn
-	return Sequence{Runners: append([]Runner{c}, a)}
+	return Sequence{Action: c, Post: a} //nolint:exhaustruct
 }
 
 /* ------------------------------ Impl: Printer ----------------------------- */

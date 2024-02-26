@@ -27,13 +27,13 @@ func (f Function) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped function.
 func (f Function) After(a Runner) Runner { //nolint:ireturn
-	return Sequence{Runners: append([]Runner{f}, a)}
+	return Sequence{Action: f, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped function and then the
 // provided action.
 func (f Function) AndThen(a Runner) Runner { //nolint:ireturn
-	return Sequence{Runners: append([]Runner{f}, a)}
+	return Sequence{Action: f, Post: a} //nolint:exhaustruct
 }
 
 /* ------------------------------ Impl: Printer ----------------------------- */
