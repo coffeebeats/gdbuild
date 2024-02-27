@@ -3,12 +3,10 @@ package manifest
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 
-	"github.com/coffeebeats/gdbuild/internal/action"
-	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 	"github.com/coffeebeats/gdbuild/pkg/build/template"
 )
 
@@ -20,12 +18,18 @@ var ErrInvalidInput = errors.New("invalid input")
 
 // Manifest defines the supported structure of the GDBuild manifest file.
 type Manifest struct {
-	// Project contains project-wide settings, like the Godot version.
-	Project Project `toml:"project"`
+	// Config contains GDBuild configuration-related settings.
+	Config Config `toml:"config"`
+	// Godot contains settings on which Godot version/source code to use.
+	Godot build.Godot `toml:"godot"`
 	// Target contains all exportable artifact specifications.
 	Target map[string]Target `toml:"target"`
 	// Template includes settings for building custom export templates.
 	Template Template `toml:"template"`
+
+	// Parent is a reference to another 'Manifest' from which this one inherits
+	// properties from. This must be set manually.
+	Parent *Manifest
 }
 
 /* --------------------------- Function: Filename --------------------------- */
@@ -37,79 +41,155 @@ func Filename() string {
 
 /* -------------------------- Method: BuildTemplate ------------------------- */
 
-func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,ireturn
-	pathManifest,
-	pathBuild string,
-	pl build.OS,
-	pr build.Profile,
-	ff ...string,
-) (action.Action, error) {
+func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
+	inv build.Invocation,
+) (template.Template, error) {
+	// First, determine whether this manifest extends another one.
+	if err := m.Config.Extends.RelTo(inv.PathManifest); err != nil {
+		return nil, fmt.Errorf(
+			"%w: cannot find inherited manifest: %w",
+			ErrInvalidInput,
+			err,
+		)
+	}
+
+	// If it doesn't, simply build the template from this manifest alone.
+	if m.Config.Extends == "" {
+		return m.mergeTemplateForInvocation(&inv)
+	}
+
+	baseManifest, err := ParseFile(string(m.Config.Extends))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"%w: cannot parse inherited manifest: %w",
+			ErrInvalidInput,
+			err,
+		)
+	}
+
+	m.Parent = baseManifest
+
+	baseInv := inv
+	baseInv.PathManifest = build.Path(filepath.Dir(string(m.Config.Extends)))
+
+	baseTemplate, err := baseManifest.BuildTemplate(baseInv)
+	if err != nil {
+		return nil, err
+	}
+
+	childTemplate, err := m.mergeTemplateForInvocation(&inv)
+	if err != nil {
+		return nil, err
+	}
+
+	switch base := baseTemplate.(type) {
+	case *template.Android:
+		child, ok := childTemplate.(*template.Android)
+		if !ok {
+			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
+		}
+
+		if err := base.Merge(child); err != nil {
+			return nil, err
+		}
+
+		return base, nil
+	case *template.IOS:
+		child, ok := childTemplate.(*template.IOS)
+		if !ok {
+			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
+		}
+
+		if err := base.Merge(child); err != nil {
+			return nil, err
+		}
+
+		return base, nil
+	case *template.Linux:
+		child, ok := childTemplate.(*template.Linux)
+		if !ok {
+			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
+		}
+
+		if err := base.Merge(child); err != nil {
+			return nil, err
+		}
+
+		return base, nil
+	case *template.MacOS:
+		child, ok := childTemplate.(*template.MacOS)
+		if !ok {
+			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
+		}
+
+		if err := base.Merge(child); err != nil {
+			return nil, err
+		}
+
+		return base, nil
+	case *template.Web:
+		child, ok := childTemplate.(*template.Web)
+		if !ok {
+			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
+		}
+
+		if err := base.Merge(child); err != nil {
+			return nil, err
+		}
+
+		return base, nil
+	case *template.Windows:
+		child, ok := childTemplate.(*template.Windows)
+		if !ok {
+			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
+		}
+
+		if err := base.Merge(child); err != nil {
+			return nil, err
+		}
+
+		return base, nil
+	default:
+	}
+
+	return baseTemplate, nil
+}
+
+/* ------------------- Method: mergeTemplateForInvocation ------------------- */
+
+func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
+	inv *build.Invocation,
+) (template.Template, error) {
 	base := m.Template.Base
 	if base == nil {
 		base = &template.Base{} //nolint:exhaustruct
 	}
 
-	pathManifest, err := filepath.Abs(pathManifest)
-	if err != nil {
+	if err := inv.Validate(); err != nil {
 		return nil, err
 	}
 
-	info, err := os.Stat(pathManifest)
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil, err
-		}
+	base.Invocation = *inv
+	base.Godot = m.Godot
 
-		if err := os.MkdirAll(pathManifest, osutil.ModeUserRWXGroupRX); err != nil {
-			return nil, err
-		}
-	}
-
-	if !info.IsDir() {
-		pathManifest = filepath.Dir(pathManifest)
-	}
-
-	pathBuild, err = filepath.Abs(pathBuild)
-	if err != nil {
-		return nil, err
-	}
-
-	base.Invocation = build.Invocation{
-		Features:     ff,
-		PathBuild:    build.Path(pathBuild),
-		PathManifest: build.Path(pathManifest),
-		Platform:     pl,
-		Profile:      pr,
-	}
-
-	base.Godot = m.Project.Godot
-	if err := base.Godot.Validate(); err != nil {
-		return nil, err
-	}
-
-	// Merge template base.
-	if err := base.Configure(&base.Invocation); err != nil {
-		return nil, err
-	}
-
-	var cmd action.Actioner
+	var out template.Template
 
 	// Merge platform-specific template.
-	switch pl {
-	case build.OSAndroid:
+	switch inv.Platform {
+	case platform.OSAndroid:
 		base := template.Android{Base: base} //nolint:exhaustruct
 
-		template := m.Template.Platform.Android
-		if err := template.Configure(&base.Invocation); err != nil {
+		t := m.Template.Platform.Android
+		if err := t.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		if err := base.Merge(template.Android); err != nil {
+		if err := base.Merge(t.Android); err != nil {
 			return nil, err
 		}
 
-		cmd = &base
-	case build.OSIOS:
+		out = &base
+	case platform.OSIOS:
 		base := template.IOS{Base: base} //nolint:exhaustruct
 
 		template := m.Template.Platform.IOS
@@ -121,8 +201,8 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			return nil, err
 		}
 
-		cmd = &base
-	case build.OSLinux:
+		out = &base
+	case platform.OSLinux:
 		base := template.Linux{Base: base}
 
 		template := m.Template.Platform.Linux
@@ -134,8 +214,8 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			return nil, err
 		}
 
-		cmd = &base
-	case build.OSMacOS:
+		out = &base
+	case platform.OSMacOS:
 		base := template.MacOS{Base: base} //nolint:exhaustruct
 
 		template := m.Template.Platform.MacOS
@@ -147,8 +227,8 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			return nil, err
 		}
 
-		cmd = &base
-	case build.OSWeb:
+		out = &base
+	case platform.OSWeb:
 		base := template.Web{Base: base} //nolint:exhaustruct
 
 		template := m.Template.Platform.Web
@@ -160,8 +240,8 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			return nil, err
 		}
 
-		cmd = &base
-	case build.OSWindows:
+		out = &base
+	case platform.OSWindows:
 		base := template.Windows{Base: base} //nolint:exhaustruct
 
 		template := m.Template.Platform.Windows
@@ -173,24 +253,20 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,gocyclo,iretur
 			return nil, err
 		}
 
-		cmd = &base
+		out = &base
 	default:
 		return nil, fmt.Errorf("%w: unsupported platform", ErrInvalidInput)
 	}
 
-	if value, ok := cmd.(build.Configurer); ok {
-		if err := value.Configure(&base.Invocation); err != nil {
-			return nil, err
-		}
+	if err := out.Configure(inv); err != nil {
+		return nil, err
 	}
 
-	if value, ok := cmd.(build.Validater); ok {
-		if err := value.Validate(); err != nil {
-			return nil, err
-		}
+	if err := out.Validate(); err != nil {
+		return nil, err
 	}
 
-	return cmd.Action()
+	return out, nil
 }
 
 /* ------------------------- Function: getOrDefault ------------------------- */
