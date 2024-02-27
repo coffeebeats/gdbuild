@@ -7,7 +7,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/pkg/build"
 	"github.com/coffeebeats/gdbuild/pkg/build/platform"
-	"github.com/coffeebeats/gdbuild/pkg/build/template"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 var ErrInvalidInput = errors.New("invalid input")

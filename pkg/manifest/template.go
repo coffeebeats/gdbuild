@@ -2,7 +2,7 @@ package manifest
 
 import (
 	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/build/template"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------------------------------------------------------- */
