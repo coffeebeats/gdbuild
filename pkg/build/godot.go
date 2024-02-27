@@ -10,6 +10,7 @@ import (
 	"github.com/coffeebeats/gdenv/pkg/install"
 	"github.com/coffeebeats/gdenv/pkg/store"
 
+	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
@@ -153,6 +154,28 @@ func (c *Godot) Validate() error { //nolint:cyclop
 
 	if _, err := version.Parse(input); err != nil {
 		return fmt.Errorf("%w: %w: %s", ErrInvalidInput, err, c.Version)
+	}
+
+	return nil
+}
+
+/* --------------------------- Impl: merge.Merger --------------------------- */
+
+func (c *Godot) Merge(other *Godot) error {
+	if c == nil || other == nil {
+		return nil
+	}
+
+	if err := merge.Primitive(&c.PathSource, other.PathSource); err != nil {
+		return err
+	}
+
+	if err := merge.Primitive(&c.Version, other.Version); err != nil {
+		return err
+	}
+
+	if err := merge.Primitive(&c.VersionFile, other.VersionFile); err != nil {
+		return err
 	}
 
 	return nil

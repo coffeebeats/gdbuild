@@ -307,5 +307,9 @@ func (c *Base) Merge(other *Base) error {
 		return err
 	}
 
+	if err := c.Godot.Merge(&other.Godot); err != nil {
+		return err
+	}
+
 	return nil
 }

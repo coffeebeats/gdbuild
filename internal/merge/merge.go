@@ -88,8 +88,10 @@ func Primitive[T comparable](base *T, other T) error {
 		return nil
 	}
 
-	if base != nil && *base != t {
-		return fmt.Errorf("%w: %v,%v", ErrConflictingValue, *base, other)
+	if base != nil {
+		if b := *base; b != t && b != other {
+			return fmt.Errorf("%w: %v,%v", ErrConflictingValue, *base, other)
+		}
 	}
 
 	*base = other

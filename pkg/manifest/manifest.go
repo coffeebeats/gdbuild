@@ -41,7 +41,7 @@ func Filename() string {
 
 /* -------------------------- Method: BuildTemplate ------------------------- */
 
-func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
+func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 	inv build.Invocation,
 ) (template.Template, error) {
 	// First, determine whether this manifest extends another one.
@@ -55,7 +55,20 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
 
 	// If it doesn't, simply build the template from this manifest alone.
 	if m.Config.Extends == "" {
-		return m.mergeTemplateForInvocation(&inv)
+		t, err := m.mergeTemplateForInvocation(&inv)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := t.Configure(&inv); err != nil {
+			return nil, err
+		}
+
+		if err := t.Validate(); err != nil {
+			return nil, err
+		}
+
+		return t, nil
 	}
 
 	baseManifest, err := ParseFile(string(m.Config.Extends))
@@ -82,6 +95,8 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
 		return nil, err
 	}
 
+	var out template.Template
+
 	switch base := baseTemplate.(type) {
 	case *template.Android:
 		child, ok := childTemplate.(*template.Android)
@@ -93,7 +108,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
 			return nil, err
 		}
 
-		return base, nil
+		out = base
 	case *template.IOS:
 		child, ok := childTemplate.(*template.IOS)
 		if !ok {
@@ -104,7 +119,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
 			return nil, err
 		}
 
-		return base, nil
+		out = base
 	case *template.Linux:
 		child, ok := childTemplate.(*template.Linux)
 		if !ok {
@@ -115,7 +130,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
 			return nil, err
 		}
 
-		return base, nil
+		out = base
 	case *template.MacOS:
 		child, ok := childTemplate.(*template.MacOS)
 		if !ok {
@@ -126,7 +141,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
 			return nil, err
 		}
 
-		return base, nil
+		out = base
 	case *template.Web:
 		child, ok := childTemplate.(*template.Web)
 		if !ok {
@@ -137,7 +152,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
 			return nil, err
 		}
 
-		return base, nil
+		out = base
 	case *template.Windows:
 		child, ok := childTemplate.(*template.Windows)
 		if !ok {
@@ -148,11 +163,20 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,ireturn
 			return nil, err
 		}
 
-		return base, nil
+		out = base
 	default:
+		return nil, fmt.Errorf("%w: unknown platform type: %T", ErrInvalidInput, base)
 	}
 
-	return baseTemplate, nil
+	if err := out.Configure(&inv); err != nil {
+		return nil, err
+	}
+
+	if err := out.Validate(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 /* ------------------- Method: mergeTemplateForInvocation ------------------- */
@@ -256,14 +280,6 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
 		out = &base
 	default:
 		return nil, fmt.Errorf("%w: unsupported platform", ErrInvalidInput)
-	}
-
-	if err := out.Configure(inv); err != nil {
-		return nil, err
-	}
-
-	if err := out.Validate(); err != nil {
-		return nil, err
 	}
 
 	return out, nil
