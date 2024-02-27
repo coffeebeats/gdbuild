@@ -3,6 +3,7 @@ package osutil
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -10,6 +11,10 @@ import (
 // ErrUnsupportedFileType is returned when attempting to copy a file type that's
 // not supported.
 var ErrUnsupportedFileType = errors.New("unsupported file type")
+
+/* -------------------------------------------------------------------------- */
+/*                              Function: CopyDir                             */
+/* -------------------------------------------------------------------------- */
 
 // CopyDir recursively copies a directory from 'srcDir' to 'dstDir', preserving
 // soft links. All regular files will be hard copied. Note that file attributes
@@ -58,4 +63,35 @@ func CopyDir(srcDir, dstDir string) error {
 
 		return nil
 	})
+}
+
+/* -------------------------------------------------------------------------- */
+/*                             Function: EnsureDir                            */
+/* -------------------------------------------------------------------------- */
+
+// EnsureDir verifies that the specified path exists, is a directory, and has
+// the specified permission bits set.
+func EnsureDir(path string, perm fs.FileMode) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+
+		if err := os.MkdirAll(path, perm); err != nil {
+			return err
+		}
+	}
+
+	if info != nil {
+		if !info.IsDir() {
+			return fmt.Errorf("%w: %s", fs.ErrExist, path)
+		}
+
+		if info.Mode().Perm()&perm == 0 {
+			return os.Chmod(path, info.Mode()|perm)
+		}
+	}
+
+	return nil
 }
