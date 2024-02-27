@@ -5,7 +5,6 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -32,7 +31,7 @@ func (c *Linux) Action() (action.Action, error) { //nolint:ireturn
 		return nil, err
 	}
 
-	cmd.process.Args = append(cmd.process.Args, "platform="+platform.OSLinux.String())
+	cmd.process.Args = append(cmd.process.Args, "platform="+build.OSLinux.String())
 
 	return cmd.action, nil
 }
@@ -44,8 +43,8 @@ func (c *Linux) Configure(inv *build.Invocation) error {
 		return err
 	}
 
-	if c.Base.Arch == platform.ArchUnknown {
-		c.Base.Arch = platform.ArchAmd64
+	if c.Base.Arch == build.ArchUnknown {
+		c.Base.Arch = build.ArchAmd64
 	}
 
 	return nil
@@ -59,8 +58,8 @@ func (c *Linux) Validate() error {
 	}
 
 	switch c.Base.Arch {
-	case platform.ArchI386, platform.ArchAmd64:
-	case platform.ArchUnknown:
+	case build.ArchI386, build.ArchAmd64:
+	case build.ArchUnknown:
 	default:
 		return fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, c.Base.Arch)
 	}

@@ -6,7 +6,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -45,8 +44,8 @@ func (c *Android) Configure(inv *build.Invocation) error {
 		return err
 	}
 
-	if c.Base.Arch == platform.ArchUnknown {
-		c.Base.Arch = platform.ArchUniversal
+	if c.Base.Arch == build.ArchUnknown {
+		c.Base.Arch = build.ArchUniversal
 	}
 
 	if err := c.PathGradlew.RelTo(inv.PathManifest); err != nil {
@@ -68,9 +67,9 @@ func (c *Android) Validate() error {
 	}
 
 	switch c.Base.Arch {
-	case platform.ArchArm32, platform.ArchArm64:
-	case platform.ArchI386, platform.ArchAmd64:
-	case platform.ArchUnknown:
+	case build.ArchArm32, build.ArchArm64:
+	case build.ArchI386, build.ArchAmd64:
+	case build.ArchUnknown:
 	default:
 		return fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, c.Base.Arch)
 	}

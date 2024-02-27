@@ -1,10 +1,6 @@
 package build
 
-import (
-	"fmt"
-
-	"github.com/coffeebeats/gdbuild/pkg/build/platform"
-)
+import "fmt"
 
 /* -------------------------------------------------------------------------- */
 /*                             Struct: Invocation                             */
@@ -20,7 +16,7 @@ type Invocation struct {
 	// Features is the list of feature tags to enable.
 	Features []string
 	// Platform is the target platform to build for.
-	Platform platform.OS
+	Platform OS
 	// Profile is the GDBuild optimization level to build with.
 	Profile Profile
 
@@ -38,7 +34,7 @@ type Invocation struct {
 /* ---------------------------- Method: Validate ---------------------------- */
 
 func (c *Invocation) Validate() error {
-	if _, err := platform.ParseOS(c.Platform.String()); err != nil {
+	if _, err := ParseOS(c.Platform.String()); err != nil {
 		return err
 	}
 

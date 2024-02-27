@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
@@ -200,7 +199,7 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
 
 	// Merge platform-specific template.
 	switch inv.Platform {
-	case platform.OSAndroid:
+	case build.OSAndroid:
 		base := template.Android{Base: base} //nolint:exhaustruct
 
 		t := m.Template.Platform.Android
@@ -213,7 +212,7 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
 		}
 
 		out = &base
-	case platform.OSIOS:
+	case build.OSIOS:
 		base := template.IOS{Base: base} //nolint:exhaustruct
 
 		template := m.Template.Platform.IOS
@@ -226,7 +225,7 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
 		}
 
 		out = &base
-	case platform.OSLinux:
+	case build.OSLinux:
 		base := template.Linux{Base: base}
 
 		template := m.Template.Platform.Linux
@@ -239,7 +238,7 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
 		}
 
 		out = &base
-	case platform.OSMacOS:
+	case build.OSMacOS:
 		base := template.MacOS{Base: base} //nolint:exhaustruct
 
 		template := m.Template.Platform.MacOS
@@ -252,7 +251,7 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
 		}
 
 		out = &base
-	case platform.OSWeb:
+	case build.OSWeb:
 		base := template.Web{Base: base} //nolint:exhaustruct
 
 		template := m.Template.Platform.Web
@@ -265,7 +264,7 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
 		}
 
 		out = &base
-	case platform.OSWindows:
+	case build.OSWindows:
 		base := template.Windows{Base: base} //nolint:exhaustruct
 
 		template := m.Template.Platform.Windows

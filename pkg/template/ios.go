@@ -6,7 +6,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -43,8 +42,8 @@ func (c *IOS) Configure(inv *build.Invocation) error {
 		return err
 	}
 
-	if c.Base.Arch == platform.ArchUnknown {
-		c.Base.Arch = platform.ArchArm64
+	if c.Base.Arch == build.ArchUnknown {
+		c.Base.Arch = build.ArchArm64
 	}
 
 	if err := c.PathSDK.RelTo(inv.PathManifest); err != nil {
@@ -62,8 +61,8 @@ func (c *IOS) Validate() error {
 	}
 
 	switch c.Base.Arch {
-	case platform.ArchAmd64, platform.ArchArm64:
-	case platform.ArchUnknown:
+	case build.ArchAmd64, build.ArchArm64:
+	case build.ArchUnknown:
 	default:
 		return fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, c.Base.Arch)
 	}

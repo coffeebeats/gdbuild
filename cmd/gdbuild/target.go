@@ -11,7 +11,6 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 	"github.com/coffeebeats/gdbuild/pkg/manifest"
 )
 
@@ -124,14 +123,14 @@ func NewTarget() *cli.Command { //nolint:funlen
 	}
 }
 
-func parsePlatform(platformInput string) (platform.OS, error) {
+func parsePlatform(platformInput string) (build.OS, error) {
 	if platformInput == "" {
 		platformInput = runtime.GOOS
 	}
 
-	godotPlatform, err := platform.ParseOS(platformInput)
+	godotPlatform, err := build.ParseOS(platformInput)
 	if err != nil {
-		return platform.OS(0), err
+		return build.OS(0), err
 	}
 
 	return godotPlatform, nil

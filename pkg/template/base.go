@@ -12,7 +12,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/exec"
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 )
 
 var ErrInvalidInput = errors.New("invalid input")
@@ -25,7 +24,7 @@ var ErrInvalidInput = errors.New("invalid input")
 // export template.
 type Base struct {
 	// Arch is the CPU architecture of the Godot export template.
-	Arch platform.Arch `toml:"arch"`
+	Arch build.Arch `toml:"arch"`
 	// CustomModules is a list of paths to custom modules to include in the
 	// template build.
 	CustomModules []build.Path `toml:"custom_modules"`
@@ -99,7 +98,7 @@ func (c *Base) action() (buildAction, error) { //nolint:cyclop,funlen
 		cmd.Args = append(cmd.Args, "verbose=yes")
 	}
 
-	// Add the achitecture setting (note that this requires the 'platform.Arch'
+	// Add the achitecture setting (note that this requires the 'build.Arch'
 	// values to match what SCons expects).
 	cmd.Args = append(cmd.Args, "arch="+c.Arch.String())
 
