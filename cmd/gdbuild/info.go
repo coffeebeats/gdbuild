@@ -7,6 +7,8 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
+
+	"github.com/coffeebeats/gdbuild/pkg/manifest"
 )
 
 // A 'urfave/cli' command to inspect a GDBuild manifest.
@@ -19,6 +21,8 @@ func NewInfo() *cli.Command { //nolint:funlen
 		UsageText: "gdbuild info [OPTIONS] <PROPERTY>",
 
 		Flags: []cli.Flag{
+			newVerboseFlag(),
+
 			&cli.PathFlag{
 				Name:     "path",
 				FilePath: ".",
@@ -38,8 +42,12 @@ func NewInfo() *cli.Command { //nolint:funlen
 			}
 
 			// Parse manifest.
-			pathManifest := c.Path("path")
-			m, err := parseManifest(pathManifest)
+			pathManifest, err := parseManifestPath(c.Path("path"))
+			if err != nil {
+				return err
+			}
+
+			m, err := manifest.ParseFile(pathManifest)
 			if err != nil {
 				return err
 			}

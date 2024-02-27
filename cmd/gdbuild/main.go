@@ -37,8 +37,14 @@ var (
 	ErrUnrecognizedLevel   = errors.New("unrecognized level")
 )
 
-func main() {
+func main() { //nolint:funlen
 	cli.VersionPrinter = versionPrinter
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:               "version",
+		Aliases:            []string{"V"},
+		Usage:              "print the version",
+		DisableDefaultText: true,
+	}
 
 	app := &cli.App{
 		Name:    "gdbuild",
@@ -46,6 +52,10 @@ func main() {
 
 		Suggest:                true,
 		UseShortOptionHandling: true,
+
+		Flags: []cli.Flag{
+			newVerboseFlag(),
+		},
 
 		Commands: []*cli.Command{
 			/* ----------------------------- Build/Export ---------------------------- */
@@ -181,20 +191,47 @@ func versionPrinter(cCtx *cli.Context) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                           Function: parseManifest                          */
+/*                         Function: parseManifestPath                        */
 /* -------------------------------------------------------------------------- */
 
-func parseManifest(path string) (*manifest.Manifest, error) {
+func parseManifestPath(path string) (string, error) {
 	path = filepath.Clean(path)
 
 	info, err := os.Stat(path)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s: %w", ErrInvalidManifestPath, path, err)
+		return "", fmt.Errorf("%w: %s: %w", ErrInvalidManifestPath, path, err)
 	}
 
 	if info.IsDir() {
 		path = filepath.Join(path, manifest.Filename())
 	}
 
-	return manifest.ParseFile(path)
+	return path, nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Function: newVerboseFlag                          */
+/* -------------------------------------------------------------------------- */
+
+// newVerboseFlag creates a new standardize verbosity flag which handles
+// updating the log level.
+func newVerboseFlag() *cli.BoolFlag {
+	return &cli.BoolFlag{
+		Name:               "verbose",
+		Usage:              "increase log verbosity",
+		Aliases:            []string{"v"},
+		DisableDefaultText: true,
+
+		Action: func(_ *cli.Context, isVerbose bool) error {
+			if !isVerbose || log.GetLevel() == log.DebugLevel {
+				return nil
+			}
+
+			if l := log.GetLevel(); isVerbose {
+				log.SetLevel(l - (log.InfoLevel - log.DebugLevel))
+			}
+
+			return nil
+		},
+	}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/build/platform"
+	"github.com/coffeebeats/gdbuild/pkg/manifest"
 )
 
 var ErrTargetUsageProfiles = errors.New("cannot specify both '--release' and '--release_debug'")
@@ -24,6 +27,8 @@ func NewTarget() *cli.Command { //nolint:funlen
 		UsageText: "gdbuild target [OPTIONS] <TARGET>",
 
 		Flags: []cli.Flag{
+			newVerboseFlag(),
+
 			&cli.PathFlag{
 				Name:  "path",
 				Value: ".",
@@ -83,17 +88,19 @@ func NewTarget() *cli.Command { //nolint:funlen
 			log.Debugf("placing template artifacts at path: %s", pathOut)
 
 			// Parse manifest.
-			pathManifest, err := parseWorkDir(c.Path("path"))
+			pathManifest, err := parseManifestPath(c.Path("path"))
 			if err != nil {
 				return err
 			}
 
-			_, err = parseManifest(pathManifest)
+			_, err = manifest.ParseFile(pathManifest)
 			if err != nil {
 				return err
 			}
 
 			log.Debugf("using manifest at path: %s", pathManifest)
+
+			pathManifest = filepath.Dir(pathManifest) //nolint:ineffassign,staticcheck,wastedassign
 
 			// Collect build modifiers.
 
@@ -117,14 +124,14 @@ func NewTarget() *cli.Command { //nolint:funlen
 	}
 }
 
-func parsePlatform(platformInput string) (build.OS, error) {
+func parsePlatform(platformInput string) (platform.OS, error) {
 	if platformInput == "" {
 		platformInput = runtime.GOOS
 	}
 
-	godotPlatform, err := build.ParseOS(platformInput)
+	godotPlatform, err := platform.ParseOS(platformInput)
 	if err != nil {
-		return build.OS(0), err
+		return platform.OS(0), err
 	}
 
 	return godotPlatform, nil

@@ -11,10 +11,12 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/manifest"
 )
 
 // A 'urfave/cli' command to compile a Godot export template.
-func NewTemplate() *cli.Command { //nolint:funlen
+func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 	return &cli.Command{
 		Name:     "template",
 		Category: "Build",
@@ -23,10 +25,16 @@ func NewTemplate() *cli.Command { //nolint:funlen
 		UsageText: "gdbuild template [OPTIONS] <PLATFORM>",
 
 		Flags: []cli.Flag{
+			newVerboseFlag(),
+
 			&cli.PathFlag{
 				Name:  "path",
 				Value: ".",
 				Usage: "use the Godot project found at 'PATH'",
+			},
+			&cli.PathFlag{
+				Name:  "build-dir",
+				Usage: "build the template within 'PATH' (defaults to a temporary directory)",
 			},
 			&cli.PathFlag{
 				Name:    "out",
@@ -76,17 +84,19 @@ func NewTemplate() *cli.Command { //nolint:funlen
 			log.Debugf("placing template artifacts at path: %s", pathOut)
 
 			// Parse manifest.
-			pathManifest, err := parseWorkDir(c.Path("path"))
+			pathManifest, err := parseManifestPath(c.Path("path"))
 			if err != nil {
 				return err
 			}
 
-			m, err := parseManifest(pathManifest)
+			m, err := manifest.ParseFile(pathManifest)
 			if err != nil {
 				return err
 			}
 
 			log.Debugf("using manifest at path: %s", pathManifest)
+
+			pathManifest = filepath.Dir(pathManifest)
 
 			// Collect build modifiers.
 
@@ -105,14 +115,39 @@ func NewTemplate() *cli.Command { //nolint:funlen
 
 			log.Infof("platform: %s", pl)
 
-			action, err := m.BuildTemplate(pathManifest, pathOut, pl, pr, features...)
+			pathBuild := c.Path("build-dir")
+			if pathBuild == "" {
+				p, err := os.MkdirTemp("", "gdbuild-*")
+				if err != nil {
+					return err
+				}
+
+				defer os.RemoveAll(p)
+
+				pathBuild = p
+			}
+
+			inv := build.Invocation{
+				Verbose:      log.GetLevel() == log.DebugLevel,
+				Features:     features,
+				PathBuild:    build.Path(pathBuild),
+				PathOut:      build.Path(pathOut),
+				PathManifest: build.Path(pathManifest),
+				Platform:     pl,
+				Profile:      pr,
+			}
+
+			t, err := m.BuildTemplate(inv)
 			if err != nil {
 				return err
 			}
 
-			log.Printf("\n%s", action.Print())
+			action, err := t.Action()
+			if err != nil {
+				return err
+			}
 
-			return nil
+			return action.Run(c.Context)
 		},
 	}
 }

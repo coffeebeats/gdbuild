@@ -14,6 +14,8 @@ Compile an export template for the specified Godot platform `PLATFORM`.
   - Default value: `$PWD` (current working directory)
 - `-o`, `--out <PATH>` — write generated artifacts to `PATH`
   - Default value: `$PWD` (current working directory)
+- `--build-dir <PATH>` — build the template within `PATH`
+  - Default value: temporary directory
 
 - `--release` — use a release export template (cannot be used with '--release_debug')
 - `--release_debug` — use a release export template with debug symbols (cannot be used with '--release')
