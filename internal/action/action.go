@@ -10,8 +10,8 @@ import "context"
 // mode, as well as combine with other Action implementers.
 type Action interface {
 	Combinable
-	Printer
 	Runner
+	Printer
 }
 
 /* ---------------------------- Interface: Runner --------------------------- */
@@ -24,18 +24,16 @@ type Runner interface {
 /* -------------------------- Interface: Combinable ------------------------- */
 
 type Combinable interface {
-	Runner
-
-	After(a Runner) Runner
-	AndThen(a Runner) Runner
+	After(a Action) Action
+	AndThen(a Action) Action
 }
 
-/* --------------------------- Interface: Printer --------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                             Interface: Printer                             */
+/* -------------------------------------------------------------------------- */
 
 type Printer interface {
-	Runner
-
-	Print() string
+	Sprint() string
 }
 
 /* -------------------------------------------------------------------------- */

@@ -13,19 +13,21 @@ import (
 // types.
 type Sequence struct {
 	Pre    Runner
-	Action Action
+	Action Runner
 	Post   Runner
 }
 
-// Compile-time check that 'Runner' is implemented.
-var _ Runner = (*Sequence)(nil)
+// Compile-time check that 'Action' is implemented.
+var _ Action = (*Sequence)(nil)
 
 /* ------------------------------ Impl: Action ------------------------------ */
 
 // Run executes all actions in the sequence.
 func (s Sequence) Run(ctx context.Context) error {
-	if err := s.Pre.Run(ctx); err != nil {
-		return err
+	if s.Pre != nil {
+		if err := s.Pre.Run(ctx); err != nil {
+			return err
+		}
 	}
 
 	if s.Action != nil {
@@ -34,8 +36,10 @@ func (s Sequence) Run(ctx context.Context) error {
 		}
 	}
 
-	if err := s.Post.Run(ctx); err != nil {
-		return err
+	if s.Post != nil {
+		if err := s.Post.Run(ctx); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -45,33 +49,33 @@ func (s Sequence) Run(ctx context.Context) error {
 
 // After creates a new action which executes the provided action and then all of
 // the actions in this sequence.
-func (s Sequence) After(r Runner) Runner { //nolint:ireturn
+func (s Sequence) After(r Action) Action { //nolint:ireturn
 	return Sequence{Action: s, Pre: r} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes all actions in this sequence and
 // then the provided action.
-func (s Sequence) AndThen(r Runner) Runner { //nolint:ireturn
+func (s Sequence) AndThen(r Action) Action { //nolint:ireturn
 	return Sequence{Action: s, Post: r} //nolint:exhaustruct
 }
 
 /* ------------------------------ Impl: Printer ----------------------------- */
 
-// Print displays the action without actually executing it.
-func (s Sequence) Print() string {
-	runners := make([]string, 0)
+// Sprint displays the action without actually executing it.
+func (s Sequence) Sprint() string {
+	cmds := make([]string, 0)
 
 	if p, ok := s.Pre.(Printer); ok {
-		runners = append(runners, p.Print())
+		cmds = append(cmds, p.Sprint())
 	}
 
 	if p, ok := s.Action.(Printer); ok {
-		runners = append(runners, p.Print())
+		cmds = append(cmds, p.Sprint())
 	}
 
 	if p, ok := s.Post.(Printer); ok {
-		runners = append(runners, p.Print())
+		cmds = append(cmds, p.Sprint())
 	}
 
-	return strings.Join(runners, "\n")
+	return strings.Join(cmds, "\n")
 }

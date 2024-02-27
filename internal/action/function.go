@@ -12,8 +12,8 @@ import (
 // Function is a wrapper for a Go-based action.
 type Function func(context.Context) error
 
-// Compile-time check that 'Runner' is implemented.
-var _ Runner = (*Function)(nil)
+// Compile-time check that 'Action' is implemented.
+var _ Action = (*Function)(nil)
 
 /* ------------------------------ Impl: Runner ------------------------------ */
 
@@ -26,19 +26,19 @@ func (f Function) Run(ctx context.Context) error {
 
 // After creates a new action which executes the provided action and then the
 // wrapped function.
-func (f Function) After(a Runner) Runner { //nolint:ireturn
+func (f Function) After(a Action) Action { //nolint:ireturn
 	return Sequence{Action: f, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped function and then the
 // provided action.
-func (f Function) AndThen(a Runner) Runner { //nolint:ireturn
+func (f Function) AndThen(a Action) Action { //nolint:ireturn
 	return Sequence{Action: f, Post: a} //nolint:exhaustruct
 }
 
 /* ------------------------------ Impl: Printer ----------------------------- */
 
-// Print displays the action without actually executing it.
-func (f Function) Print() string {
-	return fmt.Sprintf("%##v", f)
+// Sprint displays the action without actually executing it.
+func (f Function) Sprint() string {
+	return fmt.Sprintf("%#v", f)
 }
