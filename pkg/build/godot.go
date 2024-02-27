@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -13,6 +14,9 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
+
+// ErrConflictingValue is returned when two settings conflict with eachother.
+var ErrConflictingValue = errors.New("conflicting setting")
 
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Godot                               */
