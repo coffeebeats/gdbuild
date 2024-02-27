@@ -6,6 +6,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -24,6 +25,12 @@ type MacOS struct {
 	Vulkan Vulkan `toml:"vulkan"`
 }
 
+/* ----------------------------- Impl: Template ----------------------------- */
+
+func (c *MacOS) BaseTemplate() *Base {
+	return c.Base
+}
+
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
 func (c *MacOS) Action() (action.Action, error) { //nolint:ireturn
@@ -35,6 +42,10 @@ func (c *MacOS) Action() (action.Action, error) { //nolint:ireturn
 func (c *MacOS) Configure(inv *build.Invocation) error {
 	if err := c.Base.Configure(inv); err != nil {
 		return err
+	}
+
+	if c.Base.Arch == platform.ArchUnknown {
+		c.Base.Arch = platform.ArchUniversal
 	}
 
 	if err := c.Vulkan.Configure(inv); err != nil {
@@ -53,6 +64,13 @@ func (c *MacOS) Configure(inv *build.Invocation) error {
 func (c *MacOS) Validate() error {
 	if err := c.Base.Validate(); err != nil {
 		return err
+	}
+
+	switch c.Base.Arch {
+	case platform.ArchAmd64, platform.ArchArm64, platform.ArchUniversal:
+	case platform.ArchUnknown:
+	default:
+		return fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, c.Base.Arch)
 	}
 
 	if err := c.PathLipo.CheckIsFileOrEmpty(); err != nil {

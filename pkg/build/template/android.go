@@ -6,6 +6,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -23,6 +24,14 @@ type Android struct {
 	PathSDK build.Path `toml:"sdk_path"`
 }
 
+var _ Template = (*Android)(nil)
+
+/* ----------------------------- Impl: Template ----------------------------- */
+
+func (c *Android) BaseTemplate() *Base {
+	return c.Base
+}
+
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
 func (c *Android) Action() (action.Action, error) { //nolint:ireturn
@@ -34,6 +43,10 @@ func (c *Android) Action() (action.Action, error) { //nolint:ireturn
 func (c *Android) Configure(inv *build.Invocation) error {
 	if err := c.Base.Configure(inv); err != nil {
 		return err
+	}
+
+	if c.Base.Arch == platform.ArchUnknown {
+		c.Base.Arch = platform.ArchUniversal
 	}
 
 	if err := c.PathGradlew.RelTo(inv.PathManifest); err != nil {
@@ -52,6 +65,14 @@ func (c *Android) Configure(inv *build.Invocation) error {
 func (c *Android) Validate() error {
 	if err := c.Base.Validate(); err != nil {
 		return err
+	}
+
+	switch c.Base.Arch {
+	case platform.ArchArm32, platform.ArchArm64:
+	case platform.ArchI386, platform.ArchAmd64:
+	case platform.ArchUnknown:
+	default:
+		return fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, c.Base.Arch)
 	}
 
 	if err := c.PathGradlew.CheckIsFileOrEmpty(); err != nil {

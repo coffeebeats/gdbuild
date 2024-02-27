@@ -1,8 +1,11 @@
 package template
 
 import (
+	"fmt"
+
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -15,29 +18,23 @@ type Linux struct {
 	*Base
 }
 
+/* ----------------------------- Impl: Template ----------------------------- */
+
+func (c *Linux) BaseTemplate() *Base {
+	return c.Base
+}
+
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
-// base, err := c.Base.Command()
-// if err != nil {
-// 	return nil, err
-// }
-
-// arch := build.ArchAmd64
-// if c.Base.Arch != build.ArchUnknown {
-// 	arch = c.Base.Arch
-// }
-
-// switch arch {
-// case build.ArchAmd64:
-// 	base.Args = append(base.Args, "arch="+arch.String())
-// default:
-// 	return nil, fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, arch)
-// }
-
-// return base, nil
-
 func (c *Linux) Action() (action.Action, error) { //nolint:ireturn
-	return nil, nil
+	cmd, err := c.Base.action()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd.process.Args = append(cmd.process.Args, "platform="+platform.OSLinux.String())
+
+	return cmd.action, nil
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
@@ -45,6 +42,10 @@ func (c *Linux) Action() (action.Action, error) { //nolint:ireturn
 func (c *Linux) Configure(inv *build.Invocation) error {
 	if err := c.Base.Configure(inv); err != nil {
 		return err
+	}
+
+	if c.Base.Arch == platform.ArchUnknown {
+		c.Base.Arch = platform.ArchAmd64
 	}
 
 	return nil
@@ -55,6 +56,13 @@ func (c *Linux) Configure(inv *build.Invocation) error {
 func (c *Linux) Validate() error {
 	if err := c.Base.Validate(); err != nil {
 		return err
+	}
+
+	switch c.Base.Arch {
+	case platform.ArchI386, platform.ArchAmd64:
+	case platform.ArchUnknown:
+	default:
+		return fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, c.Base.Arch)
 	}
 
 	return nil

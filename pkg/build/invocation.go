@@ -2,8 +2,8 @@ package build
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+
+	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -14,26 +14,31 @@ import (
 // to be explicitly set per invocation as they can't be parsed from a GDBuild
 // manifest.
 type Invocation struct {
+	// Verbose determines whether to enable additional logging output.
+	Verbose bool
+
 	// Features is the list of feature tags to enable.
 	Features []string
 	// Platform is the target platform to build for.
-	Platform OS
+	Platform platform.OS
 	// Profile is the GDBuild optimization level to build with.
 	Profile Profile
 
-	// PathManifest is the directory in which the GDBuild manifest is located.
-	// This is used to locate relative paths in various other properties.
-	PathManifest Path
 	// PathBuild is the directory in which to build the template in. All input
 	// artifacts will be copied here and the SCons build command will be
 	// executed within this directory. Defaults to a temporary directory.
 	PathBuild Path
+	// PathManifest is the directory in which the GDBuild manifest is located.
+	// This is used to locate relative paths in various other properties.
+	PathManifest Path
+	// PathOut is the directory in which to move built artifacts to.
+	PathOut Path
 }
 
 /* ---------------------------- Method: Validate ---------------------------- */
 
 func (c *Invocation) Validate() error {
-	if _, err := ParseOS(c.Platform.String()); err != nil {
+	if _, err := platform.ParseOS(c.Platform.String()); err != nil {
 		return err
 	}
 
@@ -41,35 +46,19 @@ func (c *Invocation) Validate() error {
 		return err
 	}
 
-	info, err := os.Stat(string(c.PathManifest))
-	if err != nil {
-		return fmt.Errorf("%w: manifest directory: %s", err, c.PathManifest)
+	if err := c.PathManifest.CheckIsDir(); err != nil {
+		return err
 	}
 
-	if !info.IsDir() {
-		return fmt.Errorf(
-			"%w: manifest directory: not a directory: %s",
-			ErrInvalidInput,
-			c.PathManifest,
-		)
+	// NOTE: PathBuild might be generated via hooks, so only verify it's set.
+	if c.PathBuild == "" {
+		return fmt.Errorf("%w: build path", ErrMissingInput)
 	}
 
-	c.PathManifest = Path(filepath.Clean(string(c.PathManifest)))
-
-	info, err = os.Stat(string(c.PathBuild))
-	if err != nil {
-		return fmt.Errorf("%w: manifest directory: %s", err, c.PathManifest)
+	// NOTE: PathOut might be generated via hooks, so only verify it's set.
+	if c.PathOut == "" {
+		return fmt.Errorf("%w: build path", ErrMissingInput)
 	}
-
-	if !info.IsDir() {
-		return fmt.Errorf(
-			"%w: manifest directory: not a directory: %s",
-			ErrInvalidInput,
-			c.PathManifest,
-		)
-	}
-
-	c.PathBuild = Path(filepath.Clean(string(c.PathBuild)))
 
 	return nil
 }

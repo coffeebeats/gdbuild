@@ -6,6 +6,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/build/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -19,6 +20,12 @@ type Web struct {
 
 	// EnableEval defines whether to enable Javascript "eval()" calls.
 	EnableEval *bool `toml:"enable_eval"`
+}
+
+/* ----------------------------- Impl: Template ----------------------------- */
+
+func (c *Web) BaseTemplate() *Base {
+	return c.Base
 }
 
 /* -------------------------- Impl: action.Actioner ------------------------- */
@@ -42,6 +49,12 @@ func (c *Web) Configure(inv *build.Invocation) error {
 func (c *Web) Validate() error {
 	if err := c.Base.Validate(); err != nil {
 		return err
+	}
+
+	switch c.Base.Arch {
+	case platform.ArchUnknown:
+	default:
+		return fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, c.Base.Arch)
 	}
 
 	return nil

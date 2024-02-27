@@ -1,6 +1,9 @@
 package build
 
-import "github.com/coffeebeats/gdbuild/internal/action"
+import (
+	"github.com/coffeebeats/gdbuild/internal/action"
+	"github.com/coffeebeats/gdbuild/internal/exec"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Hook                                */
@@ -14,6 +17,8 @@ type Hook struct {
 	Pre []action.Command `toml:"prebuild"`
 	// Post contains a command to run *after* a build step.
 	Post []action.Command `toml:"postbuild"`
+	// Shell defines which shell process to run these commands in.
+	Shell exec.Shell `toml:"shell"`
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */
@@ -25,6 +30,10 @@ func (c *Hook) Merge(other *Hook) error {
 
 	c.Pre = append(c.Pre, other.Pre...)
 	c.Post = append(c.Post, other.Post...)
+
+	if other.Shell != exec.ShellUnknown {
+		c.Shell = other.Shell
+	}
 
 	return nil
 }

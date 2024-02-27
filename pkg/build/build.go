@@ -42,6 +42,17 @@ type Validater interface {
 // Path is a string type that's expected to be a path.
 type Path string
 
+/* --------------------------- Method: CheckIsDir --------------------------- */
+
+// CheckIsDir verifies that the underlying path is a valid directory.
+func (p Path) CheckIsDir() error {
+	if p == "" {
+		return ErrInvalidInput
+	}
+
+	return p.CheckIsDirOrEmpty()
+}
+
 /* ------------------------ Method: CheckIsDirOrEmpty ----------------------- */
 
 // CheckIsDirOrEmpty verifies that the underlying path is either empty or a

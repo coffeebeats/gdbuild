@@ -2,15 +2,10 @@ package build
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 
 	"github.com/charmbracelet/log"
-	"github.com/coffeebeats/gdenv/pkg/godot/artifact"
-	"github.com/coffeebeats/gdenv/pkg/godot/artifact/archive"
-	"github.com/coffeebeats/gdenv/pkg/godot/artifact/source"
 	"github.com/coffeebeats/gdenv/pkg/godot/version"
 	"github.com/coffeebeats/gdenv/pkg/install"
 	"github.com/coffeebeats/gdenv/pkg/store"
@@ -33,10 +28,22 @@ type Godot struct {
 	VersionFile Path `toml:"version_file"`
 }
 
+/* ----------------------------- Method: IsEmpty ---------------------------- */
+
+// IsEmpty returns whether all properties are unset, implying there is no need
+// to vendor Godot source code.
+func (c *Godot) IsEmpty() bool {
+	return c.PathSource == "" && c.Version == "" && c.VersionFile == ""
+}
+
 /* ---------------------------- Method: VendorTo ---------------------------- */
 
 // VendorTo vendors the Godot source code to the specified directory.
-func (c *Godot) VendorTo(ctx context.Context, out string) error { //nolint:cyclop,funlen
+func (c *Godot) VendorTo(ctx context.Context, out string) error {
+	if c.IsEmpty() {
+		return fmt.Errorf("%w: no Godot version or source path set", ErrMissingInput)
+	}
+
 	if c.PathSource != "" {
 		return osutil.CopyDir(c.PathSource.String(), out)
 	}
@@ -67,41 +74,12 @@ func (c *Godot) VendorTo(ctx context.Context, out string) error { //nolint:cyclo
 			return err
 		}
 
-		log.Debug("no 'gdenv' store found; using temporary directory: %s", tmp)
+		log.Debugf("no 'gdenv' store found; using temporary directory: %s", tmp)
 
 		storePath = tmp
 	}
 
-	src := source.Archive{Inner: source.New(v)}
-
-	if err := install.Source(ctx, storePath, src.Inner); err != nil {
-		return err
-	}
-
-	pathSrc, err := store.Source(storePath, src.Inner)
-	if err != nil {
-		return err
-	}
-
-	// Check out directory.
-	info, err := os.Stat(out)
-	if err != nil {
-		if !errors.Is(err, fs.ErrNotExist) {
-			return err
-		}
-
-		if err := os.MkdirAll(out, osutil.ModeUserRWXGroupRX); err != nil {
-			return err
-		}
-	}
-
-	if info != nil && !info.IsDir() {
-		return fmt.Errorf("%w: %s", fs.ErrExist, out)
-	}
-
-	localSrcArchive := artifact.Local[source.Archive]{Artifact: src, Path: pathSrc}
-
-	return archive.Extract(ctx, localSrcArchive, out)
+	return install.Vendor(ctx, storePath, v, out /* force= */, false)
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
@@ -121,6 +99,10 @@ func (c *Godot) Configure(inv *Invocation) error {
 /* -------------------------- Impl: build.Validater ------------------------- */
 
 func (c *Godot) Validate() error { //nolint:cyclop
+	if c.IsEmpty() {
+		return nil
+	}
+
 	if c.PathSource != "" {
 		if c.Version != "" || c.VersionFile != "" {
 			return fmt.Errorf(

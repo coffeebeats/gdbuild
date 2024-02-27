@@ -8,6 +8,11 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/merge"
 )
 
+const (
+	EnvSConsCache = "SCONS_CACHE"
+	EnvSConsFlags = "SCONSFLAGS"
+)
+
 /* -------------------------------------------------------------------------- */
 /*                                Struct: SCons                               */
 /* -------------------------------------------------------------------------- */
@@ -23,6 +28,8 @@ type SCons struct {
 	// CXXFlags are additional 'CXXFLAGS' to append to the SCons build command.
 	// Note that 'CXXFLAGS=...' will be appended *before* 'ExtraArgs'.
 	CXXFlags []string `toml:"cxxflags"`
+	// Command contains arguments used to invoke SCons. Defaults to ["scons"].
+	Command []string `toml:"command"`
 	// ExtraArgs are additional arguments to append to the SCons build command.
 	ExtraArgs []string `toml:"extra_args"`
 	// LinkFlags are additional flags passed to the linker during the SCons
@@ -32,7 +39,25 @@ type SCons struct {
 	PathCache Path `toml:"cache_path"`
 }
 
-/* ----------------------------- Impl: Validate ----------------------------- */
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (c *SCons) Configure(inv *Invocation) error {
+	if len(c.Command) == 0 {
+		c.Command = append(c.Command, "scons")
+	}
+
+	if p := os.Getenv(EnvSConsCache); p != "" {
+		c.PathCache = Path(p)
+	}
+
+	if err := c.PathCache.RelTo(inv.PathManifest); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* -------------------------- Impl: build.Validater ------------------------- */
 
 func (c *SCons) Validate() error {
 	if err := c.PathCache.CheckIsDirOrEmpty(); err != nil {
