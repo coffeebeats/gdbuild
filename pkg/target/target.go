@@ -1,65 +1,44 @@
-package build
+package target
 
-import (
-	"github.com/coffeebeats/gdbuild/internal/merge"
-)
+import "github.com/coffeebeats/gdbuild/pkg/build"
 
 /* -------------------------------------------------------------------------- */
-/*                               Struct: Target                               */
+/*                                Struct: Base                                */
 /* -------------------------------------------------------------------------- */
 
-// Target specifies a single exportable artifact within the Godot project.
-type Target struct {
+// Base specifies a single, platform-agnostic exportable artifact within the
+// Godot project.
+type Base struct {
 	// Name is the display name of the target. Not used by Godot.
-	Name string `json:"name"`
+	Name string
 
-	// Runnable is whether the export artifact should be executable. This should
-	// be true for client and server targets and false for artifacts like DLC.
-	Runnable bool `json:"runnable" toml:"runnable"`
-	// Server configures the target as a server-only executable, enabling some
-	// optimizations like disabling graphics.
-	Server bool `json:"server" toml:"server"`
 	// DefaultFeatures contains the slice of Godot project feature tags to build
 	// with.
-	DefaultFeatures []string `json:"default_features" toml:"default_features"` //nolint:tagliatelle
-	// PackFiles defines the game files exported as part of this artifact.
-	PackFiles []*PackFile `json:"pack_files" toml:"pack_files"` //nolint:tagliatelle
-
+	DefaultFeatures []string `toml:"default_features"`
 	// Hook defines commands to be run before or after the target artifact is
 	// generated.
-	Hook *Hook `json:"hook" toml:"hook"`
+	Hook build.Hook `toml:"hook"`
 	// Options are 'export_presets.cfg' overrides, specifically the preset
 	// 'options' table, for the exported artifact.
-	Options map[string]any `json:"options" toml:"options"`
+	Options map[string]any `toml:"options"`
+	// PackFiles defines the game files exported as part of this artifact.
+	PackFiles []PackFile `toml:"pack_files"`
+	// Runnable is whether the export artifact should be executable. This should
+	// be true for client and server targets and false for artifacts like DLC.
+	Runnable *bool `toml:"runnable"`
+	// Server configures the target as a server-only executable, enabling some
+	// optimizations like disabling graphics.
+	Server *bool `toml:"server"`
 }
 
-/* --------------------------- Method: CombineWith -------------------------- */
+/* --------------------------- Impl: merge.Merger --------------------------- */
 
-func (t *Target) CombineWith(targets ...*Target) *Target {
-	base := t
-	if t == nil {
-		base = &Target{} //nolint:exhaustruct
+func (c *Base) Merge(other *Base) error {
+	if c == nil || other == nil {
+		return nil
 	}
 
-	for _, other := range targets {
-		if other == nil {
-			continue
-		}
-
-		t.Name = merge.String(t.Name, other.Name)
-
-		t.Runnable = merge.Bool(t.Runnable, other.Runnable)
-		t.Server = merge.Bool(t.Server, other.Server)
-
-		t.DefaultFeatures = append(t.DefaultFeatures, other.DefaultFeatures...)
-		t.PackFiles = append(t.PackFiles, other.PackFiles...)
-
-		t.Hook = t.Hook.CombineWith(other.Hook)
-
-		t.Options = merge.Map(t.Options, other.Options)
-	}
-
-	return base
+	return nil
 }
 
 /* -------------------------------------------------------------------------- */
@@ -72,19 +51,19 @@ type PackFile struct {
 	// Embed defines whether the associated '.pck' file should be embedded in
 	// the binary. If true, then the target this 'PackFile' is associated with
 	// must be runnable.
-	Embed bool `json:"embed" toml:"embed"`
+	Embed *bool `toml:"embed"`
 	// Encrypt determines whether or not to encrypt the game files contained in
 	// the resulting '.pck' files.
-	Encrypt bool `json:"encrypt" toml:"encrypt"`
+	Encrypt *bool `toml:"encrypt"`
 	// Glob is a slice of glob expressions to match game files against. These
 	// will be evaluated from the directory containing the GDBuild manifest.
-	Glob []string `json:"glob" toml:"glob"`
+	Glob []string `toml:"glob"`
 	// PackFilePartition is a ruleset for how to split the files matched by
 	// 'glob' into one or more '.pck' files.
-	Partition PackFilePartition `json:"partition" toml:"partition"`
+	Partition PackFilePartition `toml:"partition"`
 	// Zip defines whether to compress the matching game files. The pack files
 	// will use the '.zip' extension instead of '.pck'.
-	Zip bool `json:"zip" toml:"zip"`
+	Zip *bool `toml:"zip"`
 }
 
 /* ------------------------ Struct: PackFilePartition ----------------------- */
@@ -99,10 +78,10 @@ type PackFilePartition struct {
 	// Depth is the maximum folder depth from the project directory containing
 	// the GDBuild manifest to split files between. Any folders past this depth
 	// limit will all be included within the same '.pck' file.
-	Depth uint `json:"depth" toml:"depth"`
+	Depth uint `toml:"depth"`
 	// Limit describes limits on the files within individual '.pck' files in the
 	// partition.
-	Limit PackFilePartitionLimit `json:"limit" toml:"limit"`
+	Limit PackFilePartitionLimit `toml:"limit"`
 }
 
 /* --------------------- Struct: PackFilePartitionLimit --------------------- */
@@ -112,8 +91,8 @@ type PackFilePartition struct {
 type PackFilePartitionLimit struct {
 	// Size is a human-readable file size limit that all '.pck' files within the
 	// partition must adhere to.
-	Size string `json:"size" toml:"size"`
+	Size string `toml:"size"`
 	// Files is the maximum count of files within a single '.pck' file within a
 	// partition.
-	Files uint `json:"files" toml:"files"`
+	Files uint `toml:"files"`
 }

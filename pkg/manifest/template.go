@@ -1,6 +1,9 @@
-package manifest //nolint:dupl
+package manifest
 
-import "github.com/coffeebeats/gdbuild/pkg/build"
+import (
+	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/template"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                              Struct: Template                              */
@@ -10,170 +13,427 @@ import "github.com/coffeebeats/gdbuild/pkg/build"
 // specified platform. A 'Template' definition can be customized based on
 // 'feature', 'platform', and 'profile' labels used in the property names. Note
 // that each specifier label can only be used once per property name (i.e.
-// 'target.profile.release.profile.debug' is not allowed).
+// 'target.profile.release.profile.debug' is not allowed). Additionally, the
+// order of specifiers is strict: 'platform' < 'feature' < 'profile'.
 //
 // For example, the following are all valid table names:
 //
 //	[template]
-//	[template.feature.client]
-//	[template.platform.windows]
 //	[template.profile.release]
-//	[template.profile.release.platform.macos.feature.client]
+//	[template.platform.macos.feature.client]
+//	[template.platform.linux.feature.server.profile.release_debug]
 type Template struct {
-	*build.Template
+	*template.Base
 
-	Feature  map[string]*TemplateWithoutFeature        `json:"feature"  toml:"feature"`
-	Platform map[build.OS]*TemplateWithoutPlatform     `json:"platform" toml:"platform"`
-	Profile  map[build.Profile]*TemplateWithoutProfile `json:"profile"  toml:"profile"`
+	Platform TemplatePlatform                      `toml:"platform"`
+	Feature  map[string]TemplateBaseWithoutFeature `toml:"feature"`
+	Profile  map[build.Profile]template.Base       `toml:"profile"`
 }
 
-// TODO: Improve merging logic to detect conflicts instead of silently, and
-// unpredictably, overriding.
-func (t *Template) merge(pl build.OS, pr build.Profile, ff ...string) *build.Template {
-	out := t.Template
+/* ------------------------- Impl: build.Configurer ------------------------- */
 
-	if cfg, ok := t.Profile[pr]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+func (t *Template) Configure(inv *build.Invocation) error { //nolint:dupl
+	if t == nil {
+		return nil
 	}
 
-	if cfg, ok := t.Platform[pl]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	if t.Base == nil {
+		t.Base = &template.Base{} //nolint:exhaustruct
 	}
 
-	for _, f := range ff {
-		if cfg, ok := t.Feature[f]; ok {
-			out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := merge(t.Base, p); err != nil {
+		return err
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if f.Base == nil {
+			continue
+		}
+
+		if err := merge(t.Base, *f.Base); err != nil {
+			return err
 		}
 	}
 
-	return out
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := merge(t.Base, p); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+/* ------------------- Struct: TemplateBaseWithoutFeature ------------------- */
+
+type TemplateBaseWithoutFeature struct {
+	*template.Base
+
+	Profile map[build.Profile]template.Base `toml:"profile"`
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Struct: TemplatePlatform                          */
+/* -------------------------------------------------------------------------- */
+
+type TemplatePlatform struct {
+	Android TemplateAndroid `toml:"android"`
+	IOS     TemplateIOS     `toml:"ios"`
+	Linux   TemplateLinux   `toml:"linux"`
+	MacOS   TemplateMacOS   `toml:"macos"`
+	Web     TemplateWeb     `toml:"web"`
+	Windows TemplateWindows `toml:"windows"`
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              Platform: Android                             */
+/* -------------------------------------------------------------------------- */
+
+type TemplateAndroid struct {
+	*template.Android
+
+	Feature map[string]TemplateAndroidWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]template.Android       `toml:"profile"`
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateAndroid) Configure(inv *build.Invocation) error { //nolint:dupl
+	if t == nil {
+		return nil
+	}
+
+	if t.Android == nil {
+		t.Android = &template.Android{} //nolint:exhaustruct
+	}
+
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := merge(t.Android, p); err != nil {
+		return err
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if f.Android == nil {
+			continue
+		}
+
+		if err := merge(t.Android, *f.Android); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := merge(t.Android, p); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 /* --------------------- Struct: TemplateWithoutFeature --------------------- */
 
-type TemplateWithoutFeature struct {
-	*build.Template
+type TemplateAndroidWithoutFeature struct {
+	*template.Android
 
-	Platform map[build.OS]*TemplateWithoutFeatureAndPlatform     `json:"platform" toml:"platform"`
-	Profile  map[build.Profile]*TemplateWithoutFeatureAndProfile `json:"profile"  toml:"profile"`
+	Profile map[build.Profile]template.Android `toml:"profile"`
 }
 
-func (t *TemplateWithoutFeature) merge(pl build.OS, pr build.Profile, ff ...string) *build.Template {
-	out := t.Template
+/* -------------------------------------------------------------------------- */
+/*                                Platform: IOS                               */
+/* -------------------------------------------------------------------------- */
 
-	if cfg, ok := t.Profile[pr]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
-	}
+type TemplateIOS struct {
+	*template.IOS
 
-	if cfg, ok := t.Platform[pl]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
-	}
-
-	return out
+	Feature map[string]TemplateIOSWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]template.IOS       `toml:"profile"`
 }
 
-/* --------------------- Struct: TemplateWithoutPlatform -------------------- */
+/* ------------------------- Impl: build.Configurer ------------------------- */
 
-type TemplateWithoutPlatform struct {
-	*build.Template
-
-	Feature map[string]*TemplateWithoutFeatureAndPlatform        `json:"feature" toml:"feature"`
-	Profile map[build.Profile]*TemplateWithoutPlatformAndProfile `json:"profile" toml:"profile"`
-}
-
-func (t *TemplateWithoutPlatform) merge(pl build.OS, pr build.Profile, ff ...string) *build.Template {
-	out := t.Template
-
-	if cfg, ok := t.Profile[pr]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
+func (t *TemplateIOS) Configure(inv *build.Invocation) error { //nolint:dupl
+	if t == nil {
+		return nil
 	}
 
-	for _, f := range ff {
-		if cfg, ok := t.Feature[f]; ok {
-			out = out.CombineWith(cfg.merge(pl, pr, ff...))
+	if t.IOS == nil {
+		t.IOS = &template.IOS{} //nolint:exhaustruct
+	}
+
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := merge(t.IOS, p); err != nil {
+		return err
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if f.IOS == nil {
+			continue
+		}
+
+		if err := merge(t.IOS, *f.IOS); err != nil {
+			return err
 		}
 	}
 
-	return out
-}
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
 
-/* --------------------- Struct: TemplateWithoutProfile --------------------- */
-
-type TemplateWithoutProfile struct {
-	*build.Template
-
-	Feature  map[string]*TemplateWithoutFeatureAndProfile    `json:"feature"  toml:"feature"`
-	Platform map[build.OS]*TemplateWithoutPlatformAndProfile `json:"platform" toml:"platform"`
-}
-
-func (t *TemplateWithoutProfile) merge(pl build.OS, pr build.Profile, ff ...string) *build.Template {
-	out := t.Template
-
-	if cfg, ok := t.Platform[pl]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
-	}
-
-	for _, f := range ff {
-		if cfg, ok := t.Feature[f]; ok {
-			out = out.CombineWith(cfg.merge(pl, pr, ff...))
+		if err := merge(t.IOS, p); err != nil {
+			return err
 		}
 	}
 
-	return out
+	return nil
 }
 
-/* ---------------- Struct: TemplateWithoutFeatureAndPlatform --------------- */
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
 
-type TemplateWithoutFeatureAndPlatform struct {
-	*build.Template
+type TemplateIOSWithoutFeature struct {
+	*template.IOS
 
-	Profile map[build.Profile]*build.Template `json:"profile" toml:"profile"`
+	Profile map[build.Profile]template.IOS `toml:"profile"`
 }
 
-func (t *TemplateWithoutFeatureAndPlatform) merge(_ build.OS, pr build.Profile, _ ...string) *build.Template {
-	out := t.Template
+/* -------------------------------------------------------------------------- */
+/*                               Platform: Linux                              */
+/* -------------------------------------------------------------------------- */
 
-	if cfg, ok := t.Profile[pr]; ok {
-		out = out.CombineWith(cfg)
+type TemplateLinux struct {
+	*template.Linux
+
+	Feature map[string]TemplateLinuxWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]template.Linux       `toml:"profile"`
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateLinux) Configure(inv *build.Invocation) error { //nolint:dupl
+	if t == nil {
+		return nil
 	}
 
-	return out
-}
-
-/* ---------------- Struct: TemplateWithoutFeatureAndProfile ---------------- */
-
-type TemplateWithoutFeatureAndProfile struct {
-	*build.Template
-
-	Platform map[build.OS]*build.Template `json:"platform" toml:"platform"`
-}
-
-func (t *TemplateWithoutFeatureAndProfile) merge(pl build.OS, _ build.Profile, _ ...string) *build.Template {
-	out := t.Template
-
-	if cfg, ok := t.Platform[pl]; ok {
-		out = out.CombineWith(cfg)
+	if t.Linux == nil {
+		t.Linux = &template.Linux{} //nolint:exhaustruct
 	}
 
-	return out
-}
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := merge(t.Linux, p); err != nil {
+		return err
+	}
 
-/* ---------------- Struct: TemplateWithoutPlatformAndProfile --------------- */
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if f.Linux == nil {
+			continue
+		}
 
-type TemplateWithoutPlatformAndProfile struct {
-	*build.Template
-
-	Feature map[string]*build.Template `json:"feature" toml:"feature"`
-}
-
-func (t *TemplateWithoutPlatformAndProfile) merge(_ build.OS, _ build.Profile, ff ...string) *build.Template {
-	out := t.Template
-
-	for _, f := range ff {
-		if cfg, ok := t.Feature[f]; ok {
-			out = out.CombineWith(cfg)
+		if err := merge(t.Linux, *f.Linux); err != nil {
+			return err
 		}
 	}
 
-	return out
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := merge(t.Linux, p); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
+
+type TemplateLinuxWithoutFeature struct {
+	*template.Linux
+
+	Profile map[build.Profile]template.Linux `toml:"profile"`
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               Platform: MacOS                              */
+/* -------------------------------------------------------------------------- */
+
+type TemplateMacOS struct {
+	*template.MacOS
+
+	Feature map[string]TemplateMacOSWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]template.MacOS       `toml:"profile"`
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateMacOS) Configure(inv *build.Invocation) error { //nolint:dupl
+	if t == nil {
+		return nil
+	}
+
+	if t.MacOS == nil {
+		t.MacOS = &template.MacOS{} //nolint:exhaustruct
+	}
+
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := merge(t.MacOS, p); err != nil {
+		return err
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if f.MacOS == nil {
+			continue
+		}
+
+		if err := merge(t.MacOS, *f.MacOS); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := merge(t.MacOS, p); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
+
+type TemplateMacOSWithoutFeature struct {
+	*template.MacOS
+
+	Profile map[build.Profile]template.MacOS `toml:"profile"`
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                Platform: Web                               */
+/* -------------------------------------------------------------------------- */
+
+type TemplateWeb struct {
+	*template.Web
+
+	Feature map[string]TemplateWebWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]template.Web       `toml:"profile"`
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateWeb) Configure(inv *build.Invocation) error { //nolint:dupl
+	if t == nil {
+		return nil
+	}
+
+	if t.Web == nil {
+		t.Web = &template.Web{} //nolint:exhaustruct
+	}
+
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := merge(t.Web, p); err != nil {
+		return err
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if f.Web == nil {
+			continue
+		}
+
+		if err := merge(t.Web, *f.Web); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := merge(t.Web, p); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
+
+type TemplateWebWithoutFeature struct {
+	*template.Web
+
+	Profile map[build.Profile]template.Web `toml:"profile"`
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              Platform: Windows                             */
+/* -------------------------------------------------------------------------- */
+
+type TemplateWindows struct {
+	*template.Windows
+
+	Feature map[string]TemplateWindowsWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]template.Windows       `toml:"profile"`
+}
+
+/* ------------------------- Impl: build.Configurer ------------------------- */
+
+func (t *TemplateWindows) Configure(inv *build.Invocation) error { //nolint:dupl
+	if t == nil {
+		return nil
+	}
+
+	if t.Windows == nil {
+		t.Windows = &template.Windows{} //nolint:exhaustruct
+	}
+
+	p := getOrDefault(t.Profile, inv.Profile)
+	if err := merge(t.Windows, p); err != nil {
+		return err
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		if f.Windows == nil {
+			continue
+		}
+
+		if err := merge(t.Windows, *f.Windows); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range inv.Features {
+		f := getOrDefault(t.Feature, f)
+		p := getOrDefault(f.Profile, inv.Profile)
+
+		if err := merge(t.Windows, p); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+/* --------------------- Struct: TemplateWithoutFeature --------------------- */
+
+type TemplateWindowsWithoutFeature struct {
+	*template.Windows
+
+	Profile map[build.Profile]template.Windows `toml:"profile"`
 }

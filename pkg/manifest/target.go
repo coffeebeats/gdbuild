@@ -1,6 +1,9 @@
-package manifest //nolint:dupl
+package manifest
 
-import "github.com/coffeebeats/gdbuild/pkg/build"
+import (
+	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/target"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                               Struct: Target                               */
@@ -20,160 +23,120 @@ import "github.com/coffeebeats/gdbuild/pkg/build"
 //	[target.profile.release]
 //	[target.profile.release.platform.macos.feature.client]
 type Target struct {
-	*build.Target
+	*target.Base
 
-	Feature  map[string]*TargetWithoutFeature        `json:"feature"  toml:"feature"`
-	Platform map[build.OS]*TargetWithoutPlatform     `json:"platform" toml:"platform"`
-	Profile  map[build.Profile]*TargetWithoutProfile `json:"profile"  toml:"profile"`
+	Platform TargetPlatform                      `toml:"platform"`
+	Feature  map[string]TargetBaseWithoutFeature `toml:"feature"`
+	Profile  map[build.Profile]target.Base       `toml:"profile"`
 }
 
-// TODO: Improve merging logic to detect conflicts instead of silently, and
-// unpredictably, overriding.
-func (t *Target) merge(pl build.OS, pr build.Profile, ff ...string) *build.Target {
-	out := t.Target
+/* -------------------- Struct: TargetBaseWithoutFeature -------------------- */
 
-	if cfg, ok := t.Profile[pr]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
-	}
+type TargetBaseWithoutFeature struct {
+	*target.Base
 
-	if cfg, ok := t.Platform[pl]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
-	}
-
-	for _, f := range ff {
-		if cfg, ok := t.Feature[f]; ok {
-			out = out.CombineWith(cfg.merge(pl, pr, ff...))
-		}
-	}
-
-	return out
+	Profile map[build.Profile]target.Base `toml:"profile"`
 }
 
-/* ---------------------- Struct: TargetWithoutFeature ---------------------- */
+/* -------------------------------------------------------------------------- */
+/*                           Struct: TargetPlatform                           */
+/* -------------------------------------------------------------------------- */
 
-type TargetWithoutFeature struct {
-	*build.Target
-
-	Platform map[build.OS]*TargetWithoutFeatureAndPlatform     `json:"platform" toml:"platform"`
-	Profile  map[build.Profile]*TargetWithoutFeatureAndProfile `json:"profile"  toml:"profile"`
+type TargetPlatform struct {
+	Android TargetMacOS   `toml:"android"`
+	IOS     TargetIOS     `toml:"ios"`
+	MacOS   TargetMacOS   `toml:"macos"`
+	Linux   TargetLinux   `toml:"linux"`
+	Web     TargetWeb     `toml:"web"`
+	Windows TargetWindows `toml:"windows"`
 }
 
-func (t *TargetWithoutFeature) merge(pl build.OS, pr build.Profile, ff ...string) *build.Target {
-	out := t.Target
+/* ---------------------------- Platform: Android --------------------------- */
 
-	if cfg, ok := t.Profile[pr]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
-	}
+type TargetAndroid struct {
+	*target.Android
 
-	if cfg, ok := t.Platform[pl]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
-	}
-
-	return out
+	Feature map[string]TargetAndroidWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]target.Android       `toml:"profile"`
 }
 
-/* ---------------------- Struct: TargetWithoutPlatform --------------------- */
+type TargetAndroidWithoutFeature struct {
+	*target.Android
 
-type TargetWithoutPlatform struct {
-	*build.Target
-
-	Feature map[string]*TargetWithoutFeatureAndPlatform        `json:"feature" toml:"feature"`
-	Profile map[build.Profile]*TargetWithoutPlatformAndProfile `json:"profile" toml:"profile"`
+	Profile map[build.Profile]target.Android `toml:"profile"`
 }
 
-func (t *TargetWithoutPlatform) merge(pl build.OS, pr build.Profile, ff ...string) *build.Target {
-	out := t.Target
+/* ------------------------------ Platform: IOS ----------------------------- */
 
-	if cfg, ok := t.Profile[pr]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
-	}
+type TargetIOS struct {
+	*target.IOS
 
-	for _, f := range ff {
-		if cfg, ok := t.Feature[f]; ok {
-			out = out.CombineWith(cfg.merge(pl, pr, ff...))
-		}
-	}
-
-	return out
+	Feature map[string]TargetIOSWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]target.IOS       `toml:"profile"`
 }
 
-/* ---------------------- Struct: TargetWithoutProfile ---------------------- */
+type TargetIOSWithoutFeature struct {
+	*target.IOS
 
-type TargetWithoutProfile struct {
-	*build.Target
-
-	Feature  map[string]*TargetWithoutFeatureAndProfile    `json:"feature"  toml:"feature"`
-	Platform map[build.OS]*TargetWithoutPlatformAndProfile `json:"platform" toml:"platform"`
+	Profile map[build.Profile]target.IOS `toml:"profile"`
 }
 
-func (t *TargetWithoutProfile) merge(pl build.OS, pr build.Profile, ff ...string) *build.Target {
-	out := t.Target
+/* ----------------------------- Platform: MacOS ---------------------------- */
 
-	if cfg, ok := t.Platform[pl]; ok {
-		out = out.CombineWith(cfg.merge(pl, pr, ff...))
-	}
+type TargetMacOS struct {
+	*target.MacOS
 
-	for _, f := range ff {
-		if cfg, ok := t.Feature[f]; ok {
-			out = out.CombineWith(cfg.merge(pl, pr, ff...))
-		}
-	}
-
-	return out
+	Feature map[string]TargetMacOSWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]target.MacOS       `toml:"profile"`
 }
 
-/* ----------------- Struct: TargetWithoutFeatureAndPlatform ---------------- */
+type TargetMacOSWithoutFeature struct {
+	*target.MacOS
 
-type TargetWithoutFeatureAndPlatform struct {
-	*build.Target
-
-	Profile map[build.Profile]*build.Target `json:"profile" toml:"profile"`
+	Profile map[build.Profile]target.MacOS `toml:"profile"`
 }
 
-func (t *TargetWithoutFeatureAndPlatform) merge(_ build.OS, pr build.Profile, _ ...string) *build.Target {
-	out := t.Target
+/* ----------------------------- Platform: Linux ---------------------------- */
 
-	if cfg, ok := t.Profile[pr]; ok {
-		out = out.CombineWith(cfg)
-	}
+type TargetLinux struct {
+	*target.Linux
 
-	return out
+	Feature map[string]TargetLinuxWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]target.Linux       `toml:"profile"`
 }
 
-/* ----------------- Struct: TargetWithoutFeatureAndProfile ----------------- */
+type TargetLinuxWithoutFeature struct {
+	*target.Linux
 
-type TargetWithoutFeatureAndProfile struct {
-	*build.Target
-
-	Platform map[build.OS]*build.Target `json:"platform" toml:"platform"`
+	Profile map[build.Profile]target.Linux `toml:"profile"`
 }
 
-func (t *TargetWithoutFeatureAndProfile) merge(pl build.OS, _ build.Profile, _ ...string) *build.Target {
-	out := t.Target
+/* ------------------------------ Platform: Web ----------------------------- */
 
-	if cfg, ok := t.Platform[pl]; ok {
-		out = out.CombineWith(cfg)
-	}
+type TargetWeb struct {
+	*target.Web
 
-	return out
+	Feature map[string]TargetWebWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]target.Web       `toml:"profile"`
 }
 
-/* ----------------- Struct: TargetWithoutPlatformAndProfile ---------------- */
+type TargetWebWithoutFeature struct {
+	*target.Web
 
-type TargetWithoutPlatformAndProfile struct {
-	*build.Target
-
-	Feature map[string]*build.Target `json:"feature" toml:"feature"`
+	Profile map[build.Profile]target.Web `toml:"profile"`
 }
 
-func (t *TargetWithoutPlatformAndProfile) merge(_ build.OS, _ build.Profile, ff ...string) *build.Target {
-	out := t.Target
+/* ---------------------------- Platform: Windows --------------------------- */
 
-	for _, f := range ff {
-		if cfg, ok := t.Feature[f]; ok {
-			out = out.CombineWith(cfg)
-		}
-	}
+type TargetWindows struct {
+	*target.Windows
 
-	return out
+	Feature map[string]TargetWindowsWithoutFeature `toml:"feature"`
+	Profile map[build.Profile]target.Windows       `toml:"profile"`
+}
+
+type TargetWindowsWithoutFeature struct {
+	*target.Windows
+
+	Profile map[build.Profile]target.Windows `toml:"profile"`
 }

@@ -16,7 +16,7 @@ var (
 /* -------------------------------------------------------------------------- */
 
 // Operating systems which the Godot project supports building for.
-type OS int
+type OS uint
 
 const (
 	OSUnknown OS = iota

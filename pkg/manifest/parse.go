@@ -5,12 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/pelletier/go-toml/v2"
 )
-
-var ErrInvalidInput = errors.New("invalid input")
 
 // Parse parses a 'Manifest' struct from a 'toml' document.
 func Parse(bb []byte) (*Manifest, error) {
@@ -27,22 +24,11 @@ func Parse(bb []byte) (*Manifest, error) {
 		return nil, err
 	}
 
-	if err := m.Validate(); err != nil {
-		return nil, err
-	}
-
 	return &m, nil
 }
 
 // Parse parses a 'Manifest' struct from a 'toml' file.
 func ParseFile(path string) (*Manifest, error) {
-	if !strings.HasSuffix(path, Filename()) {
-		return nil, fmt.Errorf(
-			"%w: expected a path to a 'gdbuild.toml' manifest file",
-			ErrInvalidInput,
-		)
-	}
-
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, err

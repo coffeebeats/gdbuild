@@ -1,33 +1,39 @@
 package build
 
+import (
+	"github.com/coffeebeats/gdbuild/internal/action"
+	"github.com/coffeebeats/gdbuild/internal/exec"
+)
+
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Hook                                */
 /* -------------------------------------------------------------------------- */
 
 // Hook contains commands to execute before and after a build step.
+//
+// TODO: Allow per-hook shell settings.
 type Hook struct {
 	// Pre contains a command to run *before* a build step.
-	Pre []string `json:"prebuild" toml:"prebuild"`
+	Pre []action.Command `toml:"prebuild"`
 	// Post contains a command to run *after* a build step.
-	Post []string `json:"postbuild" toml:"postbuild"`
+	Post []action.Command `toml:"postbuild"`
+	// Shell defines which shell process to run these commands in.
+	Shell exec.Shell `toml:"shell"`
 }
 
-/* --------------------------- Method: CombineWith -------------------------- */
+/* --------------------------- Impl: merge.Merger --------------------------- */
 
-func (h *Hook) CombineWith(hooks ...*Hook) *Hook {
-	base := h
-	if h == nil {
-		base = &Hook{} //nolint:exhaustruct
+func (c *Hook) Merge(other *Hook) error {
+	if c == nil || other == nil {
+		return nil
 	}
 
-	for _, other := range hooks {
-		if other == nil {
-			continue
-		}
+	c.Pre = append(c.Pre, other.Pre...)
+	c.Post = append(c.Post, other.Post...)
 
-		base.Pre = append(append(base.Pre, ";"), other.Pre...)
-		base.Post = append(append(base.Post, ";"), other.Post...)
+	if other.Shell != exec.ShellUnknown {
+		c.Shell = other.Shell
 	}
 
-	return base
+	return nil
 }

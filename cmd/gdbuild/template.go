@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,10 +9,14 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
+
+	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/manifest"
 )
 
 // A 'urfave/cli' command to compile a Godot export template.
-func NewTemplate() *cli.Command { //nolint:funlen
+func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 	return &cli.Command{
 		Name:     "template",
 		Category: "Build",
@@ -20,10 +25,20 @@ func NewTemplate() *cli.Command { //nolint:funlen
 		UsageText: "gdbuild template [OPTIONS] <PLATFORM>",
 
 		Flags: []cli.Flag{
+			newVerboseFlag(),
+
+			&cli.BoolFlag{
+				Name:  "dry-run",
+				Usage: "log the build command without running it",
+			},
 			&cli.PathFlag{
 				Name:  "path",
 				Value: ".",
 				Usage: "use the Godot project found at 'PATH'",
+			},
+			&cli.PathFlag{
+				Name:  "build-dir",
+				Usage: "build the template within 'PATH' (defaults to a temporary directory)",
 			},
 			&cli.PathFlag{
 				Name:    "out",
@@ -65,7 +80,7 @@ func NewTemplate() *cli.Command { //nolint:funlen
 				return UsageError{ctx: c, err: ErrTargetUsageProfiles}
 			}
 
-			pathOut, err := parseDirectory(c.Path("out"))
+			pathOut, err := parseWorkDir(c.Path("out"))
 			if err != nil {
 				return err
 			}
@@ -73,13 +88,19 @@ func NewTemplate() *cli.Command { //nolint:funlen
 			log.Debugf("placing template artifacts at path: %s", pathOut)
 
 			// Parse manifest.
-			pathManifest := c.Path("path")
-			m, err := parseManifest(pathManifest)
+			pathManifest, err := parseManifestPath(c.Path("path"))
+			if err != nil {
+				return err
+			}
+
+			m, err := manifest.ParseFile(pathManifest)
 			if err != nil {
 				return err
 			}
 
 			log.Debugf("using manifest at path: %s", pathManifest)
+
+			pathManifest = filepath.Dir(pathManifest)
 
 			// Collect build modifiers.
 
@@ -98,28 +119,70 @@ func NewTemplate() *cli.Command { //nolint:funlen
 
 			log.Infof("platform: %s", pl)
 
-			log.Print(m.BuildTemplate(pl, pr, features...))
+			pathBuild := c.Path("build-dir")
+			if pathBuild == "" {
+				p, err := os.MkdirTemp("", "gdbuild-*")
+				if err != nil {
+					return err
+				}
 
-			return nil
+				defer os.RemoveAll(p)
+
+				pathBuild = p
+			}
+
+			inv := build.Invocation{
+				Verbose:      log.GetLevel() == log.DebugLevel,
+				Features:     features,
+				PathBuild:    build.Path(pathBuild),
+				PathOut:      build.Path(pathOut),
+				PathManifest: build.Path(pathManifest),
+				Platform:     pl,
+				Profile:      pr,
+			}
+
+			t, err := m.BuildTemplate(inv)
+			if err != nil {
+				return err
+			}
+
+			action, err := t.Action()
+			if err != nil {
+				return err
+			}
+
+			if c.Bool("dry-run") {
+				log.Print(action.Sprint())
+
+				return nil
+			}
+
+			return action.Run(c.Context)
 		},
 	}
 }
 
-/* ------------------------ Function: parseDirectory ------------------------ */
+/* ------------------------- Function: parseWorkDir ------------------------- */
 
-func parseDirectory(path string) (string, error) {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-
+func parseWorkDir(path string) (string, error) {
 	info, err := os.Stat(path)
 	if err != nil {
-		return "", err
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+
+		if err := os.MkdirAll(path, osutil.ModeUserRWXGroupRX); err != nil {
+			return "", err
+		}
 	}
 
-	if !info.IsDir() {
-		return "", fmt.Errorf("%w: expected a directory: %s", ErrInvalidInput, path)
+	if info != nil && !info.IsDir() {
+		path = filepath.Dir(path)
+	}
+
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return "", err
 	}
 
 	return path, nil

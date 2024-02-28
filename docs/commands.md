@@ -10,10 +10,14 @@ Compile an export template for the specified Godot platform `PLATFORM`.
 
 ### Options
 
+- `--dry-run` — log the build command without running it
+
 - `-p`, `--path <PATH>` — use the Godot project found at `PATH`
   - Default value: `$PWD` (current working directory)
 - `-o`, `--out <PATH>` — write generated artifacts to `PATH`
   - Default value: `$PWD` (current working directory)
+- `--build-dir <PATH>` — build the template within `PATH`
+  - Default value: temporary directory
 
 - `--release` — use a release export template (cannot be used with '--release_debug')
 - `--release_debug` — use a release export template with debug symbols (cannot be used with '--release')
@@ -32,6 +36,8 @@ Compile any required export template(s) and then export the specified `TARGET`.
 `gdbuild target [OPTIONS] <TARGET>`
 
 ### Options
+
+- `--dry-run` — log the build command without running it
 
 - `-p`, `--path <PATH>` — use the Godot project found at `PATH`
   - Default value: `$PWD` (current working directory)

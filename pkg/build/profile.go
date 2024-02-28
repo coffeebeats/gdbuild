@@ -33,10 +33,10 @@ func (p Profile) String() string {
 	switch p {
 	case ProfileDebug:
 		return "debug"
-	case ProfileReleaseDebug:
-		return "release_debug"
 	case ProfileRelease:
 		return "release"
+	case ProfileReleaseDebug:
+		return "release_debug"
 	default:
 		return ""
 	}
