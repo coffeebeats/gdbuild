@@ -23,16 +23,10 @@ type MacOS struct {
 	Vulkan Vulkan `toml:"vulkan"`
 }
 
-/* ----------------------------- Impl: Template ----------------------------- */
-
-func (c *MacOS) BaseTemplate() *Base {
-	return c.Base
-}
-
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
 func (c *MacOS) Action() (action.Action, error) { //nolint:ireturn
-	return nil, nil
+	return nil, ErrUnimplemented
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */

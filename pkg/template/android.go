@@ -24,16 +24,10 @@ type Android struct {
 
 var _ Template = (*Android)(nil)
 
-/* ----------------------------- Impl: Template ----------------------------- */
-
-func (c *Android) BaseTemplate() *Base {
-	return c.Base
-}
-
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
 func (c *Android) Action() (action.Action, error) { //nolint:ireturn
-	return nil, nil
+	return nil, ErrUnimplemented
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */

@@ -20,16 +20,10 @@ type Windows struct {
 	PathIcon build.Path `toml:"icon_path"`
 }
 
-/* ----------------------------- Impl: Template ----------------------------- */
-
-func (c *Windows) BaseTemplate() *Base {
-	return c.Base
-}
-
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
 func (c *Windows) Action() (action.Action, error) { //nolint:ireturn
-	return nil, nil
+	return nil, ErrUnimplemented
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
