@@ -22,16 +22,10 @@ type IOS struct {
 	Simulator *bool `toml:"use_simulator"`
 }
 
-/* ----------------------------- Impl: Template ----------------------------- */
-
-func (c *IOS) BaseTemplate() *Base {
-	return c.Base
-}
-
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
 func (c *IOS) Action() (action.Action, error) { //nolint:ireturn
-	return nil, nil
+	return nil, ErrUnimplemented
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */

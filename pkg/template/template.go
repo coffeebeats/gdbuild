@@ -28,8 +28,6 @@ type Template interface {
 	action.Actioner
 	build.Configurer
 	build.Validater
-
-	BaseTemplate() *Base
 }
 
 /* --------------------- Function: newVendorGodotAction --------------------- */

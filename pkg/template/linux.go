@@ -17,12 +17,6 @@ type Linux struct {
 	*Base
 }
 
-/* ----------------------------- Impl: Template ----------------------------- */
-
-func (c *Linux) BaseTemplate() *Base {
-	return c.Base
-}
-
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
 func (c *Linux) Action() (action.Action, error) { //nolint:ireturn

@@ -20,16 +20,10 @@ type Web struct {
 	EnableEval *bool `toml:"enable_eval"`
 }
 
-/* ----------------------------- Impl: Template ----------------------------- */
-
-func (c *Web) BaseTemplate() *Base {
-	return c.Base
-}
-
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
 func (c *Web) Action() (action.Action, error) { //nolint:ireturn
-	return nil, nil
+	return nil, ErrUnimplemented
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
