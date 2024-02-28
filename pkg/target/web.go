@@ -1,5 +1,7 @@
 package target
 
+import "github.com/coffeebeats/gdbuild/internal/action"
+
 /* -------------------------------------------------------------------------- */
 /*                                 Struct: Web                                */
 /* -------------------------------------------------------------------------- */
@@ -9,10 +11,10 @@ type Web struct {
 	*Base
 }
 
-/* ----------------------------- Impl: Commander ---------------------------- */
+/* -------------------------- Impl: action.Actioner ------------------------- */
 
-func (c *Web) Command() []string {
-	return nil
+func (c *Web) Action() (action.Action, error) { //nolint:ireturn
+	return nil, nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

@@ -1,18 +1,6 @@
 package target
 
-import (
-	"github.com/coffeebeats/gdbuild/pkg/build"
-)
-
-/* -------------------------------------------------------------------------- */
-/*                            Interface: Commander                            */
-/* -------------------------------------------------------------------------- */
-
-// Commander is a type which can be translated into a shell command. This should
-// be implemented by all of the platform-specific 'Target' variants.
-type Commander interface {
-	Command() []string
-}
+import "github.com/coffeebeats/gdbuild/pkg/build"
 
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Base                                */

@@ -1,5 +1,7 @@
 package target
 
+import "github.com/coffeebeats/gdbuild/internal/action"
+
 /* -------------------------------------------------------------------------- */
 /*                               Struct: Android                              */
 /* -------------------------------------------------------------------------- */
@@ -9,10 +11,10 @@ type Android struct {
 	*Base
 }
 
-/* ----------------------------- Impl: Commander ---------------------------- */
+/* -------------------------- Impl: action.Actioner ------------------------- */
 
-func (c *Android) Command() []string {
-	return nil
+func (c *Android) Action() (action.Action, error) { //nolint:ireturn
+	return nil, nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */

@@ -1,5 +1,7 @@
 package target
 
+import "github.com/coffeebeats/gdbuild/internal/action"
+
 /* -------------------------------------------------------------------------- */
 /*                                Struct: MacOS                               */
 /* -------------------------------------------------------------------------- */
@@ -9,10 +11,10 @@ type MacOS struct {
 	*Base
 }
 
-/* ----------------------------- Impl: Commander ---------------------------- */
+/* -------------------------- Impl: action.Actioner ------------------------- */
 
-func (c *MacOS) Command() []string {
-	return nil
+func (c *MacOS) Action() (action.Action, error) { //nolint:ireturn
+	return nil, nil
 }
 
 /* --------------------------- Impl: merge.Merger --------------------------- */
