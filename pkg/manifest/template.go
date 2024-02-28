@@ -42,13 +42,17 @@ func (t *Template) Configure(inv *build.Invocation) error {
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)
-	if err := t.Base.Merge(&p); err != nil {
+	if err := merge(t.Base, p); err != nil {
 		return err
 	}
 
 	for _, f := range inv.Features {
 		f := getOrDefault(t.Feature, f)
-		if err := t.Base.Merge(f.Base); err != nil {
+		if f.Base == nil {
+			continue
+		}
+
+		if err := merge(t.Base, *f.Base); err != nil {
 			return err
 		}
 	}
@@ -57,7 +61,7 @@ func (t *Template) Configure(inv *build.Invocation) error {
 		f := getOrDefault(t.Feature, f)
 		p := getOrDefault(f.Profile, inv.Profile)
 
-		if err := t.Base.Merge(&p); err != nil {
+		if err := merge(t.Base, p); err != nil {
 			return err
 		}
 	}
@@ -109,13 +113,17 @@ func (t *TemplateAndroid) Configure(inv *build.Invocation) error {
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)
-	if err := t.Android.Merge(&p); err != nil {
+	if err := merge(t.Android, p); err != nil {
 		return err
 	}
 
 	for _, f := range inv.Features {
 		f := getOrDefault(t.Feature, f)
-		if err := t.Android.Merge(f.Android); err != nil {
+		if f.Android == nil {
+			continue
+		}
+
+		if err := merge(t.Android, *f.Android); err != nil {
 			return err
 		}
 	}
@@ -124,7 +132,7 @@ func (t *TemplateAndroid) Configure(inv *build.Invocation) error {
 		f := getOrDefault(t.Feature, f)
 		p := getOrDefault(f.Profile, inv.Profile)
 
-		if err := t.Android.Merge(&p); err != nil {
+		if err := merge(t.Android, p); err != nil {
 			return err
 		}
 	}
@@ -163,13 +171,17 @@ func (t *TemplateIOS) Configure(inv *build.Invocation) error {
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)
-	if err := t.IOS.Merge(&p); err != nil {
+	if err := merge(t.IOS, p); err != nil {
 		return err
 	}
 
 	for _, f := range inv.Features {
 		f := getOrDefault(t.Feature, f)
-		if err := t.IOS.Merge(f.IOS); err != nil {
+		if f.IOS == nil {
+			continue
+		}
+
+		if err := merge(t.IOS, *f.IOS); err != nil {
 			return err
 		}
 	}
@@ -178,7 +190,7 @@ func (t *TemplateIOS) Configure(inv *build.Invocation) error {
 		f := getOrDefault(t.Feature, f)
 		p := getOrDefault(f.Profile, inv.Profile)
 
-		if err := t.IOS.Merge(&p); err != nil {
+		if err := merge(t.IOS, p); err != nil {
 			return err
 		}
 	}
@@ -217,13 +229,16 @@ func (t *TemplateLinux) Configure(inv *build.Invocation) error {
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)
-	if err := t.Linux.Merge(&p); err != nil {
+	if err := merge(t.Linux, p); err != nil {
 		return err
 	}
 
 	for _, f := range inv.Features {
 		f := getOrDefault(t.Feature, f)
-		if err := t.Linux.Merge(f.Linux); err != nil {
+		if f.Linux == nil {
+			continue
+		}
+		if err := merge(t.Linux, *f.Linux); err != nil {
 			return err
 		}
 	}
@@ -232,7 +247,7 @@ func (t *TemplateLinux) Configure(inv *build.Invocation) error {
 		f := getOrDefault(t.Feature, f)
 		p := getOrDefault(f.Profile, inv.Profile)
 
-		if err := t.Linux.Merge(&p); err != nil {
+		if err := merge(t.Linux, p); err != nil {
 			return err
 		}
 	}
@@ -271,13 +286,17 @@ func (t *TemplateMacOS) Configure(inv *build.Invocation) error {
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)
-	if err := t.MacOS.Merge(&p); err != nil {
+	if err := merge(t.MacOS, p); err != nil {
 		return err
 	}
 
 	for _, f := range inv.Features {
 		f := getOrDefault(t.Feature, f)
-		if err := t.MacOS.Merge(f.MacOS); err != nil {
+		if f.MacOS == nil {
+			continue
+		}
+
+		if err := merge(t.MacOS, *f.MacOS); err != nil {
 			return err
 		}
 	}
@@ -286,7 +305,7 @@ func (t *TemplateMacOS) Configure(inv *build.Invocation) error {
 		f := getOrDefault(t.Feature, f)
 		p := getOrDefault(f.Profile, inv.Profile)
 
-		if err := t.MacOS.Merge(&p); err != nil {
+		if err := merge(t.MacOS, p); err != nil {
 			return err
 		}
 	}
@@ -325,13 +344,17 @@ func (t *TemplateWeb) Configure(inv *build.Invocation) error {
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)
-	if err := t.Web.Merge(&p); err != nil {
+	if err := merge(t.Web, p); err != nil {
 		return err
 	}
 
 	for _, f := range inv.Features {
 		f := getOrDefault(t.Feature, f)
-		if err := t.Web.Merge(f.Web); err != nil {
+		if f.Web == nil {
+			continue
+		}
+
+		if err := merge(t.Web, *f.Web); err != nil {
 			return err
 		}
 	}
@@ -340,7 +363,7 @@ func (t *TemplateWeb) Configure(inv *build.Invocation) error {
 		f := getOrDefault(t.Feature, f)
 		p := getOrDefault(f.Profile, inv.Profile)
 
-		if err := t.Web.Merge(&p); err != nil {
+		if err := merge(t.Web, p); err != nil {
 			return err
 		}
 	}
@@ -379,13 +402,17 @@ func (t *TemplateWindows) Configure(inv *build.Invocation) error {
 	}
 
 	p := getOrDefault(t.Profile, inv.Profile)
-	if err := t.Windows.Merge(&p); err != nil {
+	if err := merge(t.Windows, p); err != nil {
 		return err
 	}
 
 	for _, f := range inv.Features {
 		f := getOrDefault(t.Feature, f)
-		if err := t.Windows.Merge(f.Windows); err != nil {
+		if f.Windows == nil {
+			continue
+		}
+
+		if err := merge(t.Windows, *f.Windows); err != nil {
 			return err
 		}
 	}
@@ -394,7 +421,7 @@ func (t *TemplateWindows) Configure(inv *build.Invocation) error {
 		f := getOrDefault(t.Feature, f)
 		p := getOrDefault(f.Profile, inv.Profile)
 
-		if err := t.Windows.Merge(&p); err != nil {
+		if err := merge(t.Windows, p); err != nil {
 			return err
 		}
 	}

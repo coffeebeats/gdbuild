@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"dario.cat/mergo"
+
 	"github.com/coffeebeats/gdbuild/pkg/build"
 	"github.com/coffeebeats/gdbuild/pkg/template"
 )
@@ -103,7 +105,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := base.Merge(child); err != nil {
+		if err := merge(&base, child); err != nil {
 			return nil, err
 		}
 
@@ -114,7 +116,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := base.Merge(child); err != nil {
+		if err := merge(&base, child); err != nil {
 			return nil, err
 		}
 
@@ -125,7 +127,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := base.Merge(child); err != nil {
+		if err := merge(&base, child); err != nil {
 			return nil, err
 		}
 
@@ -136,7 +138,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := base.Merge(child); err != nil {
+		if err := merge(&base, child); err != nil {
 			return nil, err
 		}
 
@@ -147,7 +149,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := base.Merge(child); err != nil {
+		if err := merge(&base, child); err != nil {
 			return nil, err
 		}
 
@@ -158,7 +160,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := base.Merge(child); err != nil {
+		if err := merge(&base, child); err != nil {
 			return nil, err
 		}
 
@@ -207,73 +209,85 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
 			return nil, err
 		}
 
-		if err := base.Merge(t.Android); err != nil {
-			return nil, err
+		if t.Android != nil {
+			if err := merge(&base, *t.Android); err != nil {
+				return nil, err
+			}
 		}
 
 		out = &base
 	case build.OSIOS:
 		base := template.IOS{Base: base} //nolint:exhaustruct
 
-		template := m.Template.Platform.IOS
-		if err := template.Configure(&base.Invocation); err != nil {
+		t := m.Template.Platform.IOS
+		if err := t.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		if err := base.Merge(template.IOS); err != nil {
-			return nil, err
+		if t.IOS != nil {
+			if err := merge(&base, *t.IOS); err != nil {
+				return nil, err
+			}
 		}
 
 		out = &base
 	case build.OSLinux:
 		base := template.Linux{Base: base}
 
-		template := m.Template.Platform.Linux
-		if err := template.Configure(&base.Invocation); err != nil {
+		t := m.Template.Platform.Linux
+		if err := t.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		if err := base.Merge(template.Linux); err != nil {
-			return nil, err
+		if t.Linux != nil {
+			if err := merge(&base, *t.Linux); err != nil {
+				return nil, err
+			}
 		}
 
 		out = &base
 	case build.OSMacOS:
 		base := template.MacOS{Base: base} //nolint:exhaustruct
 
-		template := m.Template.Platform.MacOS
-		if err := template.Configure(&base.Invocation); err != nil {
+		t := m.Template.Platform.MacOS
+		if err := t.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		if err := base.Merge(template.MacOS); err != nil {
-			return nil, err
+		if t.MacOS != nil {
+			if err := merge(&base, *t.MacOS); err != nil {
+				return nil, err
+			}
 		}
 
 		out = &base
 	case build.OSWeb:
 		base := template.Web{Base: base} //nolint:exhaustruct
 
-		template := m.Template.Platform.Web
-		if err := template.Configure(&base.Invocation); err != nil {
+		t := m.Template.Platform.Web
+		if err := t.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		if err := base.Merge(template.Web); err != nil {
-			return nil, err
+		if t.Web != nil {
+			if err := merge(&base, *t.Web); err != nil {
+				return nil, err
+			}
 		}
 
 		out = &base
 	case build.OSWindows:
 		base := template.Windows{Base: base} //nolint:exhaustruct
 
-		template := m.Template.Platform.Windows
-		if err := template.Configure(&base.Invocation); err != nil {
+		t := m.Template.Platform.Windows
+		if err := t.Configure(&base.Invocation); err != nil {
 			return nil, err
 		}
 
-		if err := base.Merge(template.Windows); err != nil {
-			return nil, err
+		if t.Windows != nil {
+			if err := merge(&base, *t.Windows); err != nil {
+				return nil, err
+			}
 		}
 
 		out = &base
@@ -294,4 +308,18 @@ func getOrDefault[K comparable, V any](m map[K]V, key K) V { //nolint:ireturn
 	}
 
 	return m[key]
+}
+
+/* ----------------------------- Function: merge ---------------------------- */
+
+// merge is a helper function for invoking 'mergo.Merge' with consistent
+// settings.
+func merge[T any](dst *T, src T) error {
+	return mergo.Merge(
+		dst,
+		src,
+		mergo.WithAppendSlice,
+		mergo.WithTypeCheck,
+		mergo.WithOverride,
+	)
 }
