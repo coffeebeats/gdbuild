@@ -3,6 +3,7 @@ module github.com/coffeebeats/gdbuild
 go 1.21
 
 require (
+	dario.cat/mergo v1.0.0
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/charmbracelet/log v0.3.1
 	github.com/coffeebeats/gdenv v0.6.11
