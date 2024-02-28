@@ -18,6 +18,12 @@ var (
 	ErrUnimplemented = errors.New("unimplemented")
 )
 
+/* -------------------------------------------------------------------------- */
+/*                             Interface: Template                            */
+/* -------------------------------------------------------------------------- */
+
+// Template is a type which defines settings for compiling a Godot export
+// template.
 type Template interface {
 	action.Actioner
 	build.Configurer
