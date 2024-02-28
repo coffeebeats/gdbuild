@@ -182,7 +182,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 
 /* ------------------- Method: mergeTemplateForInvocation ------------------- */
 
-func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,ireturn
+func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,gocognit,ireturn
 	inv *build.Invocation,
 ) (template.Template, error) {
 	base := m.Template.Base

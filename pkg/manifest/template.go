@@ -32,7 +32,7 @@ type Template struct {
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
 
-func (t *Template) Configure(inv *build.Invocation) error {
+func (t *Template) Configure(inv *build.Invocation) error { //nolint:dupl
 	if t == nil {
 		return nil
 	}
@@ -103,7 +103,7 @@ type TemplateAndroid struct {
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
 
-func (t *TemplateAndroid) Configure(inv *build.Invocation) error {
+func (t *TemplateAndroid) Configure(inv *build.Invocation) error { //nolint:dupl
 	if t == nil {
 		return nil
 	}
@@ -161,7 +161,7 @@ type TemplateIOS struct {
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
 
-func (t *TemplateIOS) Configure(inv *build.Invocation) error {
+func (t *TemplateIOS) Configure(inv *build.Invocation) error { //nolint:dupl
 	if t == nil {
 		return nil
 	}
@@ -219,7 +219,7 @@ type TemplateLinux struct {
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
 
-func (t *TemplateLinux) Configure(inv *build.Invocation) error {
+func (t *TemplateLinux) Configure(inv *build.Invocation) error { //nolint:dupl
 	if t == nil {
 		return nil
 	}
@@ -238,6 +238,7 @@ func (t *TemplateLinux) Configure(inv *build.Invocation) error {
 		if f.Linux == nil {
 			continue
 		}
+
 		if err := merge(t.Linux, *f.Linux); err != nil {
 			return err
 		}
@@ -276,7 +277,7 @@ type TemplateMacOS struct {
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
 
-func (t *TemplateMacOS) Configure(inv *build.Invocation) error {
+func (t *TemplateMacOS) Configure(inv *build.Invocation) error { //nolint:dupl
 	if t == nil {
 		return nil
 	}
@@ -334,7 +335,7 @@ type TemplateWeb struct {
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
 
-func (t *TemplateWeb) Configure(inv *build.Invocation) error {
+func (t *TemplateWeb) Configure(inv *build.Invocation) error { //nolint:dupl
 	if t == nil {
 		return nil
 	}
@@ -392,7 +393,7 @@ type TemplateWindows struct {
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
 
-func (t *TemplateWindows) Configure(inv *build.Invocation) error {
+func (t *TemplateWindows) Configure(inv *build.Invocation) error { //nolint:dupl
 	if t == nil {
 		return nil
 	}
