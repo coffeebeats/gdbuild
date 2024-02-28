@@ -2,10 +2,7 @@ package build
 
 import (
 	"errors"
-	"fmt"
 	"os"
-
-	"github.com/coffeebeats/gdbuild/internal/merge"
 )
 
 const (
@@ -65,25 +62,6 @@ func (c *SCons) Validate() error {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
-	}
-
-	return nil
-}
-
-/* --------------------------- Impl: merge.Merger --------------------------- */
-
-func (c *SCons) Merge(other *SCons) error {
-	if c == nil || other == nil {
-		return nil
-	}
-
-	c.CCFlags = append(c.CCFlags, other.CCFlags...)
-	c.CFlags = append(c.CFlags, other.CFlags...)
-	c.CXXFlags = append(c.CXXFlags, other.CXXFlags...)
-	c.ExtraArgs = append(c.ExtraArgs, other.ExtraArgs...)
-
-	if err := merge.Primitive(&c.PathCache, other.PathCache); err != nil {
-		return fmt.Errorf("%w: cache_path", err)
 	}
 
 	return nil

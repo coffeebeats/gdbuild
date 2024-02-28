@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
-	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
@@ -83,28 +82,6 @@ func (c *MacOS) Validate() error {
 	return nil
 }
 
-/* --------------------------- Impl: merge.Merger --------------------------- */
-
-func (c *MacOS) Merge(other *MacOS) error {
-	if c == nil || other == nil {
-		return nil
-	}
-
-	if err := c.Base.Merge(other.Base); err != nil {
-		return err
-	}
-
-	if err := c.Vulkan.Merge(&other.Vulkan); err != nil {
-		return err
-	}
-
-	if err := merge.Primitive(&c.PathLipo, other.PathLipo); err != nil {
-		return fmt.Errorf("%w: lipo_path", err)
-	}
-
-	return nil
-}
-
 /* -------------------------------------------------------------------------- */
 /*                               Struct: Vulkan                               */
 /* -------------------------------------------------------------------------- */
@@ -133,24 +110,6 @@ func (c *Vulkan) Configure(inv *build.Invocation) error {
 func (c *Vulkan) Validate() error {
 	if err := c.PathSDK.CheckIsDirOrEmpty(); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-/* --------------------------- Impl: merge.Merger --------------------------- */
-
-func (c *Vulkan) Merge(other *Vulkan) error {
-	if c == nil || other == nil {
-		return nil
-	}
-
-	if err := merge.Pointer(c.Dynamic, other.Dynamic); err != nil {
-		return fmt.Errorf("%w: dynamic", err)
-	}
-
-	if err := merge.Primitive(&c.PathSDK, other.PathSDK); err != nil {
-		return fmt.Errorf("%w: sdk_path", err)
 	}
 
 	return nil

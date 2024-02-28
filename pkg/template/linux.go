@@ -66,17 +66,3 @@ func (c *Linux) Validate() error {
 
 	return nil
 }
-
-/* --------------------------- Impl: merge.Merger --------------------------- */
-
-func (c *Linux) Merge(other *Linux) error {
-	if c == nil || other == nil {
-		return nil
-	}
-
-	if err := c.Base.Merge(other.Base); err != nil {
-		return err
-	}
-
-	return nil
-}

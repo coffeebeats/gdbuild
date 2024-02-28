@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
-	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
@@ -80,28 +79,6 @@ func (c *Android) Validate() error {
 
 	if err := c.PathSDK.CheckIsDirOrEmpty(); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-/* --------------------------- Impl: merge.Merger --------------------------- */
-
-func (c *Android) Merge(other *Android) error {
-	if c == nil || other == nil {
-		return nil
-	}
-
-	if err := c.Base.Merge(other.Base); err != nil {
-		return err
-	}
-
-	if err := merge.Primitive(&c.PathGradlew, other.PathGradlew); err != nil {
-		return fmt.Errorf("%w: gradlew_path", err)
-	}
-
-	if err := merge.Primitive(&c.PathSDK, other.PathSDK); err != nil {
-		return fmt.Errorf("%w: sdk_path", err)
 	}
 
 	return nil

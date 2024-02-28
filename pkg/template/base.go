@@ -10,7 +10,6 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/exec"
-	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
@@ -267,46 +266,6 @@ func (c *Base) Validate() error {
 	}
 
 	if err := c.SCons.Validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/* --------------------------- Impl: merge.Merger --------------------------- */
-
-func (c *Base) Merge(other *Base) error {
-	if c == nil || other == nil {
-		return nil
-	}
-
-	c.CustomModules = append(c.CustomModules, other.CustomModules...)
-
-	if err := merge.Pointer(c.DoublePrecision, other.DoublePrecision); err != nil {
-		return fmt.Errorf("%w: double_precision", err)
-	}
-
-	if err := merge.Map(&c.Env, other.Env); err != nil {
-		return fmt.Errorf("%w: env", err)
-	}
-
-	if err := merge.Primitive(&c.Optimize, other.Optimize); err != nil {
-		return fmt.Errorf("%w: optimize", err)
-	}
-
-	if err := merge.Primitive(&c.PathCustomPy, other.PathCustomPy); err != nil {
-		return fmt.Errorf("%w: custom_py_path", err)
-	}
-
-	if err := c.Hook.Merge(&other.Hook); err != nil {
-		return err
-	}
-
-	if err := c.SCons.Merge(&other.SCons); err != nil {
-		return err
-	}
-
-	if err := c.Godot.Merge(&other.Godot); err != nil {
 		return err
 	}
 

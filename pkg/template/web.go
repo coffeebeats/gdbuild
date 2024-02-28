@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
-	"github.com/coffeebeats/gdbuild/internal/merge"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
@@ -54,24 +53,6 @@ func (c *Web) Validate() error {
 	case build.ArchUnknown:
 	default:
 		return fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, c.Base.Arch)
-	}
-
-	return nil
-}
-
-/* --------------------------- Impl: merge.Merger --------------------------- */
-
-func (c *Web) Merge(other *Web) error {
-	if c == nil || other == nil {
-		return nil
-	}
-
-	if err := c.Base.Merge(other.Base); err != nil {
-		return err
-	}
-
-	if err := merge.Pointer(c.EnableEval, other.EnableEval); err != nil {
-		return fmt.Errorf("%w: enable_eval", err)
 	}
 
 	return nil
