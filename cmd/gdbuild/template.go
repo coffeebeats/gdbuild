@@ -27,6 +27,10 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 		Flags: []cli.Flag{
 			newVerboseFlag(),
 
+			&cli.BoolFlag{
+				Name:  "dry-run",
+				Usage: "log the build command without running it",
+			},
 			&cli.PathFlag{
 				Name:  "path",
 				Value: ".",
@@ -145,6 +149,12 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 			action, err := t.Action()
 			if err != nil {
 				return err
+			}
+
+			if c.Bool("dry-run") {
+				log.Print(action.Sprint())
+
+				return nil
 			}
 
 			return action.Run(c.Context)

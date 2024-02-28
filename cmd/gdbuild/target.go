@@ -28,6 +28,10 @@ func NewTarget() *cli.Command { //nolint:funlen
 		Flags: []cli.Flag{
 			newVerboseFlag(),
 
+			&cli.BoolFlag{
+				Name:  "dry-run",
+				Usage: "log the build command without running it",
+			},
 			&cli.PathFlag{
 				Name:  "path",
 				Value: ".",
