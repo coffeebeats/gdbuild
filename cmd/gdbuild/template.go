@@ -131,6 +131,8 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 				pathBuild = p
 			}
 
+			log.Debugf("using build directory: %s", pathBuild)
+
 			inv := build.Invocation{
 				Verbose:      log.GetLevel() == log.DebugLevel,
 				Features:     features,

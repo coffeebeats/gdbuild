@@ -25,8 +25,8 @@ var _ Action = (*Process)(nil)
 /* ------------------------------ Impl: Runner ------------------------------ */
 
 // Run executes the underlying function.
-func (p Process) Run(ctx context.Context) error {
-	process := exec.Process(p)
+func (p *Process) Run(ctx context.Context) error {
+	process := exec.Process(*p)
 
 	log.Infof("running command: %s", process.String())
 
@@ -37,21 +37,21 @@ func (p Process) Run(ctx context.Context) error {
 
 // After creates a new action which executes the provided action and then the
 // wrapped function.
-func (p Process) After(a Action) Action { //nolint:ireturn
+func (p *Process) After(a Action) Action { //nolint:ireturn
 	return Sequence{Action: p, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped function and then the
 // provided action.
-func (p Process) AndThen(a Action) Action { //nolint:ireturn
+func (p *Process) AndThen(a Action) Action { //nolint:ireturn
 	return Sequence{Action: p, Post: a} //nolint:exhaustruct
 }
 
 /* ------------------------------ Impl: Printer ----------------------------- */
 
 // Sprint displays the action without actually executing it.
-func (p Process) Sprint() string {
+func (p *Process) Sprint() string {
 	dir := fmt.Sprintf("in directory '%s':\n  ", p.Directory)
 
-	return dir + exec.Process(p).String()
+	return dir + exec.Process(*p).String()
 }

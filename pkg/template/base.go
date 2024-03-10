@@ -198,7 +198,7 @@ func (c *Base) action() (buildAction, error) { //nolint:cyclop,funlen
 				Shell:    c.Hook.Shell,
 				Verbose:  c.Invocation.Verbose,
 			},
-			Action: cmd.
+			Action: (&cmd).
 				// Vendor the Godot source code prior to executing the build action.
 				After(newVendorGodotAction(&c.Godot, &c.Invocation)).
 				// Move the generated Godot export template artifacts after  executing the build action.
