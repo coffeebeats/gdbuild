@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.3 (2024-03-10)
+
+## What's Changed
+* chore(template): remove implementation of unused interface by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/14
+* fix(template): address errors blocking template builds by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/17
+* chore(deps): bump github.com/charmbracelet/lipgloss from 0.9.1 to 0.10.0 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/16
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.0.2...v0.0.3
+
 ## 0.0.2 (2024-02-28)
 
 ## What's Changed
