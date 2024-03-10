@@ -25,6 +25,13 @@ const (
 	ProfileRelease
 )
 
+/* ---------------------------- Method: IsRelease --------------------------- */
+
+// IsRelease returns whether the profile setting is a "release" type.
+func (p Profile) IsRelease() bool {
+	return p == ProfileRelease || p == ProfileReleaseDebug
+}
+
 /* ----------------------------- Impl: Stringer ----------------------------- */
 
 // String implements 'fmt.Stringer' for 'Profile' according to the profile names
