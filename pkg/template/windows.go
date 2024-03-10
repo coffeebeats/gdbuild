@@ -16,6 +16,9 @@ import (
 type Windows struct {
 	*Base
 
+	// UseMinGW determines whether the MinGW compiler is used.
+	UseMinGW bool `toml:"use_mingw"`
+
 	// PathIcon is a path to a Windows application icon.
 	PathIcon build.Path `toml:"icon_path"`
 }
@@ -29,6 +32,14 @@ func (c *Windows) Action() (action.Action, error) { //nolint:ireturn
 	}
 
 	cmd.process.Args = append(cmd.process.Args, "platform="+build.OSWindows.String())
+
+	if c.UseMinGW {
+		cmd.process.Args = append(cmd.process.Args, "use_mingw=yes")
+
+		if c.Base.Invocation.Profile.IsRelease() {
+			cmd.process.Args = append(cmd.process.Args, "lto=full")
+		}
+	}
 
 	return cmd.action, nil
 }
