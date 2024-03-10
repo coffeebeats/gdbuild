@@ -6,7 +6,7 @@ require (
 	dario.cat/mergo v1.0.0
 	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/charmbracelet/log v0.3.1
-	github.com/coffeebeats/gdenv v0.6.11
+	github.com/coffeebeats/gdenv v0.6.12
 	github.com/pelletier/go-toml/v2 v2.1.1
 	github.com/urfave/cli/v2 v2.27.1
 )
@@ -26,8 +26,8 @@ require (
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/xrash/smetrics v0.0.0-20231213231151-1d8dd44e695e // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
-	golang.org/x/mod v0.15.0 // indirect
-	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/mod v0.16.0 // indirect
+	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 )
