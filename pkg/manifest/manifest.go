@@ -105,7 +105,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := merge(&base, child); err != nil {
+		if err := merge(base, *child); err != nil {
 			return nil, err
 		}
 
@@ -116,7 +116,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := merge(&base, child); err != nil {
+		if err := merge(base, *child); err != nil {
 			return nil, err
 		}
 
@@ -127,7 +127,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := merge(&base, child); err != nil {
+		if err := merge(base, *child); err != nil {
 			return nil, err
 		}
 
@@ -138,7 +138,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := merge(&base, child); err != nil {
+		if err := merge(base, *child); err != nil {
 			return nil, err
 		}
 
@@ -149,7 +149,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := merge(&base, child); err != nil {
+		if err := merge(base, *child); err != nil {
 			return nil, err
 		}
 
@@ -160,7 +160,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, fmt.Errorf("%w: incompatible template type", ErrInvalidInput)
 		}
 
-		if err := merge(&base, child); err != nil {
+		if err := merge(base, *child); err != nil {
 			return nil, err
 		}
 
