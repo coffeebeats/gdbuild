@@ -23,7 +23,14 @@ type Windows struct {
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
 func (c *Windows) Action() (action.Action, error) { //nolint:ireturn
-	return nil, ErrUnimplemented
+	cmd, err := c.Base.action()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd.process.Args = append(cmd.process.Args, "platform="+build.OSWindows.String())
+
+	return cmd.action, nil
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
