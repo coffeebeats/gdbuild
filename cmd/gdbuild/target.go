@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -102,8 +101,6 @@ func NewTarget() *cli.Command { //nolint:funlen
 			}
 
 			log.Debugf("using manifest at path: %s", pathManifest)
-
-			pathManifest = filepath.Dir(pathManifest) //nolint:ineffassign,staticcheck,wastedassign
 
 			// Collect build modifiers.
 
