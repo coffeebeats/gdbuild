@@ -19,8 +19,8 @@ var _ Action = (*Command)(nil)
 
 /* ----------------------------- Method: process ---------------------------- */
 
-func (c Command) process() Process {
-	return Process{Args: strings.Split(string(c), " ")} //nolint:exhaustruct
+func (c Command) process() *Process {
+	return &Process{Args: strings.Split(string(c), " ")} //nolint:exhaustruct
 }
 
 /* ------------------------------ Impl: Runner ------------------------------ */
