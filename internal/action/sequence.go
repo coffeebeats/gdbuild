@@ -20,6 +20,18 @@ type Sequence struct {
 // Compile-time check that 'Action' is implemented.
 var _ Action = (*Sequence)(nil)
 
+/* ----------------------------- Method: Unwrap ----------------------------- */
+
+// Unwrap recursively unwraps a sequence to get the central 'Runner'.
+func (s Sequence) Unwrap() Runner { //nolint:ireturn
+	inner, ok := s.Action.(Sequence)
+	if ok {
+		return inner.Unwrap()
+	}
+
+	return s.Action
+}
+
 /* ------------------------------ Impl: Action ------------------------------ */
 
 // Run executes all actions in the sequence.
