@@ -67,12 +67,12 @@ func newMoveArtifactsAction(inv *build.Invocation) action.Action { //nolint:iret
 			return err
 		}
 
-		pathBin := filepath.Join(inv.PathBuild.String(), "bin")
-		if err := osutil.EnsureDir(pathBin, osutil.ModeUserRWXGroupRX); err != nil {
+		pathBin := inv.BinPath()
+		if err := pathBin.CheckIsDir(); err != nil {
 			return err
 		}
 
-		ff, err := os.ReadDir(pathBin)
+		ff, err := os.ReadDir(string(pathBin))
 		if err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func newMoveArtifactsAction(inv *build.Invocation) action.Action { //nolint:iret
 			log.Debugf("moving artifact %s: %s", f.Name(), pathOut)
 
 			if err := os.Rename(
-				filepath.Join(pathBin, f.Name()),
+				filepath.Join(string(pathBin), f.Name()),
 				filepath.Join(pathOut, f.Name()),
 			); err != nil {
 				return err

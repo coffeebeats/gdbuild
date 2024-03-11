@@ -1,6 +1,9 @@
 package build
 
-import "fmt"
+import (
+	"fmt"
+	"path/filepath"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                             Struct: Invocation                             */
@@ -31,7 +34,14 @@ type Invocation struct {
 	PathOut Path
 }
 
-/* ---------------------------- Method: Validate ---------------------------- */
+/* ----------------------------- Method: BinPath ---------------------------- */
+
+// BinPath returns the path to the Godot template artifacts are compilation.
+func (c *Invocation) BinPath() Path {
+	return Path(filepath.Join(c.PathBuild.String(), "bin"))
+}
+
+/* ----------------------------- Impl: Validater ---------------------------- */
 
 func (c *Invocation) Validate() error {
 	if _, err := ParseOS(c.Platform.String()); err != nil {

@@ -64,5 +64,7 @@ func (c *SCons) Validate() error {
 		}
 	}
 
+	// NOTE: Don't check for 'scons' command, that should be a runtime check.
+
 	return nil
 }

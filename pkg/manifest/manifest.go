@@ -234,7 +234,7 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,gocognit,i
 
 		out = &base
 	case build.OSLinux:
-		base := template.Linux{Base: base}
+		base := template.Linux{Base: base} //nolint:exhaustruct
 
 		t := m.Template.Platform.Linux
 		if err := t.Configure(&base.Invocation); err != nil {

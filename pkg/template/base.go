@@ -53,18 +53,11 @@ type Base struct {
 
 /* ----------------------------- Method: action ----------------------------- */
 
-// buildAction stores a reference to the Godot export template build action and
-// the 'action.Process' used to invoke SCons.
-type buildAction struct {
-	action  action.Action
-	process *action.Process
-}
-
 // action builds an 'action.Action' which executes the entire workflow for
 // compiling the Godot export template and moving artifacts to the output path.
 // A reference to the 'action.Process' containing the SCons command is provided
 // so that platform-specific 'Template' types can modify it prior to execution.
-func (c *Base) action() (buildAction, error) { //nolint:cyclop,funlen
+func (c *Base) action() (*action.Process, error) { //nolint:cyclop,funlen
 	var cmd action.Process
 
 	cmd.Directory = string(c.Invocation.PathBuild)
@@ -121,6 +114,8 @@ func (c *Base) action() (buildAction, error) { //nolint:cyclop,funlen
 		cmd.Args = append(cmd.Args, "custom="+path.String())
 	}
 
+	cmd.Args = append(cmd.Args, "target="+c.targetName())
+
 	// Append profile/optimization-related arguments.
 	switch c.Invocation.Profile {
 	case build.ProfileRelease:
@@ -131,7 +126,6 @@ func (c *Base) action() (buildAction, error) { //nolint:cyclop,funlen
 
 		cmd.Args = append(
 			cmd.Args,
-			"target=template_release",
 			"production=yes",
 			fmt.Sprintf("optimize=%s", optimize),
 		)
@@ -144,7 +138,6 @@ func (c *Base) action() (buildAction, error) { //nolint:cyclop,funlen
 
 		cmd.Args = append(
 			cmd.Args,
-			"target=template_debug",
 			"debug_symbols=yes",
 			"dev_mode=yes",
 			fmt.Sprintf("optimize=%s", optimize),
@@ -157,13 +150,12 @@ func (c *Base) action() (buildAction, error) { //nolint:cyclop,funlen
 
 		cmd.Args = append(
 			cmd.Args,
-			"target=template_debug",
 			"debug_symbols=yes",
 			"dev_mode=yes",
 			fmt.Sprintf("optimize=%s", optimize),
 		)
 	default:
-		return buildAction{}, fmt.Errorf("%w: profile: %s", ErrInvalidInput, c.Invocation.Profile)
+		return nil, fmt.Errorf("%w: profile: %s", ErrInvalidInput, c.Invocation.Profile)
 	}
 
 	// Append C/C++ build flags.
@@ -190,26 +182,42 @@ func (c *Base) action() (buildAction, error) { //nolint:cyclop,funlen
 	// Append extra arguments.
 	cmd.Args = append(cmd.Args, c.SCons.ExtraArgs...)
 
-	return buildAction{
-		process: &cmd,
-		action: action.Sequence{
-			Pre: action.Commands{
-				Commands: c.Hook.Pre,
-				Shell:    c.Hook.Shell,
-				Verbose:  c.Invocation.Verbose,
-			},
-			Action: (&cmd).
-				// Vendor the Godot source code prior to executing the build action.
-				After(newVendorGodotAction(&c.Godot, &c.Invocation)).
-				// Move the generated Godot export template artifacts after  executing the build action.
-				AndThen(newMoveArtifactsAction(&c.Invocation)),
-			Post: action.Commands{
-				Commands: c.Hook.Post,
-				Shell:    c.Hook.Shell,
-				Verbose:  c.Invocation.Verbose,
-			},
+	return &cmd, nil
+}
+
+/* --------------------------- Method: targetName --------------------------- */
+
+// targetName returns the name of the SCons build target based on the profile.
+func (c *Base) targetName() string {
+	if c.Invocation.Profile == build.ProfileRelease {
+		return "template_release"
+	}
+
+	return "template_debug"
+}
+
+/* ------------------------ Method: wrapBuildCommand ------------------------ */
+
+// wrapBuildCommand wraps the provided build command in the 'Base' template's
+// hook, vendor, and artifact move actions.
+func (c *Base) wrapBuildCommand(cmd action.Action) action.Sequence {
+	return action.Sequence{
+		Pre: action.Commands{
+			Commands: c.Hook.Pre,
+			Shell:    c.Hook.Shell,
+			Verbose:  c.Invocation.Verbose,
 		},
-	}, nil
+		Action: cmd.
+			// Vendor the Godot source code prior to executing the build action.
+			After(newVendorGodotAction(&c.Godot, &c.Invocation)).
+			// Move the generated Godot export template artifacts after  executing the build action.
+			AndThen(newMoveArtifactsAction(&c.Invocation)),
+		Post: action.Commands{
+			Commands: c.Hook.Post,
+			Shell:    c.Hook.Shell,
+			Verbose:  c.Invocation.Verbose,
+		},
+	}
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
