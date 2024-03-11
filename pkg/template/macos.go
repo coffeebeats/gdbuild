@@ -44,7 +44,7 @@ func (c *MacOS) Action() (action.Action, error) { //nolint:cyclop,funlen,ireturn
 			cmd.Args = append(cmd.Args, "vulkan_sdk_path="+string(vulkan))
 		}
 
-		return c.wrapMacOSBuildCommand(cmd), nil
+		return c.wrapBuildCommand(cmd), nil
 	case build.ArchUniversal:
 		// First, create the 'x86_64' binary.
 		templateAmd64 := *c
@@ -100,7 +100,7 @@ func (c *MacOS) Action() (action.Action, error) { //nolint:cyclop,funlen,ireturn
 			),
 		}
 
-		return c.wrapMacOSBuildCommand(
+		return c.wrapBuildCommand(
 			cmdAmd64.
 				AndThen(cmdArm64).
 				AndThen(cmdLipo),
@@ -109,12 +109,6 @@ func (c *MacOS) Action() (action.Action, error) { //nolint:cyclop,funlen,ireturn
 	default:
 		return nil, fmt.Errorf("%w: unsupported architecture: %s", ErrInvalidInput, a)
 	}
-}
-
-/* ---------------------- Method: wrapMacOSBuildCommand --------------------- */
-
-func (c *MacOS) wrapMacOSBuildCommand(cmd action.Action) action.Sequence {
-	return c.wrapBuildCommand(cmd)
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
