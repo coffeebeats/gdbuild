@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.4 (2024-03-11)
+
+## What's Changed
+* feat(template): add support for building `Linux`, `Windows`, and `MacOS` templates by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/18
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.0.3...v0.0.4
+
 ## 0.0.3 (2024-03-10)
 
 ## What's Changed
