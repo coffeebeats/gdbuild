@@ -16,17 +16,96 @@ import (
 type MacOS struct {
 	*Base
 
-	// PathLipo is the path to the 'lipo' executable. Only used if 'arch' is set
-	// to 'build.ArchUniversal' and defaults to 'lipo'.
-	PathLipo build.Path `toml:"lipo_path"`
+	// LipoCommand contains arguments used to invoke 'lipo'. Defaults to
+	// ["lipo"]. Only used if 'arch' is set to 'build.ArchUniversal'.
+	LipoCommand []string `toml:"lipo_command"`
 
 	Vulkan Vulkan `toml:"vulkan"`
 }
 
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
-func (c *MacOS) Action() (action.Action, error) { //nolint:ireturn
-	return nil, ErrUnimplemented
+func (c *MacOS) Action() (action.Action, error) { //nolint:funlen,ireturn
+	switch a := c.Base.Arch; a {
+	case build.ArchAmd64, build.ArchArm64:
+		cmd, err := c.Base.action()
+		if err != nil {
+			return nil, err
+		}
+
+		cmd.Args = append(cmd.Args, "platform="+build.OSMacOS.String())
+
+		return c.wrapMacOSBuildCommand(cmd), nil
+	case build.ArchUniversal:
+		// First, create the 'x86_64' binary.
+		templateAmd64 := *c
+		templateAmd64.Base.Arch = build.ArchAmd64
+
+		buildAmd64, err := templateAmd64.Action()
+		if err != nil {
+			return nil, err
+		}
+
+		cmdAmd64, ok := buildAmd64.(action.Sequence).Unwrap().(*action.Process)
+		if !ok {
+			return nil, fmt.Errorf("%w: failed to unwrap action", ErrInvalidInput)
+		}
+
+		// Next, create the 'arm64' binary.
+		templateArm64 := *c
+		templateArm64.Base.Arch = build.ArchArm64
+
+		buildArm64, err := templateArm64.Action()
+		if err != nil {
+			return nil, err
+		}
+
+		cmdArm64, ok := buildArm64.(action.Sequence).Unwrap().(*action.Process)
+		if !ok {
+			return nil, fmt.Errorf("%w: failed to unwrap action", ErrInvalidInput)
+		}
+
+		// Finally, merge the two binaries together.
+		lipo := c.LipoCommand
+		if len(lipo) == 0 {
+			lipo = append(lipo, "lipo")
+		}
+
+		targetName := c.Base.targetName()
+
+		cmdLipo := &action.Process{
+			Directory:   string(c.Invocation.BinPath()),
+			Environment: nil,
+
+			Shell: cmdArm64.Shell,
+
+			Verbose: c.Invocation.Verbose,
+
+			Args: append(
+				lipo,
+				"-create",
+				fmt.Sprintf("godot.macos.%s.x86_64", targetName),
+				fmt.Sprintf("godot.macos.%s.arm64", targetName),
+				"-output",
+				fmt.Sprintf("godot.macos.%s.universal", targetName),
+			),
+		}
+
+		return c.wrapMacOSBuildCommand(
+			cmdAmd64.
+				AndThen(cmdArm64).
+				AndThen(cmdLipo),
+		), nil
+
+	default:
+		return nil, fmt.Errorf("%w: unsupported architecture: %s", ErrInvalidInput, a)
+	}
+}
+
+/* ---------------------- Method: wrapMacOSBuildCommand --------------------- */
+
+func (c *MacOS) wrapMacOSBuildCommand(cmd action.Action) action.Sequence {
+	return c.wrapBuildCommand(cmd)
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
@@ -41,10 +120,6 @@ func (c *MacOS) Configure(inv *build.Invocation) error {
 	}
 
 	if err := c.Vulkan.Configure(inv); err != nil {
-		return err
-	}
-
-	if err := c.PathLipo.RelTo(inv.PathManifest); err != nil {
 		return err
 	}
 
@@ -65,9 +140,7 @@ func (c *MacOS) Validate() error {
 		return fmt.Errorf("%w: unsupport architecture: %s", ErrInvalidInput, c.Base.Arch)
 	}
 
-	if err := c.PathLipo.CheckIsFileOrEmpty(); err != nil {
-		return err
-	}
+	// NOTE: Don't check for 'lipo', that should be a runtime check.
 
 	if err := c.Vulkan.Validate(); err != nil {
 		return err

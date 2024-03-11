@@ -28,15 +28,15 @@ func (c *Linux) Action() (action.Action, error) { //nolint:ireturn
 		return nil, err
 	}
 
-	cmd.process.Args = append(cmd.process.Args, "platform="+build.OSLinux.String())
+	cmd.Args = append(cmd.Args, "platform="+build.OSLinux.String()) //nolint:goconst
 
 	if c.UseLLVM {
-		cmd.process.Args = append(cmd.process.Args, "use_llvm=yes")
+		cmd.Args = append(cmd.Args, "use_llvm=yes")
 	} else if c.Base.Invocation.Profile.IsRelease() { // Only valid with GCC.
-		cmd.process.Args = append(cmd.process.Args, "lto=full")
+		cmd.Args = append(cmd.Args, "lto=full")
 	}
 
-	return cmd.action, nil
+	return c.wrapBuildCommand(cmd), nil
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */

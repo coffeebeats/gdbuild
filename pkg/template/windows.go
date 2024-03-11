@@ -31,17 +31,17 @@ func (c *Windows) Action() (action.Action, error) { //nolint:ireturn
 		return nil, err
 	}
 
-	cmd.process.Args = append(cmd.process.Args, "platform="+build.OSWindows.String())
+	cmd.Args = append(cmd.Args, "platform="+build.OSWindows.String())
 
 	if c.UseMinGW {
-		cmd.process.Args = append(cmd.process.Args, "use_mingw=yes")
+		cmd.Args = append(cmd.Args, "use_mingw=yes")
 
 		if c.Base.Invocation.Profile.IsRelease() {
-			cmd.process.Args = append(cmd.process.Args, "lto=full")
+			cmd.Args = append(cmd.Args, "lto=full")
 		}
 	}
 
-	return cmd.action, nil
+	return c.wrapBuildCommand(cmd), nil
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
