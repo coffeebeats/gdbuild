@@ -45,6 +45,17 @@ func (p Path) CheckIsDirOrEmpty() error {
 	return nil
 }
 
+/* --------------------------- Method: CheckIsFile -------------------------- */
+
+// CheckIsFile verifies that the underlying path is a valid file.
+func (p Path) CheckIsFile() error {
+	if p == "" {
+		return ErrInvalidInput
+	}
+
+	return p.CheckIsFileOrEmpty()
+}
+
 /* ----------------------- Method: CheckIsFileOrEmpty ----------------------- */
 
 // CheckIsFileOrEmpty verifies that the underlying path is either empty or a
@@ -85,7 +96,18 @@ func (p *Path) RelTo(base Path) error {
 		return nil
 	}
 
-	path, err := filepath.Abs(filepath.Join(string(base), path))
+	info, err := os.Stat(string(base))
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("%w: path: %s: %w", ErrInvalidInput, base, err)
+		}
+	}
+
+	if info != nil && !info.IsDir() {
+		base = Path(filepath.Dir(string(base)))
+	}
+
+	path, err = filepath.Abs(filepath.Join(string(base), path))
 	if err != nil {
 		return err
 	}

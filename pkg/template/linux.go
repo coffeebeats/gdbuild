@@ -15,6 +15,9 @@ import (
 // export template.
 type Linux struct {
 	*Base
+
+	// UseLLVM determines whether the LLVM compiler is used.
+	UseLLVM bool `toml:"use_llvm"`
 }
 
 /* -------------------------- Impl: action.Actioner ------------------------- */
@@ -25,9 +28,15 @@ func (c *Linux) Action() (action.Action, error) { //nolint:ireturn
 		return nil, err
 	}
 
-	cmd.process.Args = append(cmd.process.Args, "platform="+build.OSLinux.String())
+	cmd.Args = append(cmd.Args, "platform="+build.OSLinux.String()) //nolint:goconst
 
-	return cmd.action, nil
+	if c.UseLLVM {
+		cmd.Args = append(cmd.Args, "use_llvm=yes")
+	} else if c.Base.Invocation.Profile.IsRelease() { // Only valid with GCC.
+		cmd.Args = append(cmd.Args, "lto=full")
+	}
+
+	return c.wrapBuildCommand(cmd), nil
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */

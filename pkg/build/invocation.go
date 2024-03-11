@@ -1,6 +1,9 @@
 package build
 
-import "fmt"
+import (
+	"fmt"
+	"path/filepath"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                             Struct: Invocation                             */
@@ -24,14 +27,21 @@ type Invocation struct {
 	// artifacts will be copied here and the SCons build command will be
 	// executed within this directory. Defaults to a temporary directory.
 	PathBuild Path
-	// PathManifest is the directory in which the GDBuild manifest is located.
-	// This is used to locate relative paths in various other properties.
+	// PathManifest is the path to the GDBuild manifest. This is used to locate
+	// relative paths in various other properties.
 	PathManifest Path
 	// PathOut is the directory in which to move built artifacts to.
 	PathOut Path
 }
 
-/* ---------------------------- Method: Validate ---------------------------- */
+/* ----------------------------- Method: BinPath ---------------------------- */
+
+// BinPath returns the path to the Godot template artifacts are compilation.
+func (c *Invocation) BinPath() Path {
+	return Path(filepath.Join(c.PathBuild.String(), "bin"))
+}
+
+/* ----------------------------- Impl: Validater ---------------------------- */
 
 func (c *Invocation) Validate() error {
 	if _, err := ParseOS(c.Platform.String()); err != nil {
@@ -42,7 +52,7 @@ func (c *Invocation) Validate() error {
 		return err
 	}
 
-	if err := c.PathManifest.CheckIsDir(); err != nil {
+	if err := c.PathManifest.CheckIsFile(); err != nil {
 		return err
 	}
 

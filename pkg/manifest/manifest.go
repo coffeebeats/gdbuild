@@ -3,7 +3,6 @@ package manifest
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	"dario.cat/mergo"
 
@@ -42,6 +41,13 @@ func Filename() string {
 
 /* -------------------------- Method: BuildTemplate ------------------------- */
 
+// BuildTemplate creates a `Template` instance which contains an action for
+// compiling Godot based on the specified configuration.
+//
+// FIXME: This method cannot perform validation because a manifest with
+// inheritance is only valid until it's completely assembled. This function is
+// recurisve, so the base case, a manifest without inheritance, is unable to
+// skip validation (which is only needed after full manifest assembly).
 func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 	inv build.Invocation,
 ) (template.Template, error) {
@@ -65,11 +71,11 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 			return nil, err
 		}
 
-		if err := t.Validate(); err != nil {
-			return nil, err
-		}
-
 		return t, nil
+	}
+
+	if err := m.Config.Extends.CheckIsFile(); err != nil {
+		return nil, err
 	}
 
 	baseManifest, err := ParseFile(string(m.Config.Extends))
@@ -84,7 +90,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 	m.Parent = baseManifest
 
 	baseInv := inv
-	baseInv.PathManifest = build.Path(filepath.Dir(string(m.Config.Extends)))
+	baseInv.PathManifest = build.Path(string(m.Config.Extends))
 
 	baseTemplate, err := baseManifest.BuildTemplate(baseInv)
 	if err != nil {
@@ -173,10 +179,6 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 		return nil, err
 	}
 
-	if err := out.Validate(); err != nil {
-		return nil, err
-	}
-
 	return out, nil
 }
 
@@ -232,7 +234,7 @@ func (m *Manifest) mergeTemplateForInvocation( //nolint:cyclop,funlen,gocognit,i
 
 		out = &base
 	case build.OSLinux:
-		base := template.Linux{Base: base}
+		base := template.Linux{Base: base} //nolint:exhaustruct
 
 		t := m.Template.Platform.Linux
 		if err := t.Configure(&base.Invocation); err != nil {

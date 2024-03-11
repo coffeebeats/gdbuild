@@ -100,8 +100,6 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 
 			log.Debugf("using manifest at path: %s", pathManifest)
 
-			pathManifest = filepath.Dir(pathManifest)
-
 			// Collect build modifiers.
 
 			features := c.StringSlice("feature")
@@ -145,6 +143,10 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 
 			t, err := m.BuildTemplate(inv)
 			if err != nil {
+				return err
+			}
+
+			if err := t.Validate(); err != nil {
 				return err
 			}
 

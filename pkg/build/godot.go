@@ -104,7 +104,7 @@ func (c *Godot) Configure(inv *Invocation) error {
 
 func (c *Godot) Validate() error { //nolint:cyclop
 	if c.IsEmpty() {
-		return nil
+		return fmt.Errorf("%w: no Godot version specified in manifest", ErrMissingInput)
 	}
 
 	if c.PathSource != "" {
