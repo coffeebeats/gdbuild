@@ -20,12 +20,13 @@ type MacOS struct {
 	// ["lipo"]. Only used if 'arch' is set to 'build.ArchUniversal'.
 	LipoCommand []string `toml:"lipo_command"`
 
+	// Vulkan defines Vulkan-related configuration.
 	Vulkan Vulkan `toml:"vulkan"`
 }
 
 /* -------------------------- Impl: action.Actioner ------------------------- */
 
-func (c *MacOS) Action() (action.Action, error) { //nolint:funlen,ireturn
+func (c *MacOS) Action() (action.Action, error) { //nolint:cyclop,funlen,ireturn
 	switch a := c.Base.Arch; a {
 	case build.ArchAmd64, build.ArchArm64:
 		cmd, err := c.Base.action()
@@ -34,6 +35,14 @@ func (c *MacOS) Action() (action.Action, error) { //nolint:funlen,ireturn
 		}
 
 		cmd.Args = append(cmd.Args, "platform="+build.OSMacOS.String())
+
+		if volk := c.Vulkan.Dynamic; volk != nil && *volk {
+			cmd.Args = append(cmd.Args, "use_volk=yes")
+		}
+
+		if vulkan := c.Vulkan.PathSDK; vulkan != "" {
+			cmd.Args = append(cmd.Args, "vulkan_sdk_path="+string(vulkan))
+		}
 
 		return c.wrapMacOSBuildCommand(cmd), nil
 	case build.ArchUniversal:
