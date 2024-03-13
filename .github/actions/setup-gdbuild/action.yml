@@ -1,0 +1,70 @@
+name: "🤖 Set up: 'gdbuild' executable"
+description: "Install the specified version of 'gdbuild'."
+
+inputs:
+  version:
+    description: "The version of 'gdbuild' to install."
+    required: false
+    default: "latest"
+  install-dir:
+    description: "The 'gdbuild' installation directory."
+    required: false
+    default: "~/.gdbuild"
+  modify-path:
+    description: "Whether to add the 'gdbuild' command to 'PATH'."
+    required: false
+    default: true
+  project-dir:
+    description: "A path to a Godot project containing a manifest file."
+    required: false
+    default: "."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache the 'gdbuild' home directory
+      id: cache-gdbuild
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.install-dir }}
+        key: gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ inputs.install-dir }}-${{ hashFiles(format('{0}/**/*.toml', inputs.project-dir)) }}
+        restore-keys: |
+          gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ inputs.install-dir }}-
+
+    - name: Export the 'GDBUILD_HOME' environment variable
+      shell: bash
+      run: export GDBUILD_HOME="${{ inputs.install-dir }}"
+
+    # See https://github.com/coffeebeats/gdbuild/blob/main/docs/installation.md#linuxmacos.
+    - name: Install 'gdbuild' (latest)
+      if: steps.cache-gdbuild.outputs.cache-hit != 'true' && inputs.version == 'latest'
+      shell: bash
+      run: |
+        curl https://raw.githubusercontent.com/coffeebeats/gdbuild/main/scripts/install.sh | sh -s -- --no-modify-path
+
+    # See https://github.com/coffeebeats/gdbuild/blob/main/docs/installation.md#manual-download.
+    - name: Install 'gdbuild'
+      if: steps.cache-gdbuild.outputs.cache-hit != 'true' && inputs.version != 'latest'
+      shell: bash
+      run: |
+        ARCH=x86_64
+        OS="$(echo "$(uname -s)" | tr '[:upper:]' '[:lower:]')"
+        VERSION="$(echo "${{ inputs.version }}" | sed 's/^v//')"
+
+        curl -LO "https://github.com/coffeebeats/gdbuild/releases/download/v${VERSION#v}/gdbuild-$VERSION-$OS-$ARCH.tar.gz"
+
+        mkdir -p $GDBUILD_HOME/bin && \
+        tar -C $GDBUILD_HOME/bin -xf gdbuild-$VERSION-$OS-$ARCH.tar.gz
+
+    - name: Update the 'PATH' environment variable
+      if: inputs.modify-path == 'true'
+      shell: bash
+      run: export PATH="$GDBUILD_HOME/bin:$PATH"
+
+    - name: Validate that the 'gdbuild' executable was installed
+      shell: bash
+      run: |
+        if ! command -v gdbuild >/dev/null; then
+          echo "Failed to install 'gdbuild'!"
+          exit 1
+        fi
