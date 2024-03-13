@@ -33,7 +33,7 @@ runs:
 
     - name: Export the 'GDBUILD_HOME' environment variable
       shell: bash
-      run: export GDBUILD_HOME="${{ inputs.install-dir }}"
+      run: echo "GDBUILD_HOME=${{ inputs.install-dir }}" >> $GITHUB_ENV
 
     # See https://github.com/coffeebeats/gdbuild/blob/main/docs/installation.md#linuxmacos.
     - name: Install 'gdbuild' (latest)
