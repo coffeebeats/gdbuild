@@ -9,7 +9,7 @@ inputs:
   install-dir:
     description: "The 'gdbuild' installation directory."
     required: false
-    default: "~/.gdbuild"
+    default: "$HOME/.gdbuild"
   modify-path:
     description: "Whether to add the 'gdbuild' command to 'PATH'."
     required: false
