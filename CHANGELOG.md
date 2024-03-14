@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.0.5 (2024-03-14)
+
+## What's Changed
+* fix: correctly set default version in `install.sh` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/20
+* feat(ci): define an action for installing `gdbuild` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/22
+* fix(ci): correctly update `PATH` in setup action by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/23
+* fix(ci): correctly export environment variable in setup action by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/24
+* fix(ci): correctly reference home directory in action by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/25
+* fix(ci): correctly use environment variable in cache path by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/26
+* fix(ci): use correct path in cache key by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/27
+* fix(ci): conditionally check for executable on path during setup by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/28
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.0.4...v0.0.5
+
 ## 0.0.4 (2024-03-11)
 
 ## What's Changed
