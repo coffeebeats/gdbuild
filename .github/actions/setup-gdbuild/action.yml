@@ -64,7 +64,15 @@ runs:
     - name: Validate that the 'gdbuild' executable was installed
       shell: bash
       run: |
-        if ! command -v gdbuild >/dev/null; then
+        if ! command -v $GDBUILD_HOME/bin/gdbuild >/dev/null; then
           echo "Failed to install 'gdbuild'!"
+          exit 1
+        fi
+
+        if [[ \
+          "${{ inputs.modify-path }}" == "true" && \
+          "$(command -v gdbuild >/dev/null 2>&1; echo $?)" -ne 0 \
+        ]]; then
+          echo "Failed to add 'gdbuild' to \$PATH!"
           exit 1
         fi
