@@ -6,8 +6,8 @@ github.com/charmbracelet/lipgloss v0.10.0 h1:KWeXFSexGcfahHX+54URiZGkBFazf70JNMt
 github.com/charmbracelet/lipgloss v0.10.0/go.mod h1:Wig9DSfvANsxqkRsqj6x87irdy123SR4dOXlKa91ciE=
 github.com/charmbracelet/log v0.3.1 h1:TjuY4OBNbxmHWSwO3tosgqs5I3biyY8sQPny/eCMTYw=
 github.com/charmbracelet/log v0.3.1/go.mod h1:OR4E1hutLsax3ZKpXbgUqPtTjQfrh1pG3zwHGWuuq8g=
-github.com/coffeebeats/gdenv v0.6.12 h1:dqsI9xr/6dSRC64rxZKE48TrYN1x5Jz+AWBleI9tQZs=
-github.com/coffeebeats/gdenv v0.6.12/go.mod h1:aY1PLNSkRqcI+iqeuEryQPgBj3zhXLfZZm0Ytk9iTQo=
+github.com/coffeebeats/gdenv v0.6.13 h1:uEyk9C4vdSOePaXKtnnosWq0NEaTqCqWfwy29wOkKd0=
+github.com/coffeebeats/gdenv v0.6.13/go.mod h1:aY1PLNSkRqcI+iqeuEryQPgBj3zhXLfZZm0Ytk9iTQo=
 github.com/cpuguy83/go-md2man/v2 v2.0.3 h1:qMCsGGgs+MAzDFyp9LpAe1Lqy/fY/qCovCm0qnXZOBM=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
