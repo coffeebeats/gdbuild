@@ -22,18 +22,18 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Export the 'GDBUILD_HOME' environment variable
+      shell: bash
+      run: echo "GDBUILD_HOME=${{ inputs.install-dir }}" >> $GITHUB_ENV
+
     - name: Cache the 'gdbuild' home directory
       id: cache-gdbuild
       uses: actions/cache@v4
       with:
-        path: ${{ inputs.install-dir }}
+        path: ${{ env.GDBUILD_HOME }}
         key: gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ inputs.install-dir }}-${{ hashFiles(format('{0}/**/*.toml', inputs.project-dir)) }}
         restore-keys: |
           gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ inputs.install-dir }}-
-
-    - name: Export the 'GDBUILD_HOME' environment variable
-      shell: bash
-      run: echo "GDBUILD_HOME=${{ inputs.install-dir }}" >> $GITHUB_ENV
 
     # See https://github.com/coffeebeats/gdbuild/blob/main/docs/installation.md#linuxmacos.
     - name: Install 'gdbuild' (latest)
