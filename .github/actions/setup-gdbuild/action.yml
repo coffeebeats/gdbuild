@@ -31,9 +31,9 @@ runs:
       uses: actions/cache@v4
       with:
         path: ${{ env.GDBUILD_HOME }}
-        key: gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ inputs.install-dir }}-${{ hashFiles(format('{0}/**/*.toml', inputs.project-dir)) }}
+        key: gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ env.GDBUILD_HOME }}-${{ hashFiles(format('{0}/**/*.toml', inputs.project-dir)) }}
         restore-keys: |
-          gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ inputs.install-dir }}-
+          gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ env.GDBUILD_HOME }}-
 
     # See https://github.com/coffeebeats/gdbuild/blob/main/docs/installation.md#linuxmacos.
     - name: Install 'gdbuild' (latest)
