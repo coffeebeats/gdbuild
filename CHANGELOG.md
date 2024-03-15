@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.0.6 (2024-03-15)
+
+## What's Changed
+* chore(deps): bump github.com/coffeebeats/gdenv from 0.6.12 to 0.6.13 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/29
+* fix(template): don't vendor source code if build directory is source directory; update `macos.dynamic` to `macos.use_volk` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/30
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.0.5...v0.0.6
+
 ## 0.0.5 (2024-03-14)
 
 ## What's Changed
