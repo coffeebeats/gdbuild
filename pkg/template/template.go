@@ -42,9 +42,28 @@ func newVendorGodotAction(g *build.Godot, inv *build.Invocation) action.Action {
 			return nil
 		}
 
-		pathBuild := string(inv.PathBuild)
+		pathSource, err := filepath.Abs(g.PathSource.String())
+		if err != nil {
+			return err
+		}
+
+		pathBuild, err := filepath.Abs(inv.PathBuild.String())
+		if err != nil {
+			return err
+		}
+
+		if pathSource == pathBuild {
+			log.Info("build directory is source directory; skipping vendoring of source code")
+
+			return nil
+		}
+
 		if err := osutil.EnsureDir(pathBuild, osutil.ModeUserRWXGroupRX); err != nil {
 			return err
+		}
+
+		if pathSource != "" {
+			return osutil.CopyDir(pathSource, pathBuild)
 		}
 
 		return g.VendorTo(ctx, pathBuild)
