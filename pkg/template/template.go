@@ -62,10 +62,6 @@ func newVendorGodotAction(g *build.Godot, inv *build.Invocation) action.Action {
 			return err
 		}
 
-		if pathSource != "" {
-			return osutil.CopyDir(pathSource, pathBuild)
-		}
-
 		return g.VendorTo(ctx, pathBuild)
 	}
 
