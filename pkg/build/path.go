@@ -120,5 +120,5 @@ func (p *Path) RelTo(base Path) error {
 /* --------------------------- Impl: fmt.Stringer --------------------------- */
 
 func (p Path) String() string {
-	return os.Expand(string(p), os.Getenv)
+	return os.ExpandEnv(string(p))
 }
