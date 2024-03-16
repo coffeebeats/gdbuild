@@ -58,7 +58,7 @@ func (c *Godot) VendorTo(ctx context.Context, out string) error {
 	case c.Version != "":
 		input = c.Version
 	case c.VersionFile != "":
-		contents, err := os.ReadFile(string(c.VersionFile))
+		contents, err := os.ReadFile(c.VersionFile.String())
 		if err != nil {
 			return err
 		}
@@ -147,7 +147,7 @@ func (c *Godot) Validate() error { //nolint:cyclop
 			return err
 		}
 
-		contents, err := os.ReadFile(string(c.VersionFile))
+		contents, err := os.ReadFile(c.VersionFile.String())
 		if err != nil {
 			return err
 		}

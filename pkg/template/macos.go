@@ -41,7 +41,7 @@ func (c *MacOS) Action() (action.Action, error) { //nolint:cyclop,funlen,ireturn
 		}
 
 		if vulkan := c.Vulkan.PathSDK; vulkan != "" {
-			cmd.Args = append(cmd.Args, "vulkan_sdk_path="+string(vulkan))
+			cmd.Args = append(cmd.Args, "vulkan_sdk_path="+vulkan.String())
 		}
 
 		return c.wrapBuildCommand(cmd), nil
@@ -83,7 +83,7 @@ func (c *MacOS) Action() (action.Action, error) { //nolint:cyclop,funlen,ireturn
 		targetName := c.Base.targetName()
 
 		cmdLipo := &action.Process{
-			Directory:   string(c.Invocation.BinPath()),
+			Directory:   c.Invocation.BinPath().String(),
 			Environment: nil,
 
 			Shell: cmdArm64.Shell,
