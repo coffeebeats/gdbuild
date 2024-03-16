@@ -12,7 +12,7 @@ Compile an export template for the specified Godot platform `PLATFORM`.
 
 - `--dry-run` — log the build command without running it
 
-- `-p`, `--path <PATH>` — use the Godot project found at `PATH`
+- `-c`, `--config <PATH>` — use the `gdbuild` configuration file found at `PATH`
   - Default value: `$PWD` (current working directory)
 - `-o`, `--out <PATH>` — write generated artifacts to `PATH`
   - Default value: `$PWD` (current working directory)

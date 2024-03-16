@@ -32,9 +32,10 @@ func NewTarget() *cli.Command { //nolint:funlen
 				Usage: "log the build command without running it",
 			},
 			&cli.PathFlag{
-				Name:  "path",
-				Value: ".",
-				Usage: "use the Godot project found at 'PATH'",
+				Name:    "config",
+				Aliases: []string{"c"},
+				Value:   "gdbuild.toml",
+				Usage:   "use the 'gdbuild' configuration file found at 'PATH'",
 			},
 			&cli.PathFlag{
 				Name:    "out",
@@ -90,7 +91,7 @@ func NewTarget() *cli.Command { //nolint:funlen
 			log.Debugf("placing template artifacts at path: %s", pathOut)
 
 			// Parse manifest.
-			pathManifest, err := parseManifestPath(c.Path("path"))
+			pathManifest, err := parseManifestPath(c.Path("config"))
 			if err != nil {
 				return err
 			}
