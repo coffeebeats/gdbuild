@@ -77,7 +77,7 @@ func newVendorGodotAction(g *build.Godot, inv *build.Invocation) action.Action {
 // Godot artifacts to the output directory.
 func newMoveArtifactsAction(inv *build.Invocation) action.Action { //nolint:ireturn
 	fn := func(ctx context.Context) error {
-		pathOut := string(inv.PathOut)
+		pathOut := inv.PathOut.String()
 		if err := osutil.EnsureDir(pathOut, osutil.ModeUserRWXGroupRX); err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func newMoveArtifactsAction(inv *build.Invocation) action.Action { //nolint:iret
 			return err
 		}
 
-		ff, err := os.ReadDir(string(pathBin))
+		ff, err := os.ReadDir(pathBin.String())
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func newMoveArtifactsAction(inv *build.Invocation) action.Action { //nolint:iret
 			log.Debugf("moving artifact %s: %s", f.Name(), pathOut)
 
 			if err := os.Rename(
-				filepath.Join(string(pathBin), f.Name()),
+				filepath.Join(pathBin.String(), f.Name()),
 				filepath.Join(pathOut, f.Name()),
 			); err != nil {
 				return err

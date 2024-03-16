@@ -60,7 +60,7 @@ type Base struct {
 func (c *Base) action() (*action.Process, error) { //nolint:cyclop,funlen
 	var cmd action.Process
 
-	cmd.Directory = string(c.Invocation.PathBuild)
+	cmd.Directory = c.Invocation.PathBuild.String()
 
 	cmd.Verbose = c.Invocation.Verbose
 

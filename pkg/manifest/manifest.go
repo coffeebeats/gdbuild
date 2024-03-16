@@ -78,7 +78,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 		return nil, err
 	}
 
-	baseManifest, err := ParseFile(string(m.Config.Extends))
+	baseManifest, err := ParseFile(m.Config.Extends.String())
 	if err != nil {
 		return nil, fmt.Errorf(
 			"%w: cannot parse inherited manifest: %w",
@@ -90,7 +90,7 @@ func (m *Manifest) BuildTemplate( //nolint:cyclop,funlen,gocognit,ireturn
 	m.Parent = baseManifest
 
 	baseInv := inv
-	baseInv.PathManifest = build.Path(string(m.Config.Extends))
+	baseInv.PathManifest = build.Path(m.Config.Extends.String())
 
 	baseTemplate, err := baseManifest.BuildTemplate(baseInv)
 	if err != nil {

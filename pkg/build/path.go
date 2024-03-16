@@ -33,7 +33,7 @@ func (p Path) CheckIsDirOrEmpty() error {
 		return nil
 	}
 
-	info, err := os.Stat(string(p))
+	info, err := os.Stat(p.String())
 	if err != nil {
 		return fmt.Errorf("%w: path: %s: %w", ErrInvalidInput, p, err)
 	}
@@ -65,7 +65,7 @@ func (p Path) CheckIsFileOrEmpty() error {
 		return nil
 	}
 
-	info, err := os.Stat(string(p))
+	info, err := os.Stat(p.String())
 	if err != nil {
 		return fmt.Errorf("%w: path: %s: %w", ErrInvalidInput, p, err)
 	}
@@ -91,12 +91,12 @@ func (p *Path) RelTo(base Path) error {
 		return nil
 	}
 
-	path := string(*p)
+	path := p.String()
 	if path == "" || filepath.IsAbs(path) {
 		return nil
 	}
 
-	info, err := os.Stat(string(base))
+	info, err := os.Stat(base.String())
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return fmt.Errorf("%w: path: %s: %w", ErrInvalidInput, base, err)
@@ -104,10 +104,10 @@ func (p *Path) RelTo(base Path) error {
 	}
 
 	if info != nil && !info.IsDir() {
-		base = Path(filepath.Dir(string(base)))
+		base = Path(filepath.Dir(base.String()))
 	}
 
-	path, err = filepath.Abs(filepath.Join(string(base), path))
+	path, err = filepath.Abs(filepath.Join(base.String(), path))
 	if err != nil {
 		return err
 	}
@@ -120,5 +120,5 @@ func (p *Path) RelTo(base Path) error {
 /* --------------------------- Impl: fmt.Stringer --------------------------- */
 
 func (p Path) String() string {
-	return string(p)
+	return os.ExpandEnv(string(p))
 }
