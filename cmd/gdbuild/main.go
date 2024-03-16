@@ -12,8 +12,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
-
-	"github.com/coffeebeats/gdbuild/pkg/manifest"
 )
 
 const (
@@ -203,7 +201,7 @@ func parseManifestPath(path string) (string, error) {
 	}
 
 	if info.IsDir() {
-		path = filepath.Join(path, manifest.Filename())
+		return "", fmt.Errorf("%w: %s", ErrInvalidManifestPath, path)
 	}
 
 	return path, nil
