@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0 (2024-03-16)
+
+## What's Changed
+* feat(ci): expand environment variables within paths defined in the manifest by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/32
+* feat(cmd)!: switch `--path` flag to `--config` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/34
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.0.6...v0.1.0
+
 ## 0.0.6 (2024-03-15)
 
 ## What's Changed
