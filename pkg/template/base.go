@@ -78,6 +78,11 @@ func (c *Base) action() (*action.Process, error) { //nolint:cyclop,funlen
 	// previously values.
 	cmd.Environment = append(cmd.Environment, os.Environ()...)
 
+	// Set the SCons cache size limit, if one was set.
+	if l := c.SCons.CacheSizeLimit; l != nil {
+		cmd.Environment = append(cmd.Environment, fmt.Sprintf("SCONS_CACHE_LIMIT=%d", *c.SCons.CacheSizeLimit))
+	}
+
 	// Build the SCons command/argument list.
 	cmd.Args = append(cmd.Args, c.SCons.Command...)
 	cmd.Args = append(cmd.Args, "-j"+strconv.Itoa(runtime.NumCPU()))

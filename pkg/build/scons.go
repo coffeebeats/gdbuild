@@ -34,6 +34,8 @@ type SCons struct {
 	LinkFlags []string `toml:"link_flags"`
 	// PathCache is the path to the SCons cache, relative to the manifest.
 	PathCache Path `toml:"cache_path"`
+	// CacheSizeLimit is the limit in MiB.
+	CacheSizeLimit *uint `toml:"cache_size_limit"`
 }
 
 /* ------------------------- Impl: build.Configurer ------------------------- */
