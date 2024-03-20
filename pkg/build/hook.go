@@ -28,7 +28,7 @@ type Hook struct {
 // PreActions is a utility function to convert pre-build commands into a slice
 // of 'Action' types.
 func (h Hook) PreActions(inv Invocation) []action.Action {
-	out := make([]action.Action, 0, len(h.Pre))
+	var out []action.Action //nolint:prealloc
 
 	for _, a := range h.Pre {
 		p := a.Process()
@@ -47,7 +47,7 @@ func (h Hook) PreActions(inv Invocation) []action.Action {
 // PostActions is a utility function to convert post-build commands into a slice
 // of 'Action' types.
 func (h Hook) PostActions(inv Invocation) []action.Action {
-	out := make([]action.Action, 0, len(h.Post))
+	var out []action.Action //nolint:prealloc
 
 	for _, a := range h.Post {
 		p := a.Process()
@@ -63,7 +63,7 @@ func (h Hook) PostActions(inv Invocation) []action.Action {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (h Hook) Validate() error {
+func (h Hook) Validate(inv Invocation) error {
 	if h.Shell != exec.ShellUnknown {
 		if _, err := exec.ParseShell(h.Shell.String()); err != nil {
 			return fmt.Errorf("%w: unsupported shell: %s", ErrInvalidInput, h.Shell)

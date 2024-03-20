@@ -100,6 +100,10 @@ func (c *Base) Validate(inv build.Invocation) error {
 		return err
 	}
 
+	if err := c.Hook.Validate(inv); err != nil {
+		return err
+	}
+
 	if err := c.SCons.Validate(inv); err != nil {
 		return err
 	}
