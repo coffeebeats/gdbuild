@@ -18,7 +18,7 @@ type Path string
 // CheckIsDir verifies that the underlying path is a valid directory.
 func (p Path) CheckIsDir() error {
 	if p == "" {
-		return ErrInvalidInput
+		return ErrMissingInput
 	}
 
 	return p.CheckIsDirOrEmpty()
@@ -50,7 +50,7 @@ func (p Path) CheckIsDirOrEmpty() error {
 // CheckIsFile verifies that the underlying path is a valid file.
 func (p Path) CheckIsFile() error {
 	if p == "" {
-		return ErrInvalidInput
+		return ErrMissingInput
 	}
 
 	return p.CheckIsFileOrEmpty()
@@ -92,7 +92,10 @@ func (p *Path) RelTo(base Path) error {
 	}
 
 	path := p.String()
-	if path == "" || filepath.IsAbs(path) {
+
+	// NOTE: It's possible 'path' is an environment variable that expands to an
+	// absolute path, so check that 'path' matches 'p' here.
+	if path == "" || (path == string(*p) && filepath.IsAbs(path)) {
 		return nil
 	}
 
@@ -107,7 +110,11 @@ func (p *Path) RelTo(base Path) error {
 		base = Path(filepath.Dir(base.String()))
 	}
 
-	path, err = filepath.Abs(filepath.Join(base.String(), path))
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(base.String(), path)
+	}
+
+	path, err = filepath.Abs(path)
 	if err != nil {
 		return err
 	}
