@@ -50,33 +50,10 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 	}
 
 	if c.PathIcon != "" {
-		t.Paths = append(t.Paths, c.PathIcon)
+		t.AddToPath(c.PathIcon)
 
 		// Copy the icon file to the correct location.
-		t.Prebuild = append(
-			t.Prebuild,
-			action.Function(func(_ context.Context) error {
-				pathDst := filepath.Join(inv.PathBuild.String(), "platform/windows/godot.ico")
-
-				dst, err := os.Create(pathDst)
-				if err != nil {
-					return err
-				}
-
-				defer dst.Close()
-
-				src, err := os.Open(c.PathIcon.String())
-				if err != nil {
-					return err
-				}
-
-				if _, err := io.Copy(dst, src); err != nil {
-					return err
-				}
-
-				return nil
-			}),
-		)
+		t.Prebuild = append(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &inv))
 	}
 
 	return t
@@ -132,4 +109,42 @@ func (c *Windows) MergeInto(other any) error {
 	}
 
 	return config.Merge(dst, *c)
+}
+
+/* -------------------------------------------------------------------------- */
+/*                      Function: NewCopyImageFileAction                      */
+/* -------------------------------------------------------------------------- */
+
+// NewCopyImageFileAction creates an 'action.Action' which places the specified
+// icon image into the Godot source code.
+func NewCopyImageFileAction(
+	pathImage build.Path,
+	inv *build.Invocation,
+) action.WithDescription[action.Function] {
+	fn := func(_ context.Context) error {
+		pathDst := filepath.Join(inv.PathBuild.String(), "platform/windows/godot.ico")
+
+		dst, err := os.Create(pathDst)
+		if err != nil {
+			return err
+		}
+
+		defer dst.Close()
+
+		src, err := os.Open(pathImage.String())
+		if err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(dst, src); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "<go function: copy icon into build directory>",
+	}
 }
