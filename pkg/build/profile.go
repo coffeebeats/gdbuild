@@ -32,6 +32,17 @@ func (p Profile) IsRelease() bool {
 	return p == ProfileRelease || p == ProfileReleaseDebug
 }
 
+/* --------------------------- Method: TargetName --------------------------- */
+
+// TargetName returns the name of the 'SCons' build target for 'Godot'.
+func (p Profile) TargetName() string {
+	if p == ProfileRelease {
+		return "template_release"
+	}
+
+	return "template_debug"
+}
+
 /* ----------------------------- Impl: Stringer ----------------------------- */
 
 // String implements 'fmt.Stringer' for 'Profile' according to the profile names

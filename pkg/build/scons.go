@@ -38,13 +38,9 @@ type SCons struct {
 	CacheSizeLimit *uint `toml:"cache_size_limit"`
 }
 
-/* ------------------------- Impl: build.Configurer ------------------------- */
+/* ---------------------------- config.Configurer --------------------------- */
 
-func (c *SCons) Configure(inv *Invocation) error {
-	if len(c.Command) == 0 {
-		c.Command = append(c.Command, "scons")
-	}
-
+func (c *SCons) Configure(inv Invocation) error {
 	if p := os.Getenv(EnvSConsCache); p != "" {
 		c.PathCache = Path(p)
 	}
@@ -56,9 +52,9 @@ func (c *SCons) Configure(inv *Invocation) error {
 	return nil
 }
 
-/* -------------------------- Impl: build.Validater ------------------------- */
+/* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *SCons) Validate() error {
+func (c *SCons) Validate(_ Invocation) error {
 	if err := c.PathCache.CheckIsDirOrEmpty(); err != nil {
 		// A missing SCons cache is not a problem.
 		if !errors.Is(err, os.ErrNotExist) {

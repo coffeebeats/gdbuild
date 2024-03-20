@@ -1,6 +1,8 @@
 package build
 
 import (
+	"fmt"
+
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/exec"
 )
@@ -21,18 +23,51 @@ type Hook struct {
 	Shell exec.Shell `toml:"shell"`
 }
 
-/* --------------------------- Impl: merge.Merger --------------------------- */
+/* --------------------------- Method: PreActions --------------------------- */
 
-func (c *Hook) Merge(other *Hook) error {
-	if c == nil || other == nil {
-		return nil
+// PreActions is a utility function to convert pre-build commands into a slice
+// of 'Action' types.
+func (h Hook) PreActions(inv Invocation) []action.Action {
+	out := make([]action.Action, 0, len(h.Pre))
+
+	for _, a := range h.Pre {
+		p := a.Process()
+		p.Directory = inv.PathBuild.String()
+		p.Shell = h.Shell
+		p.Verbose = inv.Verbose
+
+		out = append(out, action.Action(p))
 	}
 
-	c.Pre = append(c.Pre, other.Pre...)
-	c.Post = append(c.Post, other.Post...)
+	return out
+}
 
-	if other.Shell != exec.ShellUnknown {
-		c.Shell = other.Shell
+/* --------------------------- Method: PostActions -------------------------- */
+
+// PostActions is a utility function to convert post-build commands into a slice
+// of 'Action' types.
+func (h Hook) PostActions(inv Invocation) []action.Action {
+	out := make([]action.Action, 0, len(h.Post))
+
+	for _, a := range h.Post {
+		p := a.Process()
+		p.Directory = inv.PathBuild.String()
+		p.Shell = h.Shell
+		p.Verbose = inv.Verbose
+
+		out = append(out, action.Action(p))
+	}
+
+	return out
+}
+
+/* ------------------------- Impl: config.Validator ------------------------- */
+
+func (h Hook) Validate() error {
+	if h.Shell != exec.ShellUnknown {
+		if _, err := exec.ParseShell(h.Shell.String()); err != nil {
+			return fmt.Errorf("%w: unsupported shell: %s", ErrInvalidInput, h.Shell)
+		}
 	}
 
 	return nil
