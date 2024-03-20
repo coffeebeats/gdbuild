@@ -2,9 +2,11 @@ package template
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
+	"github.com/coffeebeats/gdbuild/internal/exec"
 	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
@@ -37,12 +39,14 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 
 		scons := &t.Binaries[0].SCons
 		if c.Vulkan.Dynamic != nil && *c.Vulkan.Dynamic {
+			scons.ExtraArgs = append(scons.ExtraArgs, "use_volk=yes")
+		} else {
 			scons.ExtraArgs = append(scons.ExtraArgs, "use_volk=no")
 		}
 
 		if c.Vulkan.PathSDK != "" {
 			scons.ExtraArgs = append(scons.ExtraArgs, "vulkan_sdk_path="+c.Vulkan.PathSDK.String())
-			t.Paths = append(t.Paths, c.Vulkan.PathSDK)
+			t.AddToPath(c.Vulkan.PathSDK)
 		}
 
 		return t
@@ -72,6 +76,7 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 			Directory:   inv.BinPath().String(),
 			Environment: nil,
 
+			Shell:   exec.DefaultShell(),
 			Verbose: inv.Verbose,
 
 			Args: append(
@@ -84,9 +89,16 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 			),
 		}
 
+		// Construct a list of paths with duplicates removed.
+		paths := make([]build.Path, 0, len(templateAmd64.Paths)+len(templateArm64.Paths))
+		paths = append(paths, templateAmd64.Paths...)
+		paths = append(paths, templateArm64.Paths...)
+		slices.Sort(paths)
+		paths = slices.Compact(paths)
+
 		return build.Template{
 			Binaries: []build.Compilation{templateAmd64.Binaries[0], templateArm64.Binaries[0]},
-			Paths:    append(templateAmd64.Paths, templateArm64.Paths...),
+			Paths:    paths,
 			Prebuild: append(amd64.Hook.PreActions(inv), arm64.Hook.PreActions(inv)...),
 			Postbuild: append(
 				append(
@@ -188,7 +200,7 @@ func (c *Vulkan) Configure(inv build.Invocation) error {
 
 func (c *Vulkan) Validate(_ build.Invocation) error {
 	if err := c.PathSDK.CheckIsDir(); err != nil {
-		return err
+		return fmt.Errorf("%w: missing path to Vulkan SDK", err)
 	}
 
 	return nil

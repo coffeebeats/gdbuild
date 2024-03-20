@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -46,6 +47,16 @@ type Template struct {
 	// Postbuild contains an ordered list of actions to execute after
 	// compilation of the export templates.
 	Postbuild []action.Action
+}
+
+/* ---------------------------- Method: AddToPath --------------------------- */
+
+// AddToPath is a convenience function for registering a 'Path' dependency, but
+// only if it hasn't been added yet.
+func (t *Template) AddToPath(path Path) {
+	if !slices.Contains(t.Paths, path) {
+		t.Paths = append(t.Paths, path)
+	}
 }
 
 /* -------------------------------------------------------------------------- */
