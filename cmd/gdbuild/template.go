@@ -12,7 +12,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/manifest"
+	"github.com/coffeebeats/gdbuild/pkg/config"
 )
 
 // A 'urfave/cli' command to compile a Godot export template.
@@ -94,7 +94,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 				return err
 			}
 
-			m, err := manifest.ParseFile(pathManifest)
+			m, err := config.ParseFile(pathManifest)
 			if err != nil {
 				return err
 			}
@@ -147,11 +147,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 				return err
 			}
 
-			if err := t.Validate(); err != nil {
-				return err
-			}
-
-			action, err := t.Action()
+			action, err := build.Compile(&t, &inv)
 			if err != nil {
 				return err
 			}

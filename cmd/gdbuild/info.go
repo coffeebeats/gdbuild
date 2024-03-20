@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
 
-	"github.com/coffeebeats/gdbuild/pkg/manifest"
+	"github.com/coffeebeats/gdbuild/pkg/config"
 )
 
 // A 'urfave/cli' command to inspect a GDBuild manifest.
@@ -47,7 +47,7 @@ func NewInfo() *cli.Command { //nolint:funlen
 				return err
 			}
 
-			m, err := manifest.ParseFile(pathManifest)
+			_, err = config.ParseFile(pathManifest)
 			if err != nil {
 				return err
 			}
@@ -60,9 +60,10 @@ func NewInfo() *cli.Command { //nolint:funlen
 			switch a := c.Args().First(); a {
 			case "target", "targets":
 				targets := make([]string, 0)
-				for target := range m.Target {
-					targets = append(targets, target)
-				}
+				// TODO: Enable this once targets are re-implemented.
+				// for target := range m.Target {
+				// 	targets = append(targets, target)
+				// }
 
 				if !isJSON {
 					output = strings.Join(targets, "\n")
