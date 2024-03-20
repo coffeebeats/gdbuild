@@ -17,9 +17,9 @@ type Command string
 // Compile-time check that 'Action' is implemented.
 var _ Action = (*Command)(nil)
 
-/* ----------------------------- Method: process ---------------------------- */
+/* ----------------------------- Method: Process ---------------------------- */
 
-func (c Command) process() *Process {
+func (c Command) Process() *Process {
 	return &Process{Args: strings.Split(string(c), " ")} //nolint:exhaustruct
 }
 
@@ -27,7 +27,7 @@ func (c Command) process() *Process {
 
 // Run executes the underlying shell command as a 'Process'.
 func (c Command) Run(ctx context.Context) error {
-	return c.process().Run(ctx)
+	return c.Process().Run(ctx)
 }
 
 /* -------------------------- Interface: Combinable ------------------------- */
@@ -35,12 +35,20 @@ func (c Command) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped command.
 func (c Command) After(a Action) Action { //nolint:ireturn
+	if c == "" {
+		return a
+	}
+
 	return Sequence{Action: c, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped command and then the
 // provided action.
 func (c Command) AndThen(a Action) Action { //nolint:ireturn
+	if c == "" {
+		return a
+	}
+
 	return Sequence{Action: c, Post: a} //nolint:exhaustruct
 }
 
@@ -70,7 +78,7 @@ var _ Action = (*Commands)(nil)
 // Run executes the underlying shell commands in order.
 func (c Commands) Run(ctx context.Context) error {
 	for _, cmd := range c.Commands {
-		p := cmd.process()
+		p := cmd.Process()
 
 		p.Shell = c.Shell
 		p.Verbose = c.Verbose
