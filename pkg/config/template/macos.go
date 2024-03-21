@@ -94,7 +94,7 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 		// need to deduplicate properties.
 		t := c.Base.ToTemplate(g, inv)
 
-		t.Binaries = []build.Compilation{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
+		t.Binaries = []build.Binary{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
 		t.Postbuild = append([]action.Action{cmdLipo}, t.Postbuild...)
 
 		// Construct a list of paths with duplicates removed. This is preferred

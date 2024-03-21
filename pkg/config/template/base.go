@@ -41,7 +41,7 @@ var _ Template = (*Base)(nil)
 
 func (c *Base) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 	return build.Template{
-		Binaries: []build.Compilation{
+		Binaries: []build.Binary{
 			{
 				Arch:            c.Arch,
 				CustomModules:   c.CustomModules,

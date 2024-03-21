@@ -65,7 +65,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					build.Template{
-						Binaries: []build.Compilation{
+						Binaries: []build.Binary{
 							{
 								Arch:     build.ArchAmd64,
 								Godot:    build.Godot{Version: "4.0.0"},
@@ -109,7 +109,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					build.Template{
-						Binaries: []build.Compilation{
+						Binaries: []build.Binary{
 							{
 								Arch:     build.ArchAmd64,
 								Godot:    build.Godot{Version: "4.0.0"},
@@ -178,7 +178,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					build.Template{
-						Binaries: []build.Compilation{
+						Binaries: []build.Binary{
 							{
 								Arch:     build.ArchAmd64,
 								Godot:    build.Godot{Version: "4.0.0"},
@@ -237,7 +237,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					build.Template{
-						Binaries: []build.Compilation{
+						Binaries: []build.Binary{
 							{
 								Arch:     build.ArchAmd64,
 								Godot:    build.Godot{Version: "4.2.1"},

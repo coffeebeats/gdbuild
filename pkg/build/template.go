@@ -33,7 +33,7 @@ type Templater interface {
 type Template struct {
 	// Binaries is a list of export template compilation definitions that are
 	// required by the resulting export template artifact.
-	Binaries []Compilation
+	Binaries []Binary
 
 	// Paths is a list of additional files and folders which this template
 	// depends on. Useful for recording dependencies which are defined in
@@ -60,11 +60,11 @@ func (t *Template) AddToPaths(path Path) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                             Struct: Compilation                            */
+/*                               Struct: Binary                               */
 /* -------------------------------------------------------------------------- */
 
-// Compilation uniquely specifies a compilation of a Godot export template.
-type Compilation struct {
+// Binary uniquely specifies a compilation of a Godot export template.
+type Binary struct {
 	// Arch is the CPU architecture of the Godot export template.
 	Arch Arch
 
@@ -101,7 +101,7 @@ type Compilation struct {
 /* -------------------------- Method: SConsCommand -------------------------- */
 
 // SConsCommand returns the 'SCons' command to build the export template.
-func (c *Compilation) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop,funlen
+func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop,funlen
 	var cmd action.Process
 
 	cmd.Directory = inv.PathBuild.String()
