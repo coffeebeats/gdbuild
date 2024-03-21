@@ -2,6 +2,7 @@ package template
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
@@ -50,7 +51,6 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 
 		return t
 	case build.ArchUniversal, build.ArchUnknown:
-
 		// First, create the 'x86_64' binary.
 		amd64 := *c
 		amd64.Base.Arch = build.ArchAmd64
@@ -96,6 +96,16 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 
 		t.Binaries = []build.Compilation{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
 		t.Postbuild = append([]action.Action{cmdLipo}, t.Postbuild...)
+
+		// Construct a list of paths with duplicates removed. This is preferred
+		// over duplicating the code used to decide which paths are dependencies.
+		paths := make([]build.Path, 0, len(templateAmd64.Paths)+len(templateArm64.Paths))
+		paths = append(paths, templateAmd64.Paths...)
+		paths = append(paths, templateArm64.Paths...)
+		slices.Sort(paths)
+		paths = slices.Compact(paths)
+
+		t.Paths = paths
 
 		return t
 
