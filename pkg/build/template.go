@@ -140,6 +140,16 @@ func (c *Compilation) SConsCommand(inv *Invocation) *action.Process { //nolint:c
 	cmd.Args = append(cmd.Args, scons.Command...)
 	cmd.Args = append(cmd.Args, "-j"+strconv.Itoa(runtime.NumCPU()))
 
+	// Specify the 'platform' argument.
+	cmd.Args = append(cmd.Args, c.Platform.String())
+
+	// Add the achitecture setting (note that this requires the 'build.Arch'
+	// values to match what SCons expects).
+	cmd.Args = append(cmd.Args, "arch="+c.Arch.String())
+
+	// Specify which target to build.
+	cmd.Args = append(cmd.Args, "target="+inv.Profile.TargetName())
+
 	// Add stricter warning handling.
 	cmd.Args = append(cmd.Args, "warnings=extra", "werror=yes")
 
@@ -147,10 +157,6 @@ func (c *Compilation) SConsCommand(inv *Invocation) *action.Process { //nolint:c
 	if inv.Verbose {
 		cmd.Args = append(cmd.Args, "verbose=yes")
 	}
-
-	// Add the achitecture setting (note that this requires the 'build.Arch'
-	// values to match what SCons expects).
-	cmd.Args = append(cmd.Args, "arch="+c.Arch.String())
 
 	// Append 'custom_modules' argument.
 	if len(c.CustomModules) > 0 {
@@ -166,8 +172,6 @@ func (c *Compilation) SConsCommand(inv *Invocation) *action.Process { //nolint:c
 	if c.DoublePrecision {
 		cmd.Args = append(cmd.Args, "precision=double")
 	}
-
-	cmd.Args = append(cmd.Args, "target="+inv.Profile.TargetName())
 
 	// Append profile/optimization-related arguments.
 	switch inv.Profile {
@@ -281,7 +285,7 @@ func NewMoveArtifactsAction(inv *Invocation) action.Action { //nolint:ireturn
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "<go function: move generated artifacts to output directory>",
+		Description: "move generated artifacts to output directory: " + inv.PathOut.String(),
 	}
 }
 
@@ -321,8 +325,8 @@ func (c compilation) Action() (action.Action, error) { //nolint:ireturn
 		actions = append(actions, b.SConsCommand(inv))
 	}
 
-	actions = append(actions, NewMoveArtifactsAction(inv))
 	actions = append(actions, t.Postbuild...)
+	actions = append(actions, NewMoveArtifactsAction(inv))
 
 	return action.InOrder(actions...), nil
 }
