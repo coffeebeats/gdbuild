@@ -38,12 +38,20 @@ func (p *Process) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped function.
 func (p *Process) After(a Action) Action { //nolint:ireturn
+	if p == nil {
+		return a
+	}
+
 	return Sequence{Action: p, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped function and then the
 // provided action.
 func (p *Process) AndThen(a Action) Action { //nolint:ireturn
+	if p == nil {
+		return a
+	}
+
 	return Sequence{Action: p, Post: a} //nolint:exhaustruct
 }
 
@@ -51,7 +59,13 @@ func (p *Process) AndThen(a Action) Action { //nolint:ireturn
 
 // Sprint displays the action without actually executing it.
 func (p *Process) Sprint() string {
-	dir := fmt.Sprintf("in directory '%s':\n  ", p.Directory)
+	if p == nil {
+		return ""
+	}
 
-	return dir + exec.Process(*p).String()
+	return fmt.Sprintf(
+		"Exec process (%s):\n  %s",
+		p.Directory,
+		exec.Process(*p).String(),
+	)
 }

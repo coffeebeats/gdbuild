@@ -31,16 +31,6 @@ type Base struct {
 	Server *bool `toml:"server"`
 }
 
-/* --------------------------- Impl: merge.Merger --------------------------- */
-
-func (c *Base) Merge(other *Base) error {
-	if c == nil || other == nil {
-		return nil
-	}
-
-	return nil
-}
-
 /* -------------------------------------------------------------------------- */
 /*                              Struct: PackFile                              */
 /* -------------------------------------------------------------------------- */

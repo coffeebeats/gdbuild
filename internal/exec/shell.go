@@ -3,6 +3,7 @@ package exec
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 )
 
@@ -36,11 +37,11 @@ func (s Shell) String() string {
 	case ShellBash:
 		return "bash"
 	case ShellCmd:
-		return "cmd"
+		return "cmd.exe"
 	case ShellPowerShell:
-		return "powershell"
+		return "powershell.exe"
 	case ShellPwsh:
-		return "pwsh"
+		return "pwsh.exe"
 	case ShellSh:
 		return "sh"
 	case ShellZsh:
@@ -58,7 +59,7 @@ func (s Shell) String() string {
 // if some values are missing:
 // github.com/coffeebeats/gdbuild/issues/new?labels=bug&template=%F0%9F%90%9B-bug-report.md.
 func ParseShell(input string) (Shell, error) {
-	switch strings.ToLower(strings.TrimSpace(input)) {
+	switch strings.TrimSuffix(strings.ToLower(strings.TrimSpace(input)), ".exe") {
 	case "":
 		return 0, ErrMissingShell
 
@@ -66,7 +67,7 @@ func ParseShell(input string) (Shell, error) {
 		return ShellBash, nil
 	case "cmd":
 		return ShellCmd, nil
-	case "powershell", "PowerShell":
+	case "powershell":
 		return ShellPowerShell, nil
 	case "pwsh":
 		return ShellPwsh, nil
@@ -90,6 +91,18 @@ func MustParseShell(input string) Shell {
 	}
 
 	return shell
+}
+
+/* ------------------------- Function: DefaultShell ------------------------- */
+
+// DefaultShell returns the default shell, based on the platform.
+func DefaultShell() Shell {
+	switch runtime.GOOS {
+	case "windows":
+		return ShellCmd
+	default:
+		return ShellSh
+	}
 }
 
 /* ---------------------- Impl: encoding.UnmarshalText ---------------------- */

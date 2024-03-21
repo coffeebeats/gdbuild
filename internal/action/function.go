@@ -27,12 +27,20 @@ func (f Function) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped function.
 func (f Function) After(a Action) Action { //nolint:ireturn
+	if f == nil {
+		return a
+	}
+
 	return Sequence{Action: f, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped function and then the
 // provided action.
 func (f Function) AndThen(a Action) Action { //nolint:ireturn
+	if f == nil {
+		return a
+	}
+
 	return Sequence{Action: f, Post: a} //nolint:exhaustruct
 }
 

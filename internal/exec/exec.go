@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 )
 
@@ -37,12 +36,7 @@ func (p Process) args() ([]string, error) {
 
 	shell := p.Shell
 	if shell == ShellUnknown {
-		switch runtime.GOOS {
-		case "windows":
-			shell = ShellPowerShell
-		default:
-			shell = ShellSh
-		}
+		shell = DefaultShell()
 	}
 
 	var flag string

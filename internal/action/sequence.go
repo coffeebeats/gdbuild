@@ -6,6 +6,28 @@ import (
 )
 
 /* -------------------------------------------------------------------------- */
+/*                              Function: InOrder                             */
+/* -------------------------------------------------------------------------- */
+
+// InOrder creates a wrapper action which executes the specified 'Action' types
+// in order.
+func InOrder(actions ...Action) Action { //nolint:ireturn
+	var action Action
+
+	for _, a := range actions {
+		if action == nil {
+			action = a
+
+			continue
+		}
+
+		action = action.AndThen(a)
+	}
+
+	return action
+}
+
+/* -------------------------------------------------------------------------- */
 /*                              Struct: Sequence                              */
 /* -------------------------------------------------------------------------- */
 

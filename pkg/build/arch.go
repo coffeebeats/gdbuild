@@ -3,6 +3,7 @@ package build
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -26,6 +27,13 @@ const (
 	ArchI386
 	ArchUniversal
 )
+
+/* ----------------------------- Method: IsOneOf ---------------------------- */
+
+// IsOneOf returns whether the 'Arch' is in the allowed set.
+func (a Arch) IsOneOf(aa ...Arch) bool {
+	return slices.Contains(aa, a)
+}
 
 /* ----------------------------- Impl: Stringer ----------------------------- */
 

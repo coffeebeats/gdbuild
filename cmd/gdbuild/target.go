@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/coffeebeats/gdbuild/pkg/build"
-	"github.com/coffeebeats/gdbuild/pkg/manifest"
+	"github.com/coffeebeats/gdbuild/pkg/config"
 )
 
 var ErrTargetUsageProfiles = errors.New("cannot specify both '--release' and '--release_debug'")
@@ -96,7 +96,7 @@ func NewTarget() *cli.Command { //nolint:funlen
 				return err
 			}
 
-			_, err = manifest.ParseFile(pathManifest)
+			_, err = config.ParseFile(pathManifest)
 			if err != nil {
 				return err
 			}
