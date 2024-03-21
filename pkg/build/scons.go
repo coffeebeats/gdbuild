@@ -18,22 +18,22 @@ const (
 type SCons struct {
 	// CCFlags are additional 'CFLAGS' to append to the SCons build command.
 	// Note that 'CCFLAGS=...' will be appended *before* 'ExtraArgs'.
-	CCFlags []string `toml:"ccflags"`
+	CCFlags []string `hash:"set" toml:"ccflags"`
 	// CFlags are additional 'CFLAGS' to append to the SCons build command. Note
 	// that 'CFLAGS=...' will be appended *before* 'ExtraArgs'.
-	CFlags []string `toml:"cflags"`
+	CFlags []string `hash:"set" toml:"cflags"`
 	// CXXFlags are additional 'CXXFLAGS' to append to the SCons build command.
 	// Note that 'CXXFLAGS=...' will be appended *before* 'ExtraArgs'.
-	CXXFlags []string `toml:"cxxflags"`
+	CXXFlags []string `hash:"set" toml:"cxxflags"`
 	// Command contains arguments used to invoke SCons. Defaults to ["scons"].
-	Command []string `toml:"command"`
+	Command []string `hash:"set" toml:"command"`
 	// ExtraArgs are additional arguments to append to the SCons build command.
-	ExtraArgs []string `toml:"extra_args"`
+	ExtraArgs []string `hash:"set" toml:"extra_args"`
 	// LinkFlags are additional flags passed to the linker during the SCons
 	// build command.
-	LinkFlags []string `toml:"link_flags"`
+	LinkFlags []string `hash:"set" toml:"link_flags"`
 	// PathCache is the path to the SCons cache, relative to the manifest.
-	PathCache Path `toml:"cache_path"`
+	PathCache Path `hash:"ignore" toml:"cache_path"`
 	// CacheSizeLimit is the limit in MiB.
 	CacheSizeLimit *uint `toml:"cache_size_limit"`
 }

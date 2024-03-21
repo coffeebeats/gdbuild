@@ -3,6 +3,8 @@ package build
 import (
 	"context"
 	"fmt"
+	"hash/crc32"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
+	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
@@ -33,20 +36,20 @@ type Templater interface {
 type Template struct {
 	// Binaries is a list of export template compilation definitions that are
 	// required by the resulting export template artifact.
-	Binaries []Binary
+	Binaries []Binary `hash:"set"`
 
 	// Paths is a list of additional files and folders which this template
 	// depends on. Useful for recording dependencies which are defined in
 	// otherwise opaque properties like 'Hook'.
-	Paths []Path
+	Paths []Path `hash:"set"`
 
 	// Prebuild contains an ordered list of actions to execute prior to
 	// compilation of the export templates.
-	Prebuild []action.Action
+	Prebuild []action.Action `hash:"set,string"`
 
 	// Postbuild contains an ordered list of actions to execute after
 	// compilation of the export templates.
-	Postbuild []action.Action
+	Postbuild []action.Action `hash:"set,string"`
 }
 
 /* --------------------------- Method: AddToPaths --------------------------- */
@@ -57,6 +60,74 @@ func (t *Template) AddToPaths(path Path) {
 	if !slices.Contains(t.Paths, path) {
 		t.Paths = append(t.Paths, path)
 	}
+}
+
+/* ---------------------------- Method: Checksum ---------------------------- */
+
+// Checksum produces a checksum hash of the export template specification. When
+// the checksums of two 'Template' definitions matches, the resulting export
+// templates will be equivalent.
+//
+// NOTE: This implementation relies on producers of 'Template' to correctly
+// register all file system dependencies within 'Paths'.
+func (t *Template) Checksum(inv *Invocation) (string, error) {
+	hash, err := hashstructure.Hash(
+		t,
+		hashstructure.FormatV2,
+		&hashstructure.HashOptions{ //nolint:exhaustruct
+			IgnoreZeroValue: true,
+			SlicesAsSets:    true,
+			ZeroNil:         true,
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	cs := crc32.New(crc32.IEEETable)
+
+	// Update the 'crc32' hash with the struct hash.
+	if _, err := io.Copy(cs, strings.NewReader(strconv.FormatUint(hash, 16))); err != nil {
+		return "", err
+	}
+
+	for _, p := range t.uniquePaths(inv) {
+		root := p.String()
+
+		log.Debugf("hashing files rooted at path: %s", root)
+
+		if err := osutil.HashFiles(cs, root); err != nil {
+			return "", err
+		}
+	}
+
+	return strconv.FormatUint(uint64(cs.Sum32()), 16), nil
+}
+
+/* --------------------------- Method: uniquePaths -------------------------- */
+
+// uniquePaths returns the unique list of expanded path dependencies.
+func (t *Template) uniquePaths(_ *Invocation) []Path {
+	paths := t.Paths
+
+	for _, b := range t.Binaries {
+		paths = append(paths, b.CustomModules...)
+
+		if b.CustomPy != "" {
+			paths = append(paths, b.CustomPy)
+		}
+
+		switch g := b.Godot; {
+		case g.PathSource != "":
+			paths = append(paths, g.PathSource)
+		case g.VersionFile != "":
+			paths = append(paths, g.VersionFile)
+		}
+	}
+
+	slices.Sort(paths)
+
+	return slices.Compact(paths)
 }
 
 /* -------------------------------------------------------------------------- */
@@ -70,11 +141,11 @@ type Binary struct {
 
 	// CustomModules is a list of paths to custom modules to include in the
 	// template build.
-	CustomModules []Path
+	CustomModules []Path `hash:"ignore"`
 
 	// CustomPy is a path to a 'custom.py' file which defines export template
 	// build options.
-	CustomPy Path
+	CustomPy Path `hash:"ignore"`
 
 	// DoublePrecision enables double floating-point precision.
 	DoublePrecision bool
@@ -101,13 +172,13 @@ type Binary struct {
 /* -------------------------- Method: SConsCommand -------------------------- */
 
 // SConsCommand returns the 'SCons' command to build the export template.
-func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop,funlen
+func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop,funlen
 	var cmd action.Process
 
 	cmd.Directory = inv.PathBuild.String()
 	cmd.Verbose = inv.Verbose
 
-	scons := c.SCons
+	scons := b.SCons
 
 	// Define the SCons command, if not yet set.
 	if len(scons.Command) == 0 {
@@ -120,7 +191,7 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	}
 
 	// Add specified environment variables.
-	for k, v := range c.Env {
+	for k, v := range b.Env {
 		cmd.Environment = append(cmd.Environment, k+"="+v)
 	}
 
@@ -141,11 +212,11 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	cmd.Args = append(cmd.Args, "-j"+strconv.Itoa(runtime.NumCPU()))
 
 	// Specify the 'platform' argument.
-	cmd.Args = append(cmd.Args, c.Platform.String())
+	cmd.Args = append(cmd.Args, b.Platform.String())
 
 	// Add the achitecture setting (note that this requires the 'build.Arch'
 	// values to match what SCons expects).
-	cmd.Args = append(cmd.Args, "arch="+c.Arch.String())
+	cmd.Args = append(cmd.Args, "arch="+b.Arch.String())
 
 	// Specify which target to build.
 	cmd.Args = append(cmd.Args, "target="+inv.Profile.TargetName())
@@ -159,9 +230,9 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	}
 
 	// Append 'custom_modules' argument.
-	if len(c.CustomModules) > 0 {
-		modules := make([]string, len(c.CustomModules))
-		for i, m := range c.CustomModules {
+	if len(b.CustomModules) > 0 {
+		modules := make([]string, len(b.CustomModules))
+		for i, m := range b.CustomModules {
 			modules[i] = m.String()
 		}
 
@@ -169,7 +240,7 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	}
 
 	// Append the 'precision' argument.
-	if c.DoublePrecision {
+	if b.DoublePrecision {
 		cmd.Args = append(cmd.Args, "precision=double")
 	}
 
@@ -177,8 +248,8 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	switch inv.Profile {
 	case ProfileRelease:
 		optimize := OptimizeSpeed
-		if c.Optimize != OptimizeUnknown {
-			optimize = c.Optimize
+		if b.Optimize != OptimizeUnknown {
+			optimize = b.Optimize
 		}
 
 		cmd.Args = append(
@@ -189,8 +260,8 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 
 	case ProfileReleaseDebug:
 		optimize := OptimizeSpeedTrace
-		if c.Optimize != OptimizeUnknown {
-			optimize = c.Optimize
+		if b.Optimize != OptimizeUnknown {
+			optimize = b.Optimize
 		}
 
 		cmd.Args = append(
@@ -201,8 +272,8 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 		)
 	default: // ProfileDebug
 		optimize := OptimizeDebug
-		if c.Optimize != OptimizeUnknown {
-			optimize = c.Optimize
+		if b.Optimize != OptimizeUnknown {
+			optimize = b.Optimize
 		}
 
 		cmd.Args = append(
@@ -214,28 +285,28 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	}
 
 	// Append C/C++ build flags.
-	if len(c.SCons.CCFlags) > 0 {
-		flags := fmt.Sprintf(`CCFLAGS="%s"`, strings.Join(c.SCons.CCFlags, " "))
+	if len(b.SCons.CCFlags) > 0 {
+		flags := fmt.Sprintf(`CCFLAGS="%s"`, strings.Join(b.SCons.CCFlags, " "))
 		cmd.Args = append(cmd.Args, flags)
 	}
 
-	if len(c.SCons.CFlags) > 0 {
-		flags := fmt.Sprintf(`CFLAGS="%s"`, strings.Join(c.SCons.CFlags, " "))
+	if len(b.SCons.CFlags) > 0 {
+		flags := fmt.Sprintf(`CFLAGS="%s"`, strings.Join(b.SCons.CFlags, " "))
 		cmd.Args = append(cmd.Args, flags)
 	}
 
-	if len(c.SCons.CXXFlags) > 0 {
-		flags := fmt.Sprintf(`CXXFLAGS="%s"`, strings.Join(c.SCons.CXXFlags, " "))
+	if len(b.SCons.CXXFlags) > 0 {
+		flags := fmt.Sprintf(`CXXFLAGS="%s"`, strings.Join(b.SCons.CXXFlags, " "))
 		cmd.Args = append(cmd.Args, flags)
 	}
 
-	if len(c.SCons.LinkFlags) > 0 {
-		flags := fmt.Sprintf(`LINKFLAGS="%s"`, strings.Join(c.SCons.LinkFlags, " "))
+	if len(b.SCons.LinkFlags) > 0 {
+		flags := fmt.Sprintf(`LINKFLAGS="%s"`, strings.Join(b.SCons.LinkFlags, " "))
 		cmd.Args = append(cmd.Args, flags)
 	}
 
 	// Append extra arguments.
-	cmd.Args = append(cmd.Args, c.SCons.ExtraArgs...)
+	cmd.Args = append(cmd.Args, b.SCons.ExtraArgs...)
 
 	return &cmd
 }
