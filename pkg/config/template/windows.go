@@ -124,7 +124,6 @@ func NewCopyImageFileAction(
 	pathDst := filepath.Join(inv.PathBuild.String(), "platform/windows/godot.ico")
 
 	fn := func(_ context.Context) error {
-
 		dst, err := os.Create(pathDst)
 		if err != nil {
 			return err

@@ -49,20 +49,6 @@ type Merger interface {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                           Function: GetOrDefault                           */
-/* -------------------------------------------------------------------------- */
-
-// GetOrDefault is a convenience method to safely access a value from a
-// potentially nil map.
-func GetOrDefault[K comparable, V any](m map[K]V, key K) V { //nolint:ireturn
-	if m == nil {
-		return *new(V)
-	}
-
-	return m[key]
-}
-
-/* -------------------------------------------------------------------------- */
 /*                               Function: Merge                              */
 /* -------------------------------------------------------------------------- */
 
