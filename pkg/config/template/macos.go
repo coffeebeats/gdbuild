@@ -2,7 +2,6 @@ package template
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
@@ -51,6 +50,7 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 
 		return t
 	case build.ArchUniversal, build.ArchUnknown:
+
 		// First, create the 'x86_64' binary.
 		amd64 := *c
 		amd64.Base.Arch = build.ArchAmd64
@@ -89,25 +89,15 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 			),
 		}
 
-		// Construct a list of paths with duplicates removed.
-		paths := make([]build.Path, 0, len(templateAmd64.Paths)+len(templateArm64.Paths))
-		paths = append(paths, templateAmd64.Paths...)
-		paths = append(paths, templateArm64.Paths...)
-		slices.Sort(paths)
-		paths = slices.Compact(paths)
+		// Construct the output 'Template'. This is because nothing else needs
+		// to be copied over from the arch-specific templates and this avoid the
+		// need to deduplicate properties.
+		t := c.Base.ToTemplate(g, inv)
 
-		return build.Template{
-			Binaries: []build.Compilation{templateAmd64.Binaries[0], templateArm64.Binaries[0]},
-			Paths:    paths,
-			Prebuild: append(amd64.Hook.PreActions(inv), arm64.Hook.PreActions(inv)...),
-			Postbuild: append(
-				append(
-					amd64.Hook.PostActions(inv),
-					arm64.Hook.PostActions(inv)...,
-				),
-				cmdLipo,
-			),
-		}
+		t.Binaries = []build.Compilation{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
+		t.Postbuild = append([]action.Action{cmdLipo}, t.Postbuild...)
+
+		return t
 
 	default:
 		panic(fmt.Errorf("%w: unsupported architecture: %s", ErrInvalidInput, a))
