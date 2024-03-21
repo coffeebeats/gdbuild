@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/charmbracelet/log"
 )
@@ -47,5 +48,5 @@ func (d WithDescription[T]) AndThen(a Action) Action { //nolint:ireturn
 
 // Sprint displays the action without actually executing it.
 func (d WithDescription[T]) Sprint() string {
-	return d.Description
+	return fmt.Sprintf("%T:\n  %s", d.Action, d.Description)
 }

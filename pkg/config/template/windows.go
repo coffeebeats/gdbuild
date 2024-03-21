@@ -121,8 +121,9 @@ func NewCopyImageFileAction(
 	pathImage build.Path,
 	inv *build.Invocation,
 ) action.WithDescription[action.Function] {
+	pathDst := filepath.Join(inv.PathBuild.String(), "platform/windows/godot.ico")
+
 	fn := func(_ context.Context) error {
-		pathDst := filepath.Join(inv.PathBuild.String(), "platform/windows/godot.ico")
 
 		dst, err := os.Create(pathDst)
 		if err != nil {
@@ -145,6 +146,6 @@ func NewCopyImageFileAction(
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "<go function: copy icon into build directory>",
+		Description: "copy icon into build directory: " + pathDst,
 	}
 }

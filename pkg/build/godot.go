@@ -205,6 +205,6 @@ func NewVendorGodotAction(g *Godot, inv *Invocation) action.WithDescription[acti
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "<go function: vendor godot source code>",
+		Description: "vendor godot source code: " + inv.PathBuild.String(),
 	}
 }
