@@ -49,11 +49,11 @@ type Template struct {
 	Postbuild []action.Action
 }
 
-/* ---------------------------- Method: AddToPath --------------------------- */
+/* --------------------------- Method: AddToPaths --------------------------- */
 
-// AddToPath is a convenience function for registering a 'Path' dependency, but
+// AddToPaths is a convenience function for registering a 'Path' dependency, but
 // only if it hasn't been added yet.
-func (t *Template) AddToPath(path Path) {
+func (t *Template) AddToPaths(path Path) {
 	if !slices.Contains(t.Paths, path) {
 		t.Paths = append(t.Paths, path)
 	}

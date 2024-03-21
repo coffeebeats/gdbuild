@@ -50,7 +50,7 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 	}
 
 	if c.PathIcon != "" {
-		t.AddToPath(c.PathIcon)
+		t.AddToPaths(c.PathIcon)
 
 		// Copy the icon file to the correct location.
 		t.Prebuild = append(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &inv))

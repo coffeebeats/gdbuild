@@ -46,7 +46,7 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 
 		if c.Vulkan.PathSDK != "" {
 			scons.ExtraArgs = append(scons.ExtraArgs, "vulkan_sdk_path="+c.Vulkan.PathSDK.String())
-			t.AddToPath(c.Vulkan.PathSDK)
+			t.AddToPaths(c.Vulkan.PathSDK)
 		}
 
 		return t
