@@ -155,6 +155,13 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 			if c.Bool("dry-run") {
 				log.Print(action.Sprint())
 
+				hash, err := t.Checksum(&inv)
+				if err != nil {
+					return err
+				}
+
+				log.Print("hash: " + hash)
+
 				return nil
 			}
 
