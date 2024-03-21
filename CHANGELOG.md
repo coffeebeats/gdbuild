@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.1 (2024-03-21)
+
+## What's Changed
+* refactor(template): overhaul configuration implementation for compiling templates by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/37
+* chore(deps): bump tj-actions/changed-files from 42 to 43 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/35
+* chore(deps): bump github.com/pelletier/go-toml/v2 from 2.1.1 to 2.2.0 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/36
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.1.0...v0.1.1
+
 ## 0.1.0 (2024-03-16)
 
 ## What's Changed
