@@ -20,7 +20,7 @@ type Base struct {
 	// template build.
 	CustomModules []build.Path `toml:"custom_modules"`
 	// DoublePrecision enables double floating-point precision.
-	DoublePrecision bool `toml:"double_precision"`
+	DoublePrecision *bool `toml:"double_precision"`
 	// Env is a map of environment variables to set during the build step.
 	Env map[string]string `toml:"env"`
 	// Hook defines commands to be run before or after a build step.
@@ -46,7 +46,7 @@ func (c *Base) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 				Arch:            c.Arch,
 				CustomModules:   c.CustomModules,
 				CustomPy:        c.PathCustomPy,
-				DoublePrecision: c.DoublePrecision,
+				DoublePrecision: config.Dereference(c.DoublePrecision),
 				Env:             c.Env,
 				Godot:           g,
 				Optimize:        c.Optimize,

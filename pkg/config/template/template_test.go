@@ -117,7 +117,7 @@ func TestTemplateBuild(t *testing.T) {
 			doc: "[template.platform.windows]\nuse_mingw = true",
 
 			want: &template.Windows{
-				UseMinGW: true,
+				UseMinGW: pointer(true),
 				Base:     &template.Base{},
 			},
 		},
@@ -132,7 +132,7 @@ func TestTemplateBuild(t *testing.T) {
 			use_llvm = true`,
 
 			want: &template.Linux{
-				UseLLVM: true,
+				UseLLVM: pointer(true),
 				Base:    &template.Base{},
 			},
 		},
@@ -176,7 +176,7 @@ func TestTemplateBuild(t *testing.T) {
 			icon_path = "a/b/icon.ico"`,
 
 			want: &template.Windows{
-				UseMinGW: true,
+				UseMinGW: pointer(true),
 				PathIcon: build.Path("a/b/icon.ico"),
 				Base:     &template.Base{},
 			},

@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"reflect"
 
 	"dario.cat/mergo"
 
@@ -61,5 +62,40 @@ func Merge[T any](dst *T, src T) error {
 		mergo.WithAppendSlice,
 		mergo.WithTypeCheck,
 		mergo.WithOverride,
+		mergo.WithTransformers(configTransformer{}),
 	)
+}
+
+/* --------------------------- Struct: transformer -------------------------- */
+
+type configTransformer struct{}
+
+/* ---------------------------- Impl: Transformer --------------------------- */
+
+func (ct configTransformer) Transformer(ty reflect.Type) func(dst, src reflect.Value) error {
+	if ty == reflect.TypeOf((*bool)(nil)) {
+		return func(dst, src reflect.Value) error {
+			if dst.CanSet() && !src.IsNil() {
+				dst.Set(src)
+			}
+
+			return nil
+		}
+	}
+
+	return nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                            Function: Dereference                           */
+/* -------------------------------------------------------------------------- */
+
+// Dereference safely dereferences a pointer into the underlying value or the
+// empty value for the type.
+func Dereference[T any](ptr *T) T { //nolint:ireturn
+	if ptr == nil {
+		return *new(T)
+	}
+
+	return *ptr
 }

@@ -15,7 +15,7 @@ type Linux struct {
 	*Base
 
 	// UseLLVM determines whether the LLVM compiler is used.
-	UseLLVM bool `toml:"use_llvm"`
+	UseLLVM *bool `toml:"use_llvm"`
 }
 
 // Compile-time check that 'Template' is implemented.
@@ -33,7 +33,7 @@ func (c *Linux) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 	}
 
 	scons := &t.Binaries[0].SCons
-	if c.UseLLVM {
+	if config.Dereference(c.UseLLVM) {
 		scons.ExtraArgs = append(scons.ExtraArgs, "use_llvm=yes")
 	} else if inv.Profile.IsRelease() { // Only valid with GCC.
 		scons.ExtraArgs = append(scons.ExtraArgs, "lto=full")

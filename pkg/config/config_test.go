@@ -215,7 +215,8 @@ func TestBuildTemplate(t *testing.T) {
 					godot.version = "4.2.1"
 
 					[template.platform.windows.profile.debug]
-					icon_path = "$TEST_TMPDIR/icon.ico"`,
+					icon_path = "$TEST_TMPDIR/icon.ico"
+					use_mingw = false`,
 			},
 
 			assert: func(t *testing.T, inv *build.Invocation, tmp string, got build.Template, err error) {
@@ -242,9 +243,7 @@ func TestBuildTemplate(t *testing.T) {
 								Godot:    build.Godot{Version: "4.2.1"},
 								Platform: build.OSWindows,
 								Profile:  build.ProfileDebug,
-								SCons: build.SCons{
-									ExtraArgs: []string{"use_mingw=yes"},
-								},
+								SCons:    build.SCons{},
 							},
 						},
 						Paths: []build.Path{image},

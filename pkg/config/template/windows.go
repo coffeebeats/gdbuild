@@ -20,7 +20,7 @@ type Windows struct {
 	*Base
 
 	// UseMinGW determines whether the MinGW compiler is used.
-	UseMinGW bool `toml:"use_mingw"`
+	UseMinGW *bool `toml:"use_mingw"`
 
 	// PathIcon is a path to a Windows application icon.
 	PathIcon build.Path `toml:"icon_path"`
@@ -45,7 +45,7 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 		scons.ExtraArgs = append(scons.ExtraArgs, "lto=full")
 	}
 
-	if c.UseMinGW {
+	if config.Dereference(c.UseMinGW) {
 		scons.ExtraArgs = append(scons.ExtraArgs, "use_mingw=yes")
 	}
 

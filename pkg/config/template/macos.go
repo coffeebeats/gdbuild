@@ -38,7 +38,7 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 		t.Binaries[0].Platform = build.OSMacOS
 
 		scons := &t.Binaries[0].SCons
-		if c.Vulkan.Dynamic != nil && *c.Vulkan.Dynamic {
+		if config.Dereference(c.Vulkan.Dynamic) {
 			scons.ExtraArgs = append(scons.ExtraArgs, "use_volk=yes")
 		} else {
 			scons.ExtraArgs = append(scons.ExtraArgs, "use_volk=no")
