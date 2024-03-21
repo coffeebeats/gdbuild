@@ -182,6 +182,7 @@ func (c *MacOS) MergeInto(other any) error {
 type Vulkan struct {
 	// Dynamic enables dynamically linking Vulkan to the template.
 	Dynamic *bool `toml:"use_volk"`
+
 	// PathSDK is the path to the Vulkan SDK root.
 	PathSDK build.Path `toml:"sdk_path"`
 }

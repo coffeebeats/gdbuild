@@ -63,7 +63,7 @@ func (h Hook) PostActions(inv Invocation) []action.Action {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (h Hook) Validate(inv Invocation) error {
+func (h Hook) Validate(_ Invocation) error {
 	if h.Shell != exec.ShellUnknown {
 		if _, err := exec.ParseShell(h.Shell.String()); err != nil {
 			return fmt.Errorf("%w: unsupported shell: %s", ErrInvalidInput, h.Shell)
