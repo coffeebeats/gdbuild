@@ -1,6 +1,8 @@
 package target
 
-import "github.com/coffeebeats/gdbuild/pkg/build"
+import (
+	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Base                                */
@@ -17,7 +19,7 @@ type Base struct {
 	DefaultFeatures []string `toml:"default_features"`
 	// Hook defines commands to be run before or after the target artifact is
 	// generated.
-	Hook build.Hook `toml:"hook"`
+	Hook compile.Hook `toml:"hook"`
 	// Options are 'export_presets.cfg' overrides, specifically the preset
 	// 'options' table, for the exported artifact.
 	Options map[string]any `toml:"options"`

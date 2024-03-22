@@ -10,8 +10,10 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -25,16 +27,16 @@ type Windows struct {
 	UseMinGW *bool `toml:"use_mingw"`
 
 	// PathIcon is a path to a Windows application icon.
-	PathIcon build.Path `toml:"icon_path"`
+	PathIcon pathutil.Path `toml:"icon_path"`
 }
 
 // Compile-time check that 'Template' is implemented.
 var _ Template = (*Windows)(nil)
 
-/* -------------------------- Impl: build.Templater ------------------------- */
+/* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
-	t := c.Base.ToTemplate(g, inv)
+func (c *Windows) ToTemplate(g compile.Godot, cc compile.Context) template.Template {
+	t := c.Base.ToTemplate(g, cc)
 
 	t.Binaries[0].Platform = platform.OSWindows
 
@@ -43,7 +45,7 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 	}
 
 	scons := &t.Binaries[0].SCons
-	if inv.Profile.IsRelease() {
+	if cc.Profile.IsRelease() {
 		scons.ExtraArgs = append(scons.ExtraArgs, "lto=full")
 	}
 
@@ -55,7 +57,7 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 		t.AddToPaths(c.PathIcon)
 
 		// Copy the icon file to the correct location.
-		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &inv))
+		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &cc.Invoke))
 	}
 
 	// Register the additional console artifact.
@@ -69,12 +71,12 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Windows) Configure(inv build.Invocation) error {
-	if err := c.Base.Configure(inv); err != nil {
+func (c *Windows) Configure(cc config.Context) error {
+	if err := c.Base.Configure(cc); err != nil {
 		return err
 	}
 
-	if err := c.PathIcon.RelTo(inv.PathManifest); err != nil {
+	if err := c.PathIcon.RelTo(cc.PathManifest); err != nil {
 		return err
 	}
 
@@ -83,8 +85,8 @@ func (c *Windows) Configure(inv build.Invocation) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Windows) Validate(inv build.Invocation) error {
-	if err := c.Base.Validate(inv); err != nil {
+func (c *Windows) Validate(cc config.Context) error {
+	if err := c.Base.Validate(cc); err != nil {
 		return err
 	}
 
@@ -126,10 +128,10 @@ func (c *Windows) MergeInto(other any) error {
 // NewCopyImageFileAction creates an 'action.Action' which places the specified
 // icon image into the Godot source code.
 func NewCopyImageFileAction(
-	pathImage build.Path,
-	inv *build.Invocation,
+	pathImage pathutil.Path,
+	cc *config.Context,
 ) action.WithDescription[action.Function] {
-	pathDst := filepath.Join(inv.PathBuild.String(), "platform/windows/godot.ico")
+	pathDst := filepath.Join(cc.PathBuild.String(), "platform/windows/godot.ico")
 
 	fn := func(_ context.Context) error {
 		dst, err := os.Create(pathDst)

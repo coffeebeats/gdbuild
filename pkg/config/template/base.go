@@ -4,8 +4,11 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -19,45 +22,45 @@ type Base struct {
 	Arch platform.Arch `toml:"arch"`
 	// CustomModules is a list of paths to custom modules to include in the
 	// template build.
-	CustomModules []build.Path `toml:"custom_modules"`
+	CustomModules []pathutil.Path `toml:"custom_modules"`
 	// DoublePrecision enables double floating-point precision.
 	DoublePrecision *bool `toml:"double_precision"`
 	// Env is a map of environment variables to set during the build step.
 	Env map[string]string `toml:"env"`
 	// Hook defines commands to be run before or after a build step.
-	Hook build.Hook `toml:"hook"`
+	Hook compile.Hook `toml:"hook"`
 	// Optimize is the specific optimization level for the template.
-	Optimize build.Optimize `toml:"optimize"`
+	Optimize compile.Optimize `toml:"optimize"`
 	// PathCustomPy is a path to a 'custom.py' file which defines export
 	// template build options.
-	PathCustomPy build.Path `toml:"custom_py_path"`
+	PathCustomPy pathutil.Path `toml:"custom_py_path"`
 	// SCons contains build command-related settings.
-	SCons build.SCons `toml:"scons"`
+	SCons scons.SCons `toml:"scons"`
 }
 
 // Compile-time check that 'Template' is implemented.
 var _ Template = (*Base)(nil)
 
-/* -------------------------- Impl: build.Templater ------------------------- */
+/* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *Base) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
-	scons := c.SCons
+func (c *Base) ToTemplate(g compile.Godot, cc compile.Context) template.Template {
+	s := c.SCons
 
 	// Append environment-specified arguments.
-	scons.ExtraArgs = append(scons.ExtraArgs, scons.ExtraArgsFromEnv()...)
+	s.ExtraArgs = append(s.ExtraArgs, s.ExtraArgsFromEnv()...)
 
 	// Override the cache path using an environment-specified path.
-	if pc := scons.PathCacheFromEnv(); pc != "" {
-		scons.PathCache = pc
+	if pc := s.PathCacheFromEnv(); pc != "" {
+		s.PathCache = pc
 	}
 
 	// Override the cache size limit using an environment-specified path.
-	if csl := scons.CacheSizeLimitFromEnv(); csl != nil {
-		scons.CacheSizeLimit = csl
+	if csl := s.CacheSizeLimitFromEnv(); csl != nil {
+		s.CacheSizeLimit = csl
 	}
 
-	return build.Template{
-		Binaries: []build.Binary{
+	return template.Template{
+		Binaries: []scons.Build{
 			{
 				Arch:            c.Arch,
 				CustomModules:   c.CustomModules,
@@ -66,34 +69,34 @@ func (c *Base) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 				Env:             c.Env,
 				Godot:           g,
 				Optimize:        c.Optimize,
-				Platform:        inv.Platform,
-				Profile:         inv.Profile,
-				SCons:           scons,
+				Platform:        cc.Platform,
+				Profile:         cc.Profile,
+				SCons:           s,
 			},
 		},
 		ExtraArtifacts: nil,
 		Paths:          nil,
-		Prebuild:       c.Hook.PreActions(inv),
-		Postbuild:      c.Hook.PostActions(inv),
+		Prebuild:       c.Hook.PreActions(cc.Invoke),
+		Postbuild:      c.Hook.PostActions(cc.Invoke),
 	}
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Base) Configure(inv build.Invocation) error {
-	if err := c.PathCustomPy.RelTo(inv.PathManifest); err != nil {
+func (c *Base) Configure(cc config.Context) error {
+	if err := c.PathCustomPy.RelTo(cc.PathManifest); err != nil {
 		return err
 	}
 
 	for i, m := range c.CustomModules {
-		if err := m.RelTo(inv.PathManifest); err != nil {
+		if err := m.RelTo(cc.PathManifest); err != nil {
 			return err
 		}
 
 		c.CustomModules[i] = m
 	}
 
-	if err := c.SCons.Configure(inv); err != nil {
+	if err := c.SCons.Configure(cc); err != nil {
 		return err
 	}
 
@@ -102,11 +105,7 @@ func (c *Base) Configure(inv build.Invocation) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Base) Validate(inv build.Invocation) error {
-	if err := inv.Validate(); err != nil {
-		return err
-	}
-
+func (c *Base) Validate(cc config.Context) error {
 	for _, m := range c.CustomModules {
 		if err := m.CheckIsDirOrEmpty(); err != nil {
 			return err
@@ -117,11 +116,11 @@ func (c *Base) Validate(inv build.Invocation) error {
 		return err
 	}
 
-	if err := c.Hook.Validate(inv); err != nil {
+	if err := c.Hook.Validate(cc); err != nil {
 		return err
 	}
 
-	if err := c.SCons.Validate(inv); err != nil {
+	if err := c.SCons.Validate(cc); err != nil {
 		return err
 	}
 

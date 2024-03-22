@@ -7,8 +7,11 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/exec"
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -29,12 +32,12 @@ type MacOS struct {
 // Compile-time check that 'Template' is implemented.
 var _ Template = (*MacOS)(nil)
 
-/* -------------------------- Impl: build.Templater ------------------------- */
+/* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template { //nolint:funlen
+func (c *MacOS) ToTemplate(g compile.Godot, cc compile.Context) template.Template { //nolint:funlen
 	switch a := c.Base.Arch; a {
 	case platform.ArchAmd64, platform.ArchArm64:
-		t := c.Base.ToTemplate(g, inv)
+		t := c.Base.ToTemplate(g, cc)
 
 		t.Binaries[0].Platform = platform.OSMacOS
 
@@ -56,13 +59,13 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 		amd64 := *c
 		amd64.Base.Arch = platform.ArchAmd64
 
-		templateAmd64 := amd64.ToTemplate(g, inv)
+		templateAmd64 := amd64.ToTemplate(g, cc)
 
 		// Next, create the 'arm64' binary.
 		arm64 := *c
 		arm64.Base.Arch = platform.ArchArm64
 
-		templateArm64 := arm64.ToTemplate(g, inv)
+		templateArm64 := arm64.ToTemplate(g, cc)
 
 		// Finally, merge the two binaries together.
 
@@ -71,18 +74,18 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 			lipo = append(lipo, "lipo")
 		}
 
-		templateNameUniversal := build.TemplateName(
+		templateNameUniversal := scons.TemplateName(
 			platform.OSMacOS,
 			platform.ArchUniversal,
-			inv.Profile,
+			cc.Profile,
 		)
 
 		cmdLipo := &action.Process{
-			Directory:   inv.BinPath().String(),
+			Directory:   cc.Invoke.BinPath().String(),
 			Environment: nil,
 
 			Shell:   exec.DefaultShell(),
-			Verbose: inv.Verbose,
+			Verbose: cc.Invoke.Verbose,
 
 			Args: append(
 				lipo,
@@ -97,17 +100,17 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 		// Construct the output 'Template'. This is because nothing else needs
 		// to be copied over from the arch-specific templates and this avoid the
 		// need to deduplicate properties.
-		t := c.Base.ToTemplate(g, inv)
+		t := c.Base.ToTemplate(g, cc)
 
 		// Register the additional artifact.
 		t.ExtraArtifacts = append(t.ExtraArtifacts, templateNameUniversal)
 
-		t.Binaries = []build.Binary{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
+		t.Binaries = []scons.Build{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
 		t.Postbuild = cmdLipo.AndThen(t.Postbuild)
 
 		// Construct a list of paths with duplicates removed. This is preferred
 		// over duplicating the code used to decide which paths are dependencies.
-		paths := make([]build.Path, 0, len(templateAmd64.Paths)+len(templateArm64.Paths))
+		paths := make([]pathutil.Path, 0, len(templateAmd64.Paths)+len(templateArm64.Paths))
 		paths = append(paths, templateAmd64.Paths...)
 		paths = append(paths, templateArm64.Paths...)
 		slices.Sort(paths)
@@ -124,12 +127,12 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *MacOS) Configure(inv build.Invocation) error {
-	if err := c.Base.Configure(inv); err != nil {
+func (c *MacOS) Configure(cc config.Context) error {
+	if err := c.Base.Configure(cc); err != nil {
 		return err
 	}
 
-	if err := c.Vulkan.Configure(inv); err != nil {
+	if err := c.Vulkan.Configure(cc); err != nil {
 		return err
 	}
 
@@ -138,8 +141,8 @@ func (c *MacOS) Configure(inv build.Invocation) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *MacOS) Validate(inv build.Invocation) error {
-	if err := c.Base.Validate(inv); err != nil {
+func (c *MacOS) Validate(cc config.Context) error {
+	if err := c.Base.Validate(cc); err != nil {
 		return err
 	}
 
@@ -154,7 +157,7 @@ func (c *MacOS) Validate(inv build.Invocation) error {
 
 	// NOTE: Don't check for 'lipo', that should be a runtime check.
 
-	if err := c.Vulkan.Validate(inv); err != nil {
+	if err := c.Vulkan.Validate(cc); err != nil {
 		return err
 	}
 
@@ -192,13 +195,13 @@ type Vulkan struct {
 	Dynamic *bool `toml:"use_volk"`
 
 	// PathSDK is the path to the Vulkan SDK root.
-	PathSDK build.Path `toml:"sdk_path"`
+	PathSDK pathutil.Path `toml:"sdk_path"`
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Vulkan) Configure(inv build.Invocation) error {
-	if err := c.PathSDK.RelTo(inv.PathManifest); err != nil {
+func (c *Vulkan) Configure(cc config.Context) error {
+	if err := c.PathSDK.RelTo(cc.PathManifest); err != nil {
 		return err
 	}
 
@@ -207,7 +210,7 @@ func (c *Vulkan) Configure(inv build.Invocation) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Vulkan) Validate(_ build.Invocation) error {
+func (c *Vulkan) Validate(_ config.Context) error {
 	if err := c.PathSDK.CheckIsDir(); err != nil {
 		return fmt.Errorf("%w: missing path to Vulkan SDK", err)
 	}

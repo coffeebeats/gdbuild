@@ -9,8 +9,8 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
 
-	"github.com/coffeebeats/gdbuild/pkg/build"
 	"github.com/coffeebeats/gdbuild/pkg/config"
+	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
@@ -139,16 +139,16 @@ func parsePlatform(platformInput string) (platform.OS, error) {
 	return godotPlatform, nil
 }
 
-func parseProfile(releaseInput, releaseDebugInput bool) build.Profile {
-	var profile build.Profile
+func parseProfile(releaseInput, releaseDebugInput bool) compile.Profile {
+	var profile compile.Profile
 
 	switch {
 	case releaseInput:
-		profile = build.ProfileRelease
+		profile = compile.ProfileRelease
 	case releaseDebugInput:
-		profile = build.ProfileReleaseDebug
+		profile = compile.ProfileReleaseDebug
 	default:
-		profile = build.ProfileDebug
+		profile = compile.ProfileDebug
 	}
 
 	return profile

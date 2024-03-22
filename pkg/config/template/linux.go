@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -22,10 +23,10 @@ type Linux struct {
 // Compile-time check that 'Template' is implemented.
 var _ Template = (*Linux)(nil)
 
-/* -------------------------- Impl: build.Templater ------------------------- */
+/* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *Linux) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
-	t := c.Base.ToTemplate(g, inv)
+func (c *Linux) ToTemplate(g compile.Godot, cc compile.Context) template.Template {
+	t := c.Base.ToTemplate(g, cc)
 
 	t.Binaries[0].Platform = platform.OSLinux
 
@@ -36,7 +37,7 @@ func (c *Linux) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 	scons := &t.Binaries[0].SCons
 	if config.Dereference(c.UseLLVM) {
 		scons.ExtraArgs = append(scons.ExtraArgs, "use_llvm=yes")
-	} else if inv.Profile.IsRelease() { // Only valid with GCC.
+	} else if cc.Profile.IsRelease() { // Only valid with GCC.
 		scons.ExtraArgs = append(scons.ExtraArgs, "lto=full")
 	}
 
@@ -45,8 +46,8 @@ func (c *Linux) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Linux) Configure(inv build.Invocation) error {
-	if err := c.Base.Configure(inv); err != nil {
+func (c *Linux) Configure(cc config.Context) error {
+	if err := c.Base.Configure(cc); err != nil {
 		return err
 	}
 
@@ -55,8 +56,8 @@ func (c *Linux) Configure(inv build.Invocation) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Linux) Validate(inv build.Invocation) error {
-	if err := c.Base.Validate(inv); err != nil {
+func (c *Linux) Validate(cc config.Context) error {
+	if err := c.Base.Validate(cc); err != nil {
 		return err
 	}
 

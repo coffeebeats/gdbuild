@@ -1,9 +1,10 @@
-package build
+package compile
 
 import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
+	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/exec"
 )
 
@@ -27,14 +28,14 @@ type Hook struct {
 
 // PreActions is a utility function to convert pre-build commands into a slice
 // of 'Action' types.
-func (h Hook) PreActions(inv Invocation) action.Action { //nolint:ireturn
+func (h Hook) PreActions(ctx config.Context) action.Action { //nolint:ireturn
 	actions := make([]action.Action, 0, len(h.Pre))
 
 	for _, a := range h.Pre {
 		p := a.Process()
-		p.Directory = inv.PathBuild.String()
+		p.Directory = ctx.PathBuild.String()
 		p.Shell = h.Shell
-		p.Verbose = inv.Verbose
+		p.Verbose = ctx.Verbose
 
 		actions = append(actions, action.Action(p))
 	}
@@ -46,14 +47,14 @@ func (h Hook) PreActions(inv Invocation) action.Action { //nolint:ireturn
 
 // PostActions is a utility function to convert post-build commands into a slice
 // of 'Action' types.
-func (h Hook) PostActions(inv Invocation) action.Action { //nolint:ireturn
+func (h Hook) PostActions(ctx config.Context) action.Action { //nolint:ireturn
 	actions := make([]action.Action, 0, len(h.Post))
 
 	for _, a := range h.Post {
 		p := a.Process()
-		p.Directory = inv.PathBuild.String()
+		p.Directory = ctx.PathBuild.String()
 		p.Shell = h.Shell
-		p.Verbose = inv.Verbose
+		p.Verbose = ctx.Verbose
 
 		actions = append(actions, action.Action(p))
 	}
@@ -63,7 +64,7 @@ func (h Hook) PostActions(inv Invocation) action.Action { //nolint:ireturn
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (h Hook) Validate(_ Invocation) error {
+func (h Hook) Validate(_ config.Context) error {
 	if h.Shell != exec.ShellUnknown {
 		if _, err := exec.ParseShell(h.Shell.String()); err != nil {
 			return fmt.Errorf("%w: unsupported shell: %s", ErrInvalidInput, h.Shell)

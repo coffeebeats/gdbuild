@@ -1,4 +1,4 @@
-package build
+package compile
 
 import (
 	"context"
@@ -8,16 +8,25 @@ import (
 	"path/filepath"
 
 	"github.com/charmbracelet/log"
+
 	"github.com/coffeebeats/gdenv/pkg/godot/version"
 	"github.com/coffeebeats/gdenv/pkg/install"
 	"github.com/coffeebeats/gdenv/pkg/store"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
+	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/internal/pathutil"
 )
 
-// ErrConflictingValue is returned when two settings conflict with eachother.
-var ErrConflictingValue = errors.New("conflicting setting")
+var (
+	// ErrConflictingValue is returned when two settings conflict with eachother.
+	ErrConflictingValue = errors.New("conflicting setting")
+	// ErrInvalidInput is returned when a function is provided invalid input.
+	ErrInvalidInput = errors.New("invalid input")
+	// ErrMissingInput is returned when a function is missing required input.
+	ErrMissingInput = errors.New("missing input")
+)
 
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Godot                               */
@@ -27,11 +36,11 @@ var ErrConflictingValue = errors.New("conflicting setting")
 // only one of these options can be used at a time, but one *must* be specified.
 type Godot struct {
 	// PathSource is a path to a directory containing the Godot source code.
-	PathSource Path `hash:"ignore" toml:"src_path"`
+	PathSource pathutil.Path `hash:"ignore" toml:"src_path"`
 	// Version is a specific version label to download.
 	Version string `toml:"version"`
 	// VersionFile is a file containing just the a version label to download.
-	VersionFile Path `hash:"ignore" toml:"version_file"`
+	VersionFile pathutil.Path `hash:"ignore" toml:"version_file"`
 }
 
 /* ----------------------------- Method: IsEmpty ---------------------------- */
@@ -90,12 +99,12 @@ func (c *Godot) VendorTo(ctx context.Context, out string) error {
 
 /* ---------------------------- config.Configurer --------------------------- */
 
-func (c *Godot) Configure(inv Invocation) error {
-	if err := c.PathSource.RelTo(inv.PathManifest); err != nil {
+func (c *Godot) Configure(ctx config.Context) error {
+	if err := c.PathSource.RelTo(ctx.PathManifest); err != nil {
 		return err
 	}
 
-	if err := c.VersionFile.RelTo(inv.PathManifest); err != nil {
+	if err := c.VersionFile.RelTo(ctx.PathManifest); err != nil {
 		return err
 	}
 
@@ -104,7 +113,7 @@ func (c *Godot) Configure(inv Invocation) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Godot) Validate(_ Invocation) error { //nolint:cyclop,funlen
+func (c *Godot) Validate(_ config.Context) error { //nolint:cyclop,funlen
 	if c.IsEmpty() {
 		return fmt.Errorf("%w: no Godot version specified in manifest", ErrMissingInput)
 	}
@@ -172,7 +181,7 @@ func (c *Godot) Validate(_ Invocation) error { //nolint:cyclop,funlen
 
 // NewVendorGodotAction creates an 'action.Action' which vendors Godot source
 // code into the build directory.
-func NewVendorGodotAction(g *Godot, inv *Invocation) action.WithDescription[action.Function] {
+func NewVendorGodotAction(g *Godot, inv *config.Context) action.WithDescription[action.Function] {
 	fn := func(ctx context.Context) error {
 		if g.IsEmpty() {
 			log.Debug("no Godot version set; skipping vendoring of source code")

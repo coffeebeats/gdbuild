@@ -5,8 +5,6 @@ import (
 	"reflect"
 
 	"dario.cat/mergo"
-
-	"github.com/coffeebeats/gdbuild/pkg/build"
 )
 
 var (
@@ -31,14 +29,14 @@ type Configurable interface {
 // invocation. Note that 'Configure' must *not* set default values as this
 // method might be called prior to complete resolution of user inputs.
 type Configurer interface {
-	Configure(inv build.Invocation) error
+	Configure(inv Context) error
 }
 
 /* -------------------------- Interface: Validator -------------------------- */
 
 // Validator is a type which can validate itself.
 type Validator interface {
-	Validate(inv build.Invocation) error
+	Validate(inv Context) error
 }
 
 /* ---------------------------- Interface: Merger --------------------------- */

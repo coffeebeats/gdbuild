@@ -1,4 +1,4 @@
-package build
+package scons
 
 import (
 	"errors"
@@ -7,6 +7,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
+
+	"github.com/coffeebeats/gdbuild/internal/config"
+	"github.com/coffeebeats/gdbuild/internal/pathutil"
 )
 
 const (
@@ -40,7 +43,7 @@ type SCons struct {
 	// build command.
 	LinkFlags []string `hash:"set" toml:"link_flags"`
 	// PathCache is the path to the SCons cache, relative to the manifest.
-	PathCache Path `hash:"ignore" toml:"cache_path"` // Ignore; doesn't affect binary.
+	PathCache pathutil.Path `hash:"ignore" toml:"cache_path"` // Ignore; doesn't affect binary.
 }
 
 /* ---------------------- Method: CacheSizeLimitFromEnv --------------------- */
@@ -84,15 +87,15 @@ func (c *SCons) ExtraArgsFromEnv() []string {
 /* ------------------------ Method: PathCacheFromEnv ------------------------ */
 
 // PathCacheFromEnv returns a SCons cache path set via environment variable.
-func (c *SCons) PathCacheFromEnv() Path {
-	return Path(os.Getenv(envSConsCache))
+func (c *SCons) PathCacheFromEnv() pathutil.Path {
+	return pathutil.Path(os.Getenv(envSConsCache))
 }
 
 /* ---------------------------- config.Configurer --------------------------- */
 
-func (c *SCons) Configure(inv Invocation) error {
+func (c *SCons) Configure(inv config.Context) error {
 	if p := os.Getenv(envSConsCache); p != "" {
-		c.PathCache = Path(p)
+		c.PathCache = pathutil.Path(p)
 	}
 
 	if err := c.PathCache.RelTo(inv.PathManifest); err != nil {
@@ -104,7 +107,7 @@ func (c *SCons) Configure(inv Invocation) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *SCons) Validate(_ Invocation) error {
+func (c *SCons) Validate(_ config.Context) error {
 	if err := c.PathCache.CheckIsDirOrEmpty(); err != nil {
 		// A missing SCons cache is not a problem.
 		if !errors.Is(err, os.ErrNotExist) {

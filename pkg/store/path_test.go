@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/coffeebeats/gdbuild/internal/archive"
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------- Test: TemplateArchive ------------------------- */
@@ -19,7 +19,7 @@ func TestTemplateArchive(t *testing.T) {
 		name string
 
 		store    string
-		template build.Template
+		template template.Template
 
 		want string
 		err  error
@@ -38,7 +38,7 @@ func TestTemplateArchive(t *testing.T) {
 			store: storeName,
 
 			want: func() string {
-				cs, err := (&build.Template{}).Checksum()
+				cs, err := (&template.Template{}).Checksum()
 				assert.NoError(t, err)
 
 				return filepath.Join(
