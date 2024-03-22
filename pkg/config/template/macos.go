@@ -73,7 +73,7 @@ func (c *MacOS) ToTemplate(g build.Godot, bc build.Context) template.Template { 
 			lipo = append(lipo, "lipo")
 		}
 
-		templateNameUniversal := template.Name(
+		templateNameUniversal := build.TemplateName(
 			platform.OSMacOS,
 			platform.ArchUniversal,
 			bc.Profile,
@@ -104,7 +104,7 @@ func (c *MacOS) ToTemplate(g build.Godot, bc build.Context) template.Template { 
 		// Register the additional artifact.
 		t.ExtraArtifacts = append(t.ExtraArtifacts, templateNameUniversal)
 
-		t.Builds = []template.Build{templateAmd64.Builds[0], templateArm64.Builds[0]}
+		t.Builds = []build.Build{templateAmd64.Builds[0], templateArm64.Builds[0]}
 		t.Postbuild = cmdLipo.AndThen(t.Postbuild)
 
 		// Construct a list of paths with duplicates removed. This is preferred

@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	EnvSConsCache          = "SCONS_CACHE"
-	EnvSConsCacheSizeLimit = "SCONS_CACHE_LIMIT"
-	EnvSConsFlags          = "SCONSFLAGS"
+	envSConsCache          = "SCONS_CACHE"
+	envSConsCacheSizeLimit = "SCONS_CACHE_LIMIT"
+	envSConsFlags          = "SCONSFLAGS"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -51,7 +51,7 @@ type SCons struct {
 // CacheSizeLimitFromEnv returns a SCons cache size limit set via environment
 // variable.
 func (c *SCons) CacheSizeLimitFromEnv() *uint32 {
-	cslRaw := os.Getenv(EnvSConsCacheSizeLimit)
+	cslRaw := os.Getenv(envSConsCacheSizeLimit)
 	if cslRaw == "" {
 		return nil
 	}
@@ -60,7 +60,7 @@ func (c *SCons) CacheSizeLimitFromEnv() *uint32 {
 	if err != nil {
 		log.Warnf(
 			"found invalid environment variable '%s' (expected u32): %s",
-			EnvSConsCacheSizeLimit,
+			envSConsCacheSizeLimit,
 			cslRaw,
 		)
 
@@ -76,7 +76,7 @@ func (c *SCons) CacheSizeLimitFromEnv() *uint32 {
 
 // ExtraArgsFromEnv returns extra SCons arguments set via environment variable.
 func (c *SCons) ExtraArgsFromEnv() []string {
-	argsRaw := os.Getenv(EnvSConsFlags)
+	argsRaw := os.Getenv(envSConsFlags)
 	if argsRaw == "" {
 		return nil
 	}
@@ -88,13 +88,13 @@ func (c *SCons) ExtraArgsFromEnv() []string {
 
 // PathCacheFromEnv returns a SCons cache path set via environment variable.
 func (c *SCons) PathCacheFromEnv() pathutil.Path {
-	return pathutil.Path(os.Getenv(EnvSConsCache))
+	return pathutil.Path(os.Getenv(envSConsCache))
 }
 
 /* ---------------------------- config.Configurer --------------------------- */
 
 func (c *SCons) Configure(inv config.Context) error {
-	if p := os.Getenv(EnvSConsCache); p != "" {
+	if p := os.Getenv(envSConsCache); p != "" {
 		c.PathCache = pathutil.Path(p)
 	}
 
