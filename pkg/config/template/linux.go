@@ -28,13 +28,13 @@ var _ Template = (*Linux)(nil)
 func (c *Linux) ToTemplate(g build.Godot, bc build.Context) template.Template {
 	t := c.Base.ToTemplate(g, bc)
 
-	t.Binaries[0].Platform = platform.OSLinux
+	t.Builds[0].Platform = platform.OSLinux
 
 	if c.Base.Arch == platform.ArchUnknown {
-		t.Binaries[0].Arch = platform.ArchAmd64
+		t.Builds[0].Arch = platform.ArchAmd64
 	}
 
-	scons := &t.Binaries[0].SCons
+	scons := &t.Builds[0].SCons
 	if config.Dereference(c.UseLLVM) {
 		scons.ExtraArgs = append(scons.ExtraArgs, "use_llvm=yes")
 	} else if bc.Profile.IsRelease() { // Only valid with GCC.

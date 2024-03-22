@@ -59,7 +59,7 @@ func (c *Base) ToTemplate(g build.Godot, bc build.Context) template.Template {
 	}
 
 	return template.Template{
-		Binaries: []template.Build{
+		Builds: []template.Build{
 			{
 				Arch:            c.Arch,
 				CustomModules:   c.CustomModules,

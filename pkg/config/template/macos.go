@@ -38,9 +38,9 @@ func (c *MacOS) ToTemplate(g build.Godot, bc build.Context) template.Template { 
 	case platform.ArchAmd64, platform.ArchArm64:
 		t := c.Base.ToTemplate(g, bc)
 
-		t.Binaries[0].Platform = platform.OSMacOS
+		t.Builds[0].Platform = platform.OSMacOS
 
-		scons := &t.Binaries[0].SCons
+		scons := &t.Builds[0].SCons
 		if config.Dereference(c.Vulkan.Dynamic) {
 			scons.ExtraArgs = append(scons.ExtraArgs, "use_volk=yes")
 		} else {
@@ -89,8 +89,8 @@ func (c *MacOS) ToTemplate(g build.Godot, bc build.Context) template.Template { 
 			Args: append(
 				lipo,
 				"-create",
-				templateAmd64.Binaries[0].Filename(),
-				templateArm64.Binaries[0].Filename(),
+				templateAmd64.Builds[0].Filename(),
+				templateArm64.Builds[0].Filename(),
 				"-output",
 				templateNameUniversal,
 			),
@@ -104,7 +104,7 @@ func (c *MacOS) ToTemplate(g build.Godot, bc build.Context) template.Template { 
 		// Register the additional artifact.
 		t.ExtraArtifacts = append(t.ExtraArtifacts, templateNameUniversal)
 
-		t.Binaries = []template.Build{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
+		t.Builds = []template.Build{templateAmd64.Builds[0], templateArm64.Builds[0]}
 		t.Postbuild = cmdLipo.AndThen(t.Postbuild)
 
 		// Construct a list of paths with duplicates removed. This is preferred

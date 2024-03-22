@@ -38,13 +38,13 @@ var _ Template = (*Windows)(nil)
 func (c *Windows) ToTemplate(g build.Godot, bc build.Context) template.Template {
 	t := c.Base.ToTemplate(g, bc)
 
-	t.Binaries[0].Platform = platform.OSWindows
+	t.Builds[0].Platform = platform.OSWindows
 
 	if c.Base.Arch == platform.ArchUnknown {
-		t.Binaries[0].Arch = platform.ArchAmd64
+		t.Builds[0].Arch = platform.ArchAmd64
 	}
 
-	scons := &t.Binaries[0].SCons
+	scons := &t.Builds[0].SCons
 	if bc.Profile.IsRelease() {
 		scons.ExtraArgs = append(scons.ExtraArgs, "lto=full")
 	}
@@ -63,7 +63,7 @@ func (c *Windows) ToTemplate(g build.Godot, bc build.Context) template.Template 
 	// Register the additional console artifact.
 	t.ExtraArtifacts = append(
 		t.ExtraArtifacts,
-		strings.TrimSuffix(t.Binaries[0].Filename(), ".exe")+".console.exe",
+		strings.TrimSuffix(t.Builds[0].Filename(), ".exe")+".console.exe",
 	)
 
 	return t

@@ -40,14 +40,14 @@ type Templater interface {
 // Template defines a Godot export template compilation. Its scope is limited to
 // the compilation step.
 type Template struct {
-	// Binaries is a list of export template compilation definitions that are
+	// Builds is a list of export template compilation definitions that are
 	// required by the resulting export template artifact.
-	Binaries []Build `hash:"set"`
+	Builds []Build `hash:"set"`
 
 	// ExtraArtifacts are the base names of export template artifacts which are
 	// expected to be found in the 'bin' directory post-compilation. If these
 	// are missing, 'gdbuild' will consider the build to have failed. Note that
-	// the artifacts pertaining to 'Binaries' do not need to be specified.
+	// the artifacts pertaining to 'Builds' do not need to be specified.
 	ExtraArtifacts []string `hash:"ignore"`
 
 	// Paths is a list of additional files and folders which this template
@@ -72,7 +72,7 @@ type Template struct {
 func (t *Template) Artifacts() []string {
 	artifacts := make(map[string]struct{})
 
-	for _, b := range t.Binaries {
+	for _, b := range t.Builds {
 		artifacts[b.Filename()] = struct{}{}
 	}
 
@@ -141,7 +141,7 @@ func (t *Template) Checksum() (string, error) {
 func (t *Template) uniquePaths() []pathutil.Path {
 	paths := t.Paths
 
-	for _, b := range t.Binaries {
+	for _, b := range t.Builds {
 		paths = append(paths, b.CustomModules...)
 
 		if b.CustomPy != "" {
@@ -281,16 +281,16 @@ func (c compilation) Action() (action.Action, error) { //nolint:ireturn
 	actions := make(
 		[]action.Action,
 		0,
-		2+1+1+len(t.Binaries),
+		2+1+1+len(t.Builds),
 	)
 
 	actions = append(
 		actions,
 		t.Prebuild,
-		build.NewVendorGodotAction(&t.Binaries[0].Godot, &c.context.Invoke),
+		build.NewVendorGodotAction(&t.Builds[0].Godot, &c.context.Invoke),
 	)
 
-	for _, b := range t.Binaries {
+	for _, b := range t.Builds {
 		actions = append(actions, b.SConsCommand(c.context))
 	}
 
