@@ -411,7 +411,7 @@ func NewVerifyArtifactsAction(
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "validate generated artifacts: " + strings.Join(required, ", "),
+		Description: "validate generated artifacts: " + strings.Join(artifacts, ", "),
 	}
 }
 
