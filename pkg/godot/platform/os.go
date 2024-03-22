@@ -1,4 +1,4 @@
-package build
+package platform
 
 import (
 	"errors"

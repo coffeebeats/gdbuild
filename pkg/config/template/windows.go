@@ -11,6 +11,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -35,10 +36,10 @@ var _ Template = (*Windows)(nil)
 func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 	t := c.Base.ToTemplate(g, inv)
 
-	t.Binaries[0].Platform = build.OSWindows
+	t.Binaries[0].Platform = platform.OSWindows
 
-	if c.Base.Arch == build.ArchUnknown {
-		t.Binaries[0].Arch = build.ArchAmd64
+	if c.Base.Arch == platform.ArchUnknown {
+		t.Binaries[0].Arch = platform.ArchAmd64
 	}
 
 	scons := &t.Binaries[0].SCons
@@ -87,7 +88,7 @@ func (c *Windows) Validate(inv build.Invocation) error {
 		return err
 	}
 
-	if !c.Base.Arch.IsOneOf(build.ArchAmd64, build.ArchI386, build.ArchUnknown) {
+	if !c.Base.Arch.IsOneOf(platform.ArchAmd64, platform.ArchI386, platform.ArchUnknown) {
 		return fmt.Errorf("%w: unsupport architecture: %s", config.ErrInvalidInput, c.Base.Arch)
 	}
 

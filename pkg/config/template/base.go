@@ -5,6 +5,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -15,7 +16,7 @@ import (
 // export template.
 type Base struct {
 	// Arch is the CPU architecture of the Godot export template.
-	Arch build.Arch `toml:"arch"`
+	Arch platform.Arch `toml:"arch"`
 	// CustomModules is a list of paths to custom modules to include in the
 	// template build.
 	CustomModules []build.Path `toml:"custom_modules"`

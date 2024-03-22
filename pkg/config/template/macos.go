@@ -8,6 +8,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/exec"
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -18,7 +19,7 @@ type MacOS struct {
 	*Base
 
 	// LipoCommand contains arguments used to invoke 'lipo'. Defaults to
-	// ["lipo"]. Only used if 'arch' is set to 'build.ArchUniversal'.
+	// ["lipo"]. Only used if 'arch' is set to 'platform.ArchUniversal'.
 	LipoCommand []string `toml:"lipo_command"`
 
 	// Vulkan defines Vulkan-related configuration.
@@ -32,10 +33,10 @@ var _ Template = (*MacOS)(nil)
 
 func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template { //nolint:funlen
 	switch a := c.Base.Arch; a {
-	case build.ArchAmd64, build.ArchArm64:
+	case platform.ArchAmd64, platform.ArchArm64:
 		t := c.Base.ToTemplate(g, inv)
 
-		t.Binaries[0].Platform = build.OSMacOS
+		t.Binaries[0].Platform = platform.OSMacOS
 
 		scons := &t.Binaries[0].SCons
 		if config.Dereference(c.Vulkan.Dynamic) {
@@ -50,16 +51,16 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 		}
 
 		return t
-	case build.ArchUniversal, build.ArchUnknown:
+	case platform.ArchUniversal, platform.ArchUnknown:
 		// First, create the 'x86_64' binary.
 		amd64 := *c
-		amd64.Base.Arch = build.ArchAmd64
+		amd64.Base.Arch = platform.ArchAmd64
 
 		templateAmd64 := amd64.ToTemplate(g, inv)
 
 		// Next, create the 'arm64' binary.
 		arm64 := *c
-		arm64.Base.Arch = build.ArchArm64
+		arm64.Base.Arch = platform.ArchArm64
 
 		templateArm64 := arm64.ToTemplate(g, inv)
 
@@ -71,8 +72,8 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 		}
 
 		templateNameUniversal := build.TemplateName(
-			build.OSMacOS,
-			build.ArchUniversal,
+			platform.OSMacOS,
+			platform.ArchUniversal,
 			inv.Profile,
 		)
 
@@ -143,10 +144,10 @@ func (c *MacOS) Validate(inv build.Invocation) error {
 	}
 
 	if !c.Base.Arch.IsOneOf(
-		build.ArchAmd64,
-		build.ArchArm64,
-		build.ArchUniversal,
-		build.ArchUnknown,
+		platform.ArchAmd64,
+		platform.ArchArm64,
+		platform.ArchUniversal,
+		platform.ArchUnknown,
 	) {
 		return fmt.Errorf("%w: unsupport architecture: %s", config.ErrInvalidInput, c.Base.Arch)
 	}

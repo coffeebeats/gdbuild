@@ -3,6 +3,8 @@ package build
 import (
 	"fmt"
 	"path/filepath"
+
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -19,7 +21,7 @@ type Invocation struct {
 	// Features is the list of feature tags to enable.
 	Features []string
 	// Platform is the target platform to build for.
-	Platform OS
+	Platform platform.OS
 	// Profile is the GDBuild optimization level to build with.
 	Profile Profile
 
@@ -44,7 +46,7 @@ func (c *Invocation) BinPath() Path {
 /* ----------------------------- Impl: Validater ---------------------------- */
 
 func (c *Invocation) Validate() error {
-	if _, err := ParseOS(c.Platform.String()); err != nil {
+	if _, err := platform.ParseOS(c.Platform.String()); err != nil {
 		return err
 	}
 

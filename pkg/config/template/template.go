@@ -5,6 +5,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 var ErrInvalidInput = config.ErrInvalidInput
@@ -99,19 +100,19 @@ func (t *Templates) Build(inv build.Invocation) (Template, error) { //nolint:cyc
 	}
 
 	switch p := inv.Platform; p {
-	case build.OSLinux:
+	case platform.OSLinux:
 		out = &Linux{Base: out.(*Base)} //nolint:exhaustruct,forcetypeassert
 
 		if err := t.Platform.Linux.build(inv, out); err != nil {
 			return nil, err
 		}
-	case build.OSMacOS:
+	case platform.OSMacOS:
 		out = &MacOS{Base: out.(*Base)} //nolint:exhaustruct,forcetypeassert
 
 		if err := t.Platform.MacOS.build(inv, out); err != nil {
 			return nil, err
 		}
-	case build.OSWindows:
+	case platform.OSWindows:
 		out = &Windows{Base: out.(*Base)} //nolint:exhaustruct,forcetypeassert
 
 		if err := t.Platform.Windows.build(inv, out); err != nil {

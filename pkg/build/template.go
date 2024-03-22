@@ -18,6 +18,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -163,7 +164,7 @@ func (t *Template) uniquePaths() []Path {
 // Binary uniquely specifies a compilation of a Godot export template.
 type Binary struct {
 	// Arch is the CPU architecture of the Godot export template.
-	Arch Arch
+	Arch platform.Arch
 
 	// CustomModules is a list of paths to custom modules to include in the
 	// template build.
@@ -186,7 +187,7 @@ type Binary struct {
 	Optimize Optimize
 
 	// Platform defines which OS/platform to build for.
-	Platform OS
+	Platform platform.OS
 
 	// Profile is the optimization level of the template.
 	Profile Profile
@@ -199,9 +200,9 @@ type Binary struct {
 
 // TemplateName returns the base name of the export template defined by the
 // specified parameters.
-func TemplateName(pl OS, arch Arch, pr Profile) string {
+func TemplateName(pl platform.OS, arch platform.Arch, pr Profile) string {
 	name := fmt.Sprintf("godot.%s.%s.%s", pl, pr.TargetName(), arch)
-	if pl == OSWindows {
+	if pl == platform.OSWindows {
 		name += ".exe"
 	}
 
@@ -263,7 +264,7 @@ func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	// Specify the 'platform' argument.
 	args = append(args, b.Platform.String())
 
-	// Add the achitecture setting (note that this requires the 'build.Arch'
+	// Add the achitecture setting (note that this requires the 'platform.Arch'
 	// values to match what SCons expects).
 	args = append(args, "arch="+b.Arch.String())
 

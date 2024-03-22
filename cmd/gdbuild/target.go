@@ -11,6 +11,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/pkg/build"
 	"github.com/coffeebeats/gdbuild/pkg/config"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 var ErrTargetUsageProfiles = errors.New("cannot specify both '--release' and '--release_debug'")
@@ -125,14 +126,14 @@ func NewTarget() *cli.Command { //nolint:funlen
 	}
 }
 
-func parsePlatform(platformInput string) (build.OS, error) {
+func parsePlatform(platformInput string) (platform.OS, error) {
 	if platformInput == "" {
 		platformInput = runtime.GOOS
 	}
 
-	godotPlatform, err := build.ParseOS(platformInput)
+	godotPlatform, err := platform.ParseOS(platformInput)
 	if err != nil {
-		return build.OS(0), err
+		return platform.OS(0), err
 	}
 
 	return godotPlatform, nil

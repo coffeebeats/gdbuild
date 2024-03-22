@@ -50,7 +50,7 @@ func TestBuildTemplate(t *testing.T) {
 				PathBuild:    "$TEST_TMPDIR/build",
 				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
 				PathOut:      "$TEST_TMPDIR/dist",
-				Platform:     build.OSLinux,
+				Platform:     platform.OSLinux,
 				Profile:      build.ProfileDebug,
 			},
 			files: map[string]string{
@@ -67,9 +67,9 @@ func TestBuildTemplate(t *testing.T) {
 					build.Template{
 						Binaries: []build.Binary{
 							{
-								Arch:     build.ArchAmd64,
+								Arch:     platform.ArchAmd64,
 								Godot:    build.Godot{Version: "4.0.0"},
-								Platform: build.OSLinux,
+								Platform: platform.OSLinux,
 								Profile:  build.ProfileDebug,
 							},
 						},
@@ -88,7 +88,7 @@ func TestBuildTemplate(t *testing.T) {
 				PathBuild:    "$TEST_TMPDIR/build",
 				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
 				PathOut:      "$TEST_TMPDIR/dist",
-				Platform:     build.OSMacOS,
+				Platform:     platform.OSMacOS,
 				Profile:      build.ProfileDebug,
 			},
 			files: map[string]string{
@@ -111,9 +111,9 @@ func TestBuildTemplate(t *testing.T) {
 					build.Template{
 						Binaries: []build.Binary{
 							{
-								Arch:     build.ArchAmd64,
+								Arch:     platform.ArchAmd64,
 								Godot:    build.Godot{Version: "4.0.0"},
-								Platform: build.OSMacOS,
+								Platform: platform.OSMacOS,
 								Profile:  build.ProfileDebug,
 								SCons: build.SCons{
 									ExtraArgs: []string{
@@ -123,9 +123,9 @@ func TestBuildTemplate(t *testing.T) {
 								},
 							},
 							{
-								Arch:     build.ArchArm64,
+								Arch:     platform.ArchArm64,
 								Godot:    build.Godot{Version: "4.0.0"},
-								Platform: build.OSMacOS,
+								Platform: platform.OSMacOS,
 								Profile:  build.ProfileDebug,
 								SCons: build.SCons{
 									ExtraArgs: []string{
@@ -162,7 +162,7 @@ func TestBuildTemplate(t *testing.T) {
 				PathBuild:    "$TEST_TMPDIR/build",
 				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
 				PathOut:      "$TEST_TMPDIR/dist",
-				Platform:     build.OSWindows,
+				Platform:     platform.OSWindows,
 				Profile:      build.ProfileDebug,
 			},
 			files: map[string]string{
@@ -179,9 +179,9 @@ func TestBuildTemplate(t *testing.T) {
 					build.Template{
 						Binaries: []build.Binary{
 							{
-								Arch:     build.ArchAmd64,
+								Arch:     platform.ArchAmd64,
 								Godot:    build.Godot{Version: "4.0.0"},
-								Platform: build.OSWindows,
+								Platform: platform.OSWindows,
 								Profile:  build.ProfileDebug,
 							},
 						},
@@ -198,7 +198,7 @@ func TestBuildTemplate(t *testing.T) {
 				PathBuild:    "$TEST_TMPDIR/build",
 				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
 				PathOut:      "$TEST_TMPDIR/dist",
-				Platform:     build.OSWindows,
+				Platform:     platform.OSWindows,
 				Profile:      build.ProfileDebug,
 			},
 			files: map[string]string{
@@ -238,9 +238,9 @@ func TestBuildTemplate(t *testing.T) {
 					build.Template{
 						Binaries: []build.Binary{
 							{
-								Arch:     build.ArchAmd64,
+								Arch:     platform.ArchAmd64,
 								Godot:    build.Godot{Version: "4.2.1"},
-								Platform: build.OSWindows,
+								Platform: platform.OSWindows,
 								Profile:  build.ProfileDebug,
 								SCons:    build.SCons{},
 							},
