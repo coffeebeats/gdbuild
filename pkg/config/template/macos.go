@@ -70,7 +70,11 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 			lipo = append(lipo, "lipo")
 		}
 
-		targetName := inv.Profile.TargetName()
+		templateNameUniversal := build.TemplateName(
+			build.OSMacOS,
+			build.ArchUniversal,
+			inv.Profile,
+		)
 
 		cmdLipo := &action.Process{
 			Directory:   inv.BinPath().String(),
@@ -82,10 +86,10 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 			Args: append(
 				lipo,
 				"-create",
-				fmt.Sprintf("godot.macos.%s.x86_64", targetName),
-				fmt.Sprintf("godot.macos.%s.arm64", targetName),
+				templateAmd64.Binaries[0].Filename(),
+				templateArm64.Binaries[0].Filename(),
 				"-output",
-				fmt.Sprintf("godot.macos.%s.universal", targetName),
+				templateNameUniversal,
 			),
 		}
 
@@ -93,6 +97,9 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 		// to be copied over from the arch-specific templates and this avoid the
 		// need to deduplicate properties.
 		t := c.Base.ToTemplate(g, inv)
+
+		// Register the additional artifact.
+		t.ExtraArtifacts = append(t.ExtraArtifacts, templateNameUniversal)
 
 		t.Binaries = []build.Binary{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
 		t.Postbuild = cmdLipo.AndThen(t.Postbuild)
