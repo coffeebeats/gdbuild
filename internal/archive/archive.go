@@ -15,7 +15,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
-const extensionTarGZ = ".tar.gz"
+const FileExtension = ".tar.gz"
 
 var (
 	ErrExtractFailed = errors.New("extract failed")
@@ -40,8 +40,8 @@ func Create(files []string, out string) error {
 		return fmt.Errorf("%w: 'out'", ErrMissingInput)
 	}
 
-	if !strings.HasSuffix(out, extensionTarGZ) {
-		out += extensionTarGZ
+	if !strings.HasSuffix(out, FileExtension) {
+		out += FileExtension
 	}
 
 	f, err := os.Create(out)
@@ -114,7 +114,7 @@ func Extract(ctx context.Context, archive, out string) error { //nolint:cyclop,f
 		return err
 	}
 
-	prefix := strings.TrimSuffix(filepath.Base(archive), extensionTarGZ)
+	prefix := strings.TrimSuffix(filepath.Base(archive), FileExtension)
 
 	a, err := os.Open(archive)
 	if err != nil {
