@@ -10,7 +10,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
 
@@ -74,7 +73,7 @@ func (c *MacOS) ToTemplate(g compile.Godot, cc compile.Context) template.Templat
 			lipo = append(lipo, "lipo")
 		}
 
-		templateNameUniversal := scons.TemplateName(
+		templateNameUniversal := template.Name(
 			platform.OSMacOS,
 			platform.ArchUniversal,
 			cc.Profile,
@@ -105,7 +104,7 @@ func (c *MacOS) ToTemplate(g compile.Godot, cc compile.Context) template.Templat
 		// Register the additional artifact.
 		t.ExtraArtifacts = append(t.ExtraArtifacts, templateNameUniversal)
 
-		t.Binaries = []scons.Build{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
+		t.Binaries = []template.Build{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
 		t.Postbuild = cmdLipo.AndThen(t.Postbuild)
 
 		// Construct a list of paths with duplicates removed. This is preferred

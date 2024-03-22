@@ -19,7 +19,6 @@ import (
 	configtemplate "github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
 
@@ -72,7 +71,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					template.Template{
-						Binaries: []scons.Build{
+						Binaries: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
 								Godot:    compile.Godot{Version: "4.0.0"},
@@ -116,13 +115,13 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					template.Template{
-						Binaries: []scons.Build{
+						Binaries: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
 								Godot:    compile.Godot{Version: "4.0.0"},
 								Platform: platform.OSMacOS,
 								Profile:  compile.ProfileDebug,
-								SCons: scons.SCons{
+								SCons: compile.SCons{
 									ExtraArgs: []string{
 										"use_volk=no",
 										"vulkan_sdk_path=" + filepath.Join(tmp, "vulkan"),
@@ -134,7 +133,7 @@ func TestBuildTemplate(t *testing.T) {
 								Godot:    compile.Godot{Version: "4.0.0"},
 								Platform: platform.OSMacOS,
 								Profile:  compile.ProfileDebug,
-								SCons: scons.SCons{
+								SCons: compile.SCons{
 									ExtraArgs: []string{
 										"use_volk=no",
 										"vulkan_sdk_path=" + filepath.Join(tmp, "vulkan"),
@@ -184,7 +183,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					template.Template{
-						Binaries: []scons.Build{
+						Binaries: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
 								Godot:    compile.Godot{Version: "4.0.0"},
@@ -243,13 +242,13 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					template.Template{
-						Binaries: []scons.Build{
+						Binaries: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
 								Godot:    compile.Godot{Version: "4.2.1"},
 								Platform: platform.OSWindows,
 								Profile:  compile.ProfileDebug,
-								SCons:    scons.SCons{},
+								SCons:    compile.SCons{},
 							},
 						},
 						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},

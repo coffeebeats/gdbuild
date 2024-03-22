@@ -7,7 +7,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
 
@@ -35,7 +34,7 @@ type Base struct {
 	// template build options.
 	PathCustomPy pathutil.Path `toml:"custom_py_path"`
 	// SCons contains build command-related settings.
-	SCons scons.SCons `toml:"scons"`
+	SCons compile.SCons `toml:"scons"`
 }
 
 // Compile-time check that 'Template' is implemented.
@@ -60,7 +59,7 @@ func (c *Base) ToTemplate(g compile.Godot, cc compile.Context) template.Template
 	}
 
 	return template.Template{
-		Binaries: []scons.Build{
+		Binaries: []template.Build{
 			{
 				Arch:            c.Arch,
 				CustomModules:   c.CustomModules,

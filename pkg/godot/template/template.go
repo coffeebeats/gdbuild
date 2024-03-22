@@ -21,7 +21,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
-	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
 )
 
 var ErrMissingInput = errors.New("missing input")
@@ -43,7 +42,7 @@ type Templater interface {
 type Template struct {
 	// Binaries is a list of export template compilation definitions that are
 	// required by the resulting export template artifact.
-	Binaries []scons.Build `hash:"set"`
+	Binaries []Build `hash:"set"`
 
 	// ExtraArtifacts are the base names of export template artifacts which are
 	// expected to be found in the 'bin' directory post-compilation. If these
