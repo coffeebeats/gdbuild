@@ -135,8 +135,9 @@ func TestBuildTemplate(t *testing.T) {
 								},
 							},
 						},
-						Paths:    []build.Path{build.Path(filepath.Join(tmp, "vulkan"))},
-						Prebuild: nil,
+						ExtraArtifacts: []string{"godot.macos.template_debug.universal"},
+						Paths:          []build.Path{build.Path(filepath.Join(tmp, "vulkan"))},
+						Prebuild:       nil,
 						Postbuild: &action.Process{
 							Directory: filepath.Join(tmp, "build/bin"),
 							Shell:     exec.DefaultShell(),
@@ -184,6 +185,7 @@ func TestBuildTemplate(t *testing.T) {
 								Profile:  build.ProfileDebug,
 							},
 						},
+						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
 					},
 					got,
 				)
@@ -243,7 +245,8 @@ func TestBuildTemplate(t *testing.T) {
 								SCons:    build.SCons{},
 							},
 						},
-						Paths: []build.Path{image},
+						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
+						Paths:          []build.Path{image},
 					},
 					got,
 				)
