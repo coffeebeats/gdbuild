@@ -20,11 +20,8 @@ const (
 )
 
 var (
-	ErrInvalidInput        = errors.New("invalid input")
-	ErrMissingInput        = errors.New("missing input")
-	ErrMissingStore        = errors.New("missing store")
-	ErrUnexpectedLayout    = errors.New("unexpected layout")
-	ErrUnsupportedArtifact = errors.New("unsupported artifact")
+	ErrMissingInput = errors.New("missing input")
+	ErrMissingStore = errors.New("missing store")
 )
 
 /* -------------------------------------------------------------------------- */
@@ -58,11 +55,7 @@ func Has(storePath string, t build.Template) (bool, error) {
 
 	path, err := TemplateArchive(storePath, t)
 	if err != nil {
-		if !errors.Is(err, ErrUnsupportedArtifact) {
-			return false, err
-		}
-
-		return false, nil
+		return false, err
 	}
 
 	_, err = os.Stat(path)
