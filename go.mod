@@ -7,6 +7,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/charmbracelet/log v0.3.1
 	github.com/coffeebeats/gdenv v0.6.13
+	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pelletier/go-toml/v2 v2.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.1

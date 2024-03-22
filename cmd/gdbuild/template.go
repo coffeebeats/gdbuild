@@ -15,8 +15,10 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/config"
 )
 
+var ErrPrintHashUsage = errors.New("cannot set option with '--print-hash'")
+
 // A 'urfave/cli' command to compile a Godot export template.
-func NewTemplate() *cli.Command { //nolint:cyclop,funlen
+func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 	return &cli.Command{
 		Name:     "template",
 		Category: "Build",
@@ -30,6 +32,10 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 			&cli.BoolFlag{
 				Name:  "dry-run",
 				Usage: "log the build command without running it",
+			},
+			&cli.BoolFlag{
+				Name:  "print-hash",
+				Usage: "log the unique hash of the export template (skips compilation)",
 			},
 			&cli.PathFlag{
 				Name:    "config",
@@ -79,6 +85,21 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 
 			if c.IsSet("release") && c.IsSet("release_debug") {
 				return UsageError{ctx: c, err: ErrTargetUsageProfiles}
+			}
+
+			if c.IsSet("print-hash") {
+				for _, opt := range []string{"build-dir", "dry-run", "out"} {
+					if c.IsSet(opt) {
+						return UsageError{
+							ctx: c,
+							err: fmt.Errorf("%w: --%s", ErrPrintHashUsage, opt),
+						}
+					}
+				}
+
+				// Don't log anything lower than error since that will obstruct
+				// parsing of the hash.
+				log.SetLevel(log.ErrorLevel)
 			}
 
 			pathOut, err := parseWorkDir(c.Path("out"))
@@ -147,6 +168,17 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 				return err
 			}
 
+			cs, err := t.Checksum(&inv)
+			if err != nil {
+				return err
+			}
+
+			if c.Bool("print-hash") {
+				log.Print(cs)
+
+				return nil
+			}
+
 			action, err := build.Compile(&t, &inv)
 			if err != nil {
 				return err
@@ -154,6 +186,8 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen
 
 			if c.Bool("dry-run") {
 				log.Print(action.Sprint())
+
+				log.Debug("template hash: " + cs)
 
 				return nil
 			}

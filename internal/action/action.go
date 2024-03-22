@@ -1,6 +1,9 @@
 package action
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                              Interface: Runner                             */
@@ -12,6 +15,8 @@ type Action interface {
 	Combinable
 	Runner
 	Printer
+
+	fmt.Stringer // Required for checksums.
 }
 
 /* ---------------------------- Interface: Runner --------------------------- */

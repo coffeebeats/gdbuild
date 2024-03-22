@@ -35,6 +35,10 @@ func (c Command) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped command.
 func (c Command) After(a Action) Action { //nolint:ireturn
+	if a == nil {
+		return c
+	}
+
 	if c == "" {
 		return a
 	}
@@ -45,6 +49,10 @@ func (c Command) After(a Action) Action { //nolint:ireturn
 // AndThen creates a new action which executes the wrapped command and then the
 // provided action.
 func (c Command) AndThen(a Action) Action { //nolint:ireturn
+	if a == nil {
+		return c
+	}
+
 	if c == "" {
 		return a
 	}
@@ -57,6 +65,12 @@ func (c Command) AndThen(a Action) Action { //nolint:ireturn
 // Sprint displays the action without actually executing it.
 func (c Command) Sprint() string {
 	return string(c)
+}
+
+/* --------------------------- Impl: fmt.Stringer --------------------------- */
+
+func (c Command) String() string {
+	return c.Sprint()
 }
 
 /* -------------------------------------------------------------------------- */
@@ -96,12 +110,28 @@ func (c Commands) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped list of commands.
 func (c Commands) After(a Action) Action { //nolint:ireturn
+	if a == nil {
+		return c
+	}
+
+	if len(c.Commands) == 0 {
+		return a
+	}
+
 	return Sequence{Action: c, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped list of commands and
 // then the provided action.
 func (c Commands) AndThen(a Action) Action { //nolint:ireturn
+	if a == nil {
+		return c
+	}
+
+	if len(c.Commands) == 0 {
+		return a
+	}
+
 	return Sequence{Action: c, Post: a} //nolint:exhaustruct
 }
 
@@ -116,4 +146,10 @@ func (c Commands) Sprint() string {
 	}
 
 	return strings.Join(cmds, "\n")
+}
+
+/* --------------------------- Impl: fmt.Stringer --------------------------- */
+
+func (c Commands) String() string {
+	return c.Sprint()
 }

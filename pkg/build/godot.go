@@ -27,11 +27,11 @@ var ErrConflictingValue = errors.New("conflicting setting")
 // only one of these options can be used at a time, but one *must* be specified.
 type Godot struct {
 	// PathSource is a path to a directory containing the Godot source code.
-	PathSource Path `toml:"src_path"`
+	PathSource Path `hash:"ignore" toml:"src_path"`
 	// Version is a specific version label to download.
 	Version string `toml:"version"`
 	// VersionFile is a file containing just the a version label to download.
-	VersionFile Path `toml:"version_file"`
+	VersionFile Path `hash:"ignore" toml:"version_file"`
 }
 
 /* ----------------------------- Method: IsEmpty ---------------------------- */

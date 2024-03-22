@@ -73,7 +73,19 @@ type configTransformer struct{}
 /* ---------------------------- Impl: Transformer --------------------------- */
 
 func (ct configTransformer) Transformer(ty reflect.Type) func(dst, src reflect.Value) error {
+	// Handle pointers to 'bool' types.
 	if ty == reflect.TypeOf((*bool)(nil)) {
+		return func(dst, src reflect.Value) error {
+			if dst.CanSet() && !src.IsNil() {
+				dst.Set(src)
+			}
+
+			return nil
+		}
+	}
+
+	// Handle pointers to 'uint' types.
+	if ty == reflect.TypeOf((*uint)(nil)) {
 		return func(dst, src reflect.Value) error {
 			if dst.CanSet() && !src.IsNil() {
 				dst.Set(src)

@@ -53,7 +53,7 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 		t.AddToPaths(c.PathIcon)
 
 		// Copy the icon file to the correct location.
-		t.Prebuild = append(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &inv))
+		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &inv))
 	}
 
 	return t

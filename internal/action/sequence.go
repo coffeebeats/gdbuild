@@ -15,6 +15,10 @@ func InOrder(actions ...Action) Action { //nolint:ireturn
 	var action Action
 
 	for _, a := range actions {
+		if a == nil {
+			continue
+		}
+
 		if action == nil {
 			action = a
 
@@ -84,12 +88,28 @@ func (s Sequence) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then all of
 // the actions in this sequence.
 func (s Sequence) After(r Action) Action { //nolint:ireturn
+	if r == nil {
+		return s
+	}
+
+	if s.Pre == nil && s.Action == nil && s.Post == nil {
+		return r
+	}
+
 	return Sequence{Action: s, Pre: r} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes all actions in this sequence and
 // then the provided action.
 func (s Sequence) AndThen(r Action) Action { //nolint:ireturn
+	if r == nil {
+		return s
+	}
+
+	if s.Pre == nil && s.Action == nil && s.Post == nil {
+		return r
+	}
+
 	return Sequence{Action: s, Post: r} //nolint:exhaustruct
 }
 
@@ -112,4 +132,10 @@ func (s Sequence) Sprint() string {
 	}
 
 	return strings.Join(cmds, "\n")
+}
+
+/* --------------------------- Impl: fmt.Stringer --------------------------- */
+
+func (s Sequence) String() string {
+	return s.Sprint()
 }

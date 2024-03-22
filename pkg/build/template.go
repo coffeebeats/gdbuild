@@ -3,6 +3,8 @@ package build
 import (
 	"context"
 	"fmt"
+	"hash/crc32"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
+	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
@@ -33,20 +36,20 @@ type Templater interface {
 type Template struct {
 	// Binaries is a list of export template compilation definitions that are
 	// required by the resulting export template artifact.
-	Binaries []Binary
+	Binaries []Binary `hash:"set"`
 
 	// Paths is a list of additional files and folders which this template
 	// depends on. Useful for recording dependencies which are defined in
 	// otherwise opaque properties like 'Hook'.
-	Paths []Path
+	Paths []Path `hash:"set"`
 
 	// Prebuild contains an ordered list of actions to execute prior to
 	// compilation of the export templates.
-	Prebuild []action.Action
+	Prebuild action.Action `hash:"string"`
 
 	// Postbuild contains an ordered list of actions to execute after
 	// compilation of the export templates.
-	Postbuild []action.Action
+	Postbuild action.Action `hash:"string"`
 }
 
 /* --------------------------- Method: AddToPaths --------------------------- */
@@ -57,6 +60,74 @@ func (t *Template) AddToPaths(path Path) {
 	if !slices.Contains(t.Paths, path) {
 		t.Paths = append(t.Paths, path)
 	}
+}
+
+/* ---------------------------- Method: Checksum ---------------------------- */
+
+// Checksum produces a checksum hash of the export template specification. When
+// the checksums of two 'Template' definitions matches, the resulting export
+// templates will be equivalent.
+//
+// NOTE: This implementation relies on producers of 'Template' to correctly
+// register all file system dependencies within 'Paths'.
+func (t *Template) Checksum(inv *Invocation) (string, error) {
+	hash, err := hashstructure.Hash(
+		t,
+		hashstructure.FormatV2,
+		&hashstructure.HashOptions{ //nolint:exhaustruct
+			IgnoreZeroValue: true,
+			SlicesAsSets:    true,
+			ZeroNil:         true,
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	cs := crc32.New(crc32.IEEETable)
+
+	// Update the 'crc32' hash with the struct hash.
+	if _, err := io.Copy(cs, strings.NewReader(strconv.FormatUint(hash, 16))); err != nil {
+		return "", err
+	}
+
+	for _, p := range t.uniquePaths(inv) {
+		root := p.String()
+
+		log.Debugf("hashing files rooted at path: %s", root)
+
+		if err := osutil.HashFiles(cs, root); err != nil {
+			return "", err
+		}
+	}
+
+	return strconv.FormatUint(uint64(cs.Sum32()), 16), nil
+}
+
+/* --------------------------- Method: uniquePaths -------------------------- */
+
+// uniquePaths returns the unique list of expanded path dependencies.
+func (t *Template) uniquePaths(_ *Invocation) []Path {
+	paths := t.Paths
+
+	for _, b := range t.Binaries {
+		paths = append(paths, b.CustomModules...)
+
+		if b.CustomPy != "" {
+			paths = append(paths, b.CustomPy)
+		}
+
+		switch g := b.Godot; {
+		case g.PathSource != "":
+			paths = append(paths, g.PathSource)
+		case g.VersionFile != "":
+			paths = append(paths, g.VersionFile)
+		}
+	}
+
+	slices.Sort(paths)
+
+	return slices.Compact(paths)
 }
 
 /* -------------------------------------------------------------------------- */
@@ -70,11 +141,11 @@ type Binary struct {
 
 	// CustomModules is a list of paths to custom modules to include in the
 	// template build.
-	CustomModules []Path
+	CustomModules []Path `hash:"ignore"` // Ignore; paths are separately hashed.
 
 	// CustomPy is a path to a 'custom.py' file which defines export template
 	// build options.
-	CustomPy Path
+	CustomPy Path `hash:"ignore"` // Ignore; path is separately hashed.
 
 	// DoublePrecision enables double floating-point precision.
 	DoublePrecision bool
@@ -101,13 +172,13 @@ type Binary struct {
 /* -------------------------- Method: SConsCommand -------------------------- */
 
 // SConsCommand returns the 'SCons' command to build the export template.
-func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop,funlen
+func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop,funlen
 	var cmd action.Process
 
 	cmd.Directory = inv.PathBuild.String()
 	cmd.Verbose = inv.Verbose
 
-	scons := c.SCons
+	scons := b.SCons
 
 	// Define the SCons command, if not yet set.
 	if len(scons.Command) == 0 {
@@ -116,11 +187,11 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 
 	// Define the SCons cache path.
 	if path := scons.PathCache; path != "" {
-		cmd.Environment = append(cmd.Environment, EnvSConsCache+"="+path.String())
+		cmd.Environment = append(cmd.Environment, envSConsCache+"="+path.String())
 	}
 
 	// Add specified environment variables.
-	for k, v := range c.Env {
+	for k, v := range b.Env {
 		cmd.Environment = append(cmd.Environment, k+"="+v)
 	}
 
@@ -129,84 +200,86 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	cmd.Environment = append(cmd.Environment, os.Environ()...)
 
 	// Set the SCons cache size limit, if one was set.
-	if l := scons.CacheSizeLimit; l != nil {
+	if csl := scons.CacheSizeLimit; csl != nil {
 		cmd.Environment = append(
 			cmd.Environment,
-			fmt.Sprintf("SCONS_CACHE_LIMIT=%d", *scons.CacheSizeLimit),
+			fmt.Sprintf("%s=%d", envSConsCacheSizeLimit, *csl),
 		)
 	}
 
 	// Build the SCons command/argument list.
-	cmd.Args = append(cmd.Args, scons.Command...)
-	cmd.Args = append(cmd.Args, "-j"+strconv.Itoa(runtime.NumCPU()))
+	var args []string
+
+	// Add multi-core support.
+	args = append(args, "-j"+strconv.Itoa(runtime.NumCPU()))
 
 	// Specify the 'platform' argument.
-	cmd.Args = append(cmd.Args, c.Platform.String())
+	args = append(args, b.Platform.String())
 
 	// Add the achitecture setting (note that this requires the 'build.Arch'
 	// values to match what SCons expects).
-	cmd.Args = append(cmd.Args, "arch="+c.Arch.String())
+	args = append(args, "arch="+b.Arch.String())
 
 	// Specify which target to build.
-	cmd.Args = append(cmd.Args, "target="+inv.Profile.TargetName())
+	args = append(args, "target="+inv.Profile.TargetName())
 
 	// Add stricter warning handling.
-	cmd.Args = append(cmd.Args, "warnings=extra", "werror=yes")
+	args = append(args, "warnings=extra", "werror=yes")
 
 	// Handle a verbose flag.
 	if inv.Verbose {
-		cmd.Args = append(cmd.Args, "verbose=yes")
+		args = append(args, "verbose=yes")
 	}
 
 	// Append 'custom_modules' argument.
-	if len(c.CustomModules) > 0 {
-		modules := make([]string, len(c.CustomModules))
-		for i, m := range c.CustomModules {
+	if len(b.CustomModules) > 0 {
+		modules := make([]string, len(b.CustomModules))
+		for i, m := range b.CustomModules {
 			modules[i] = m.String()
 		}
 
-		cmd.Args = append(cmd.Args, fmt.Sprintf(`custom_modules="%s"`, strings.Join(modules, ",")))
+		args = append(args, fmt.Sprintf(`custom_modules="%s"`, strings.Join(modules, ",")))
 	}
 
 	// Append the 'precision' argument.
-	if c.DoublePrecision {
-		cmd.Args = append(cmd.Args, "precision=double")
+	if b.DoublePrecision {
+		args = append(args, "precision=double")
 	}
 
 	// Append profile/optimization-related arguments.
 	switch inv.Profile {
 	case ProfileRelease:
 		optimize := OptimizeSpeed
-		if c.Optimize != OptimizeUnknown {
-			optimize = c.Optimize
+		if b.Optimize != OptimizeUnknown {
+			optimize = b.Optimize
 		}
 
-		cmd.Args = append(
-			cmd.Args,
+		args = append(
+			args,
 			"production=yes",
 			fmt.Sprintf("optimize=%s", optimize),
 		)
 
 	case ProfileReleaseDebug:
 		optimize := OptimizeSpeedTrace
-		if c.Optimize != OptimizeUnknown {
-			optimize = c.Optimize
+		if b.Optimize != OptimizeUnknown {
+			optimize = b.Optimize
 		}
 
-		cmd.Args = append(
-			cmd.Args,
+		args = append(
+			args,
 			"debug_symbols=yes",
 			"dev_mode=yes",
 			fmt.Sprintf("optimize=%s", optimize),
 		)
 	default: // ProfileDebug
 		optimize := OptimizeDebug
-		if c.Optimize != OptimizeUnknown {
-			optimize = c.Optimize
+		if b.Optimize != OptimizeUnknown {
+			optimize = b.Optimize
 		}
 
-		cmd.Args = append(
-			cmd.Args,
+		args = append(
+			args,
 			"debug_symbols=yes",
 			"dev_mode=yes",
 			fmt.Sprintf("optimize=%s", optimize),
@@ -214,28 +287,32 @@ func (c *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	}
 
 	// Append C/C++ build flags.
-	if len(c.SCons.CCFlags) > 0 {
-		flags := fmt.Sprintf(`CCFLAGS="%s"`, strings.Join(c.SCons.CCFlags, " "))
-		cmd.Args = append(cmd.Args, flags)
+	if len(b.SCons.CCFlags) > 0 {
+		flags := fmt.Sprintf(`CCFLAGS="%s"`, strings.Join(b.SCons.CCFlags, " "))
+		args = append(args, flags)
 	}
 
-	if len(c.SCons.CFlags) > 0 {
-		flags := fmt.Sprintf(`CFLAGS="%s"`, strings.Join(c.SCons.CFlags, " "))
-		cmd.Args = append(cmd.Args, flags)
+	if len(b.SCons.CFlags) > 0 {
+		flags := fmt.Sprintf(`CFLAGS="%s"`, strings.Join(b.SCons.CFlags, " "))
+		args = append(args, flags)
 	}
 
-	if len(c.SCons.CXXFlags) > 0 {
-		flags := fmt.Sprintf(`CXXFLAGS="%s"`, strings.Join(c.SCons.CXXFlags, " "))
-		cmd.Args = append(cmd.Args, flags)
+	if len(b.SCons.CXXFlags) > 0 {
+		flags := fmt.Sprintf(`CXXFLAGS="%s"`, strings.Join(b.SCons.CXXFlags, " "))
+		args = append(args, flags)
 	}
 
-	if len(c.SCons.LinkFlags) > 0 {
-		flags := fmt.Sprintf(`LINKFLAGS="%s"`, strings.Join(c.SCons.LinkFlags, " "))
-		cmd.Args = append(cmd.Args, flags)
+	if len(b.SCons.LinkFlags) > 0 {
+		flags := fmt.Sprintf(`LINKFLAGS="%s"`, strings.Join(b.SCons.LinkFlags, " "))
+		args = append(args, flags)
 	}
 
 	// Append extra arguments.
-	cmd.Args = append(cmd.Args, c.SCons.ExtraArgs...)
+	args = append(args, b.SCons.ExtraArgs...)
+
+	// Attach the command with arguments to the action.
+	cmd.Args = append(cmd.Args, scons.Command...)
+	cmd.Args = append(cmd.Args, args...)
 
 	return &cmd
 }
@@ -315,18 +392,24 @@ func (c compilation) Action() (action.Action, error) { //nolint:ireturn
 	actions := make(
 		[]action.Action,
 		0,
-		2+len(t.Prebuild)+len(t.Postbuild)+len(t.Binaries),
+		2+1+1+len(t.Binaries),
 	)
 
-	actions = append(actions, t.Prebuild...)
-	actions = append(actions, NewVendorGodotAction(&t.Binaries[0].Godot, inv))
+	actions = append(
+		actions,
+		t.Prebuild,
+		NewVendorGodotAction(&t.Binaries[0].Godot, inv),
+	)
 
 	for _, b := range t.Binaries {
 		actions = append(actions, b.SConsCommand(inv))
 	}
 
-	actions = append(actions, t.Postbuild...)
-	actions = append(actions, NewMoveArtifactsAction(inv))
+	actions = append(
+		actions,
+		t.Postbuild,
+		NewMoveArtifactsAction(inv),
+	)
 
 	return action.InOrder(actions...), nil
 }

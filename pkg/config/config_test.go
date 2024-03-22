@@ -137,18 +137,16 @@ func TestBuildTemplate(t *testing.T) {
 						},
 						Paths:    []build.Path{build.Path(filepath.Join(tmp, "vulkan"))},
 						Prebuild: nil,
-						Postbuild: []action.Action{
-							&action.Process{
-								Directory: filepath.Join(tmp, "build/bin"),
-								Shell:     exec.DefaultShell(),
-								Args: []string{
-									"lipo",
-									"-create",
-									"godot.macos.template_debug.x86_64",
-									"godot.macos.template_debug.arm64",
-									"-output",
-									"godot.macos.template_debug.universal",
-								},
+						Postbuild: &action.Process{
+							Directory: filepath.Join(tmp, "build/bin"),
+							Shell:     exec.DefaultShell(),
+							Args: []string{
+								"lipo",
+								"-create",
+								"godot.macos.template_debug.x86_64",
+								"godot.macos.template_debug.arm64",
+								"-output",
+								"godot.macos.template_debug.universal",
 							},
 						},
 					},
@@ -229,9 +227,8 @@ func TestBuildTemplate(t *testing.T) {
 				// Then: The template matches expectations.
 
 				// NOTE: Function actions can't be checked, so separately test them.
-				assert.Len(t, got.Prebuild, 1)
-				assert.NotNil(t, got.Prebuild[0])
-				assert.IsType(t, template.NewCopyImageFileAction(image, inv), got.Prebuild[0])
+				assert.NotNil(t, got.Prebuild)
+				assert.IsType(t, template.NewCopyImageFileAction(image, inv), got.Prebuild)
 				got.Prebuild = nil
 
 				assert.Equal(
