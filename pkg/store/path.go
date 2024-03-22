@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/archive"
-	"github.com/coffeebeats/gdbuild/pkg/godot/template"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 const envStore = "GDBUILD_HOME"

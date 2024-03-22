@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/godot/template"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 const (

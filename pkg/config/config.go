@@ -5,9 +5,9 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
-	"github.com/coffeebeats/gdbuild/pkg/config/template"
+	cfgtemplate "github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
-	godottemplate "github.com/coffeebeats/gdbuild/pkg/godot/template"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 var (
@@ -26,7 +26,7 @@ type Manifest struct {
 	// Godot contains settings on which Godot version/source code to use.
 	Godot build.Source `toml:"godot"`
 	// Template includes settings for building custom export templates.
-	Template template.Templates `toml:"template"`
+	Template cfgtemplate.Templates `toml:"template"`
 }
 
 /* -------------------------- Method: BuildTemplate ------------------------- */
@@ -38,10 +38,10 @@ type configuration struct {
 
 // BuildTemplate creates a `Template` instance which contains an action for
 // compiling Godot based on the specified configuration.
-func (m *Manifest) BuildTemplate(bc build.Context) (godottemplate.Template, error) { //nolint:cyclop,funlen
+func (m *Manifest) BuildTemplate(bc build.Context) (template.Template, error) { //nolint:cyclop,funlen
 	var merged struct {
-		godot    build.Source
-		template template.Template
+		source   build.Source
+		template cfgtemplate.Template
 	}
 
 	toBuild := []configuration{{invocation: &bc, manifest: m}}
@@ -57,7 +57,7 @@ func (m *Manifest) BuildTemplate(bc build.Context) (godottemplate.Template, erro
 		// First, determine whether this manifest extends another one.
 
 		if err := cfg.manifest.Config.Extends.RelTo(bc.Invoke.PathManifest); err != nil {
-			return godottemplate.Template{}, fmt.Errorf(
+			return template.Template{}, fmt.Errorf(
 				"%w: cannot find inherited manifest: %w",
 				config.ErrInvalidInput,
 				err,
@@ -70,7 +70,7 @@ func (m *Manifest) BuildTemplate(bc build.Context) (godottemplate.Template, erro
 		if _, ok := visited[extends]; !ok && extends != "" {
 			baseManifest, err := ParseFile(extends.String())
 			if err != nil {
-				return godottemplate.Template{}, fmt.Errorf("cannot parse inherited manifest: %w", err)
+				return template.Template{}, fmt.Errorf("cannot parse inherited manifest: %w", err)
 			}
 
 			bc.Invoke.PathManifest = extends
@@ -85,23 +85,23 @@ func (m *Manifest) BuildTemplate(bc build.Context) (godottemplate.Template, erro
 
 		// Configure 'Godot' properties.
 		if err := cfg.manifest.Godot.Configure(bc.Invoke); err != nil {
-			return godottemplate.Template{}, err
+			return template.Template{}, err
 		}
 
 		// Merge 'Godot' properties.
-		if err := config.Merge(&merged.godot, cfg.manifest.Godot); err != nil {
-			return godottemplate.Template{}, err
+		if err := config.Merge(&merged.source, cfg.manifest.Godot); err != nil {
+			return template.Template{}, err
 		}
 
 		// Build 'Template' properties.
 		t, err := cfg.manifest.Template.Build(bc)
 		if err != nil {
-			return godottemplate.Template{}, err
+			return template.Template{}, err
 		}
 
 		// Configure 'Template' properties.
 		if err := t.Configure(bc.Invoke); err != nil {
-			return godottemplate.Template{}, err
+			return template.Template{}, err
 		}
 
 		if merged.template == nil {
@@ -112,20 +112,20 @@ func (m *Manifest) BuildTemplate(bc build.Context) (godottemplate.Template, erro
 
 		// Merge 'Template' properties.
 		if err := t.MergeInto(merged.template); err != nil {
-			return godottemplate.Template{}, err
+			return template.Template{}, err
 		}
 	}
 
 	if merged.template == nil {
-		return godottemplate.Template{}, fmt.Errorf("%w: failed to build template", ErrMissingInput)
+		return template.Template{}, fmt.Errorf("%w: failed to build template", ErrMissingInput)
 	}
 
 	// Validate 'Template' properties.
 	if err := merged.template.Validate(bc.Invoke); err != nil {
-		return godottemplate.Template{}, err
+		return template.Template{}, err
 	}
 
-	return merged.template.ToTemplate(merged.godot, bc), nil
+	return merged.template.ToTemplate(merged.source, bc), nil
 }
 
 /* -------------------------------------------------------------------------- */

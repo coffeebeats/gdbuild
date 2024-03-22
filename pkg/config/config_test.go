@@ -19,7 +19,7 @@ import (
 	configtemplate "github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/template"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 func TestBuildTemplate(t *testing.T) {
