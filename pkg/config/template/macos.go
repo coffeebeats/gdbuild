@@ -95,7 +95,7 @@ func (c *MacOS) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 		t := c.Base.ToTemplate(g, inv)
 
 		t.Binaries = []build.Binary{templateAmd64.Binaries[0], templateArm64.Binaries[0]}
-		t.Postbuild = append([]action.Action{cmdLipo}, t.Postbuild...)
+		t.Postbuild = cmdLipo.AndThen(t.Postbuild)
 
 		// Construct a list of paths with duplicates removed. This is preferred
 		// over duplicating the code used to decide which paths are dependencies.
