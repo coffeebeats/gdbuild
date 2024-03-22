@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.2 (2024-03-22)
+
+## What's Changed
+* feat(build): implement `Template` hashes for determining export template equivalence by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/39
+* feat(template): add support for registering expected template artifacts by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/42
+* chore(deps): bump github.com/charmbracelet/log from 0.3.1 to 0.4.0 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/41
+* feat(archive): create a package for writing and extracting template archives by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/43
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.1.1...v0.1.2
+
 ## 0.1.1 (2024-03-21)
 
 ## What's Changed
