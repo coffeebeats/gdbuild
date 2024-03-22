@@ -11,6 +11,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.1
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 )
 
 require (
@@ -29,7 +30,6 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/xrash/smetrics v0.0.0-20231213231151-1d8dd44e695e // indirect
-	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/mod v0.16.0 // indirect
 	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
