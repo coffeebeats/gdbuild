@@ -17,7 +17,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	configtemplate "github.com/coffeebeats/gdbuild/pkg/config/template"
-	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
@@ -26,11 +26,11 @@ func TestBuildTemplate(t *testing.T) {
 	tests := []struct {
 		name string
 
-		cc    compile.Context
+		bc    build.Context
 		files map[string]string
 		index uint // The root manifest (defaults to '0').
 
-		assert func(t *testing.T, cc *compile.Context, tmp string, got template.Template, err error)
+		assert func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error)
 	}{
 		{
 			name: "empty 'config.extends' returns an error",
@@ -39,7 +39,7 @@ func TestBuildTemplate(t *testing.T) {
 				"gdbuild.toml": `config.extends = ""`,
 			},
 
-			assert: func(t *testing.T, cc *compile.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
 				// Then: There's an error denoting the failure.
 				assert.ErrorIs(t, err, config.ErrInvalidInput)
 
@@ -50,20 +50,20 @@ func TestBuildTemplate(t *testing.T) {
 		{
 			name: "empty template is correctly converted into default for linux",
 
-			cc: compile.Context{
+			bc: build.Context{
 				Invoke: internalconfig.Context{
 					PathBuild:    "$TEST_TMPDIR/build",
 					PathManifest: "$TEST_TMPDIR/gdbuild.toml",
 					PathOut:      "$TEST_TMPDIR/dist",
 				},
 				Platform: platform.OSLinux,
-				Profile:  compile.ProfileDebug,
+				Profile:  build.ProfileDebug,
 			},
 			files: map[string]string{
 				"gdbuild.toml": `godot.version = "4.0.0"`,
 			},
 
-			assert: func(t *testing.T, cc *compile.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
@@ -74,9 +74,9 @@ func TestBuildTemplate(t *testing.T) {
 						Binaries: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Godot:    compile.Godot{Version: "4.0.0"},
+								Godot:    build.Godot{Version: "4.0.0"},
 								Platform: platform.OSLinux,
-								Profile:  compile.ProfileDebug,
+								Profile:  build.ProfileDebug,
 							},
 						},
 						Paths:     nil,
@@ -90,12 +90,12 @@ func TestBuildTemplate(t *testing.T) {
 		{
 			name: "empty template is correctly converted into default for macos",
 
-			cc: compile.Context{
+			bc: build.Context{
 				Invoke: internalconfig.Context{PathBuild: "$TEST_TMPDIR/build",
 					PathManifest: "$TEST_TMPDIR/gdbuild.toml",
 					PathOut:      "$TEST_TMPDIR/dist"},
 				Platform: platform.OSMacOS,
-				Profile:  compile.ProfileDebug,
+				Profile:  build.ProfileDebug,
 			},
 			files: map[string]string{
 				"vulkan/": "", // Create an empty directory.
@@ -107,7 +107,7 @@ func TestBuildTemplate(t *testing.T) {
 					vulkan = { sdk_path = "$TEST_TMPDIR/vulkan" }`,
 			},
 
-			assert: func(t *testing.T, cc *compile.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
@@ -118,10 +118,10 @@ func TestBuildTemplate(t *testing.T) {
 						Binaries: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Godot:    compile.Godot{Version: "4.0.0"},
+								Godot:    build.Godot{Version: "4.0.0"},
 								Platform: platform.OSMacOS,
-								Profile:  compile.ProfileDebug,
-								SCons: compile.SCons{
+								Profile:  build.ProfileDebug,
+								SCons: build.SCons{
 									ExtraArgs: []string{
 										"use_volk=no",
 										"vulkan_sdk_path=" + filepath.Join(tmp, "vulkan"),
@@ -130,10 +130,10 @@ func TestBuildTemplate(t *testing.T) {
 							},
 							{
 								Arch:     platform.ArchArm64,
-								Godot:    compile.Godot{Version: "4.0.0"},
+								Godot:    build.Godot{Version: "4.0.0"},
 								Platform: platform.OSMacOS,
-								Profile:  compile.ProfileDebug,
-								SCons: compile.SCons{
+								Profile:  build.ProfileDebug,
+								SCons: build.SCons{
 									ExtraArgs: []string{
 										"use_volk=no",
 										"vulkan_sdk_path=" + filepath.Join(tmp, "vulkan"),
@@ -164,18 +164,18 @@ func TestBuildTemplate(t *testing.T) {
 		{
 			name: "empty template is correctly converted into default for windows",
 
-			cc: compile.Context{
+			bc: build.Context{
 				Invoke: internalconfig.Context{PathBuild: "$TEST_TMPDIR/build",
 					PathManifest: "$TEST_TMPDIR/gdbuild.toml",
 					PathOut:      "$TEST_TMPDIR/dist"},
 				Platform: platform.OSWindows,
-				Profile:  compile.ProfileDebug,
+				Profile:  build.ProfileDebug,
 			},
 			files: map[string]string{
 				"gdbuild.toml": `godot.version = "4.0.0"`,
 			},
 
-			assert: func(t *testing.T, cc *compile.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
@@ -186,9 +186,9 @@ func TestBuildTemplate(t *testing.T) {
 						Binaries: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Godot:    compile.Godot{Version: "4.0.0"},
+								Godot:    build.Godot{Version: "4.0.0"},
 								Platform: platform.OSWindows,
-								Profile:  compile.ProfileDebug,
+								Profile:  build.ProfileDebug,
 							},
 						},
 						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
@@ -200,12 +200,12 @@ func TestBuildTemplate(t *testing.T) {
 		{
 			name: "inherited template is correctly populated",
 
-			cc: compile.Context{
+			bc: build.Context{
 				Invoke: internalconfig.Context{PathBuild: "$TEST_TMPDIR/build",
 					PathManifest: "$TEST_TMPDIR/gdbuild.toml",
 					PathOut:      "$TEST_TMPDIR/dist"},
 				Platform: platform.OSWindows,
-				Profile:  compile.ProfileDebug,
+				Profile:  build.ProfileDebug,
 			},
 			files: map[string]string{
 				"parent.toml": `
@@ -225,7 +225,7 @@ func TestBuildTemplate(t *testing.T) {
 					use_mingw = false`,
 			},
 
-			assert: func(t *testing.T, cc *compile.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
@@ -236,7 +236,7 @@ func TestBuildTemplate(t *testing.T) {
 
 				// NOTE: Function actions can't be checked, so separately test them.
 				assert.NotNil(t, got.Prebuild)
-				assert.IsType(t, configtemplate.NewCopyImageFileAction(image, &cc.Invoke), got.Prebuild)
+				assert.IsType(t, configtemplate.NewCopyImageFileAction(image, &bc.Invoke), got.Prebuild)
 				got.Prebuild = nil
 
 				assert.Equal(
@@ -245,10 +245,10 @@ func TestBuildTemplate(t *testing.T) {
 						Binaries: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Godot:    compile.Godot{Version: "4.2.1"},
+								Godot:    build.Godot{Version: "4.2.1"},
 								Platform: platform.OSWindows,
-								Profile:  compile.ProfileDebug,
-								SCons:    compile.SCons{},
+								Profile:  build.ProfileDebug,
+								SCons:    build.SCons{},
 							},
 						},
 						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
@@ -274,16 +274,16 @@ func TestBuildTemplate(t *testing.T) {
 			}
 
 			// Given: The root manifest is parsed.
-			doc := tc.files[filepath.Base(tc.cc.Invoke.PathManifest.String())]
+			doc := tc.files[filepath.Base(tc.bc.Invoke.PathManifest.String())]
 			m, err := config.Parse([]byte(doc))
 			require.NoError(t, err)
 
 			// When: The 'Template' is built.
-			got, err := m.BuildTemplate(tc.cc)
+			got, err := m.BuildTemplate(tc.bc)
 
 			// Then: Results match expectations.
 			require.NotNil(t, tc.assert)
-			tc.assert(t, &tc.cc, tmp, got, err)
+			tc.assert(t, &tc.bc, tmp, got, err)
 		})
 	}
 }

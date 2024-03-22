@@ -9,7 +9,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
-	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
@@ -37,26 +37,26 @@ type Build struct {
 	Env map[string]string
 
 	// Godot is the source code specification for the build.
-	Godot compile.Godot
+	Godot build.Godot
 
 	// Optimize is the level of optimization for the Godot export template.
-	Optimize compile.Optimize
+	Optimize build.Optimize
 
 	// Platform defines which OS/platform to build for.
 	Platform platform.OS
 
 	// Profile is the optimization level of the template.
-	Profile compile.Profile
+	Profile build.Profile
 
 	// SCons contains a specification for how to invoke the compiler.
-	SCons compile.SCons
+	SCons build.SCons
 }
 
 /* ----------------------------- Function: Name ----------------------------- */
 
 // Name returns the base name of the export template defined by the specified
 // parameters.
-func Name(pl platform.OS, arch platform.Arch, pr compile.Profile) string {
+func Name(pl platform.OS, arch platform.Arch, pr build.Profile) string {
 	name := fmt.Sprintf("godot.%s.%s.%s", pl, pr.TargetName(), arch)
 	if pl == platform.OSWindows {
 		name += ".exe"
@@ -76,7 +76,7 @@ func (b *Build) Filename() string {
 /* -------------------------- Method: SConsCommand -------------------------- */
 
 // SConsCommand returns the 'SCons' command to build the export template.
-func (b *Build) SConsCommand(ctx *compile.Context) *action.Process { //nolint:cyclop,funlen
+func (b *Build) SConsCommand(ctx *build.Context) *action.Process { //nolint:cyclop,funlen
 	var cmd action.Process
 
 	cmd.Directory = ctx.Invoke.PathBuild.String()
@@ -91,7 +91,7 @@ func (b *Build) SConsCommand(ctx *compile.Context) *action.Process { //nolint:cy
 
 	// Define the SCons cache path.
 	if path := scons.PathCache; path != "" {
-		cmd.Environment = append(cmd.Environment, compile.EnvSConsCache+"="+path.String())
+		cmd.Environment = append(cmd.Environment, build.EnvSConsCache+"="+path.String())
 	}
 
 	// Add specified environment variables.
@@ -107,7 +107,7 @@ func (b *Build) SConsCommand(ctx *compile.Context) *action.Process { //nolint:cy
 	if csl := scons.CacheSizeLimit; csl != nil {
 		cmd.Environment = append(
 			cmd.Environment,
-			fmt.Sprintf("%s=%d", compile.EnvSConsCacheSizeLimit, *csl),
+			fmt.Sprintf("%s=%d", build.EnvSConsCacheSizeLimit, *csl),
 		)
 	}
 
@@ -152,9 +152,9 @@ func (b *Build) SConsCommand(ctx *compile.Context) *action.Process { //nolint:cy
 
 	// Append profile/optimization-related arguments.
 	switch ctx.Profile {
-	case compile.ProfileRelease:
-		optimize := compile.OptimizeSpeed
-		if b.Optimize != compile.OptimizeUnknown {
+	case build.ProfileRelease:
+		optimize := build.OptimizeSpeed
+		if b.Optimize != build.OptimizeUnknown {
 			optimize = b.Optimize
 		}
 
@@ -164,9 +164,9 @@ func (b *Build) SConsCommand(ctx *compile.Context) *action.Process { //nolint:cy
 			fmt.Sprintf("optimize=%s", optimize),
 		)
 
-	case compile.ProfileReleaseDebug:
-		optimize := compile.OptimizeSpeedTrace
-		if b.Optimize != compile.OptimizeUnknown {
+	case build.ProfileReleaseDebug:
+		optimize := build.OptimizeSpeedTrace
+		if b.Optimize != build.OptimizeUnknown {
 			optimize = b.Optimize
 		}
 
@@ -177,8 +177,8 @@ func (b *Build) SConsCommand(ctx *compile.Context) *action.Process { //nolint:cy
 			fmt.Sprintf("optimize=%s", optimize),
 		)
 	default: // ProfileDebug
-		optimize := compile.OptimizeDebug
-		if b.Optimize != compile.OptimizeUnknown {
+		optimize := build.OptimizeDebug
+		if b.Optimize != build.OptimizeUnknown {
 			optimize = b.Optimize
 		}
 

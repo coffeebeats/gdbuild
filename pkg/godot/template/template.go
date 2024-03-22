@@ -20,7 +20,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
-	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 )
 
 var ErrMissingInput = errors.New("missing input")
@@ -30,7 +30,7 @@ var ErrMissingInput = errors.New("missing input")
 /* -------------------------------------------------------------------------- */
 
 type Templater interface {
-	ToTemplate(cg compile.Godot, tc compile.Context) Template
+	ToTemplate(cg build.Godot, tc build.Context) Template
 }
 
 /* -------------------------------------------------------------------------- */
@@ -168,11 +168,11 @@ func (t *Template) uniquePaths() []pathutil.Path {
 // NewVerifyArtifactsAction creates an 'action.Action' which verifies that all
 // required artifacts have been generated.
 func NewVerifyArtifactsAction(
-	cc *config.Context,
+	bc *config.Context,
 	artifacts []string,
 ) action.WithDescription[action.Function] {
 	fn := func(_ context.Context) error {
-		pathBin := cc.BinPath()
+		pathBin := bc.BinPath()
 		if err := pathBin.CheckIsDir(); err != nil {
 			return err
 		}
@@ -262,14 +262,14 @@ func NewCopyArtifactsAction(
 
 // Compile creates a new 'action.Action' which executes the specified processes
 // for compiling the export template.
-func Compile(t *Template, cc *compile.Context) (action.Action, error) { //nolint:ireturn
-	return compilation{context: cc, template: t}.Action()
+func Compile(t *Template, bc *build.Context) (action.Action, error) { //nolint:ireturn
+	return compilation{context: bc, template: t}.Action()
 }
 
 /* --------------------------- Struct: compilation -------------------------- */
 
 type compilation struct {
-	context  *compile.Context
+	context  *build.Context
 	template *Template
 }
 
@@ -287,7 +287,7 @@ func (c compilation) Action() (action.Action, error) { //nolint:ireturn
 	actions = append(
 		actions,
 		t.Prebuild,
-		compile.NewVendorGodotAction(&t.Binaries[0].Godot, &c.context.Invoke),
+		build.NewVendorGodotAction(&t.Binaries[0].Godot, &c.context.Invoke),
 	)
 
 	for _, b := range t.Binaries {

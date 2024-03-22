@@ -6,7 +6,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/config/template"
-	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	godottemplate "github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
 
@@ -24,7 +24,7 @@ type Manifest struct {
 	// Config contains GDBuild configuration-related settings.
 	Config Config `toml:"config"`
 	// Godot contains settings on which Godot version/source code to use.
-	Godot compile.Godot `toml:"godot"`
+	Godot build.Godot `toml:"godot"`
 	// Template includes settings for building custom export templates.
 	Template template.Templates `toml:"template"`
 }
@@ -33,18 +33,18 @@ type Manifest struct {
 
 type configuration struct {
 	manifest   *Manifest
-	invocation *compile.Context
+	invocation *build.Context
 }
 
 // BuildTemplate creates a `Template` instance which contains an action for
 // compiling Godot based on the specified configuration.
-func (m *Manifest) BuildTemplate(cc compile.Context) (godottemplate.Template, error) { //nolint:cyclop,funlen
+func (m *Manifest) BuildTemplate(bc build.Context) (godottemplate.Template, error) { //nolint:cyclop,funlen
 	var merged struct {
-		godot    compile.Godot
+		godot    build.Godot
 		template template.Template
 	}
 
-	toBuild := []configuration{{invocation: &cc, manifest: m}}
+	toBuild := []configuration{{invocation: &bc, manifest: m}}
 	visited := map[pathutil.Path]struct{}{}
 
 	for len(toBuild) > 0 {
@@ -56,7 +56,7 @@ func (m *Manifest) BuildTemplate(cc compile.Context) (godottemplate.Template, er
 
 		// First, determine whether this manifest extends another one.
 
-		if err := cfg.manifest.Config.Extends.RelTo(cc.Invoke.PathManifest); err != nil {
+		if err := cfg.manifest.Config.Extends.RelTo(bc.Invoke.PathManifest); err != nil {
 			return godottemplate.Template{}, fmt.Errorf(
 				"%w: cannot find inherited manifest: %w",
 				config.ErrInvalidInput,
@@ -73,7 +73,7 @@ func (m *Manifest) BuildTemplate(cc compile.Context) (godottemplate.Template, er
 				return godottemplate.Template{}, fmt.Errorf("cannot parse inherited manifest: %w", err)
 			}
 
-			cc.Invoke.PathManifest = extends
+			bc.Invoke.PathManifest = extends
 
 			base := configuration{invocation: &inv, manifest: baseManifest}
 			toBuild = append(toBuild, base, cfg)
@@ -84,7 +84,7 @@ func (m *Manifest) BuildTemplate(cc compile.Context) (godottemplate.Template, er
 		}
 
 		// Configure 'Godot' properties.
-		if err := cfg.manifest.Godot.Configure(cc.Invoke); err != nil {
+		if err := cfg.manifest.Godot.Configure(bc.Invoke); err != nil {
 			return godottemplate.Template{}, err
 		}
 
@@ -94,13 +94,13 @@ func (m *Manifest) BuildTemplate(cc compile.Context) (godottemplate.Template, er
 		}
 
 		// Build 'Template' properties.
-		t, err := cfg.manifest.Template.Build(cc)
+		t, err := cfg.manifest.Template.Build(bc)
 		if err != nil {
 			return godottemplate.Template{}, err
 		}
 
 		// Configure 'Template' properties.
-		if err := t.Configure(cc.Invoke); err != nil {
+		if err := t.Configure(bc.Invoke); err != nil {
 			return godottemplate.Template{}, err
 		}
 
@@ -121,11 +121,11 @@ func (m *Manifest) BuildTemplate(cc compile.Context) (godottemplate.Template, er
 	}
 
 	// Validate 'Template' properties.
-	if err := merged.template.Validate(cc.Invoke); err != nil {
+	if err := merged.template.Validate(bc.Invoke); err != nil {
 		return godottemplate.Template{}, err
 	}
 
-	return merged.template.ToTemplate(merged.godot, cc), nil
+	return merged.template.ToTemplate(merged.godot, bc), nil
 }
 
 /* -------------------------------------------------------------------------- */

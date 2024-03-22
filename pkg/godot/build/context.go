@@ -1,4 +1,4 @@
-package compile
+package build
 
 import (
 	"github.com/coffeebeats/gdbuild/internal/config"

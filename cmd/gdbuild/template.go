@@ -14,7 +14,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
-	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
 
@@ -156,7 +156,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			log.Debugf("using build directory: %s", pathBuild)
 
-			cc := compile.Context{
+			bc := build.Context{
 				Invoke: internalconfig.Context{
 					PathBuild:    pathutil.Path(pathBuild),
 					PathManifest: pathutil.Path(pathManifest),
@@ -168,7 +168,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				Profile:  pr,
 			}
 
-			t, err := m.BuildTemplate(cc)
+			t, err := m.BuildTemplate(bc)
 			if err != nil {
 				return err
 			}
@@ -184,7 +184,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return nil
 			}
 
-			action, err := template.Compile(&t, &cc)
+			action, err := template.Compile(&t, &bc)
 			if err != nil {
 				return err
 			}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
@@ -27,7 +27,7 @@ type Template interface {
 /* ----------------------- Interface: templateBuilder ----------------------- */
 
 type templateBuilder interface {
-	build(inv compile.Context, dst Template) error
+	build(inv build.Context, dst Template) error
 }
 
 /* -------------------------------------------------------------------------- */
@@ -52,7 +52,7 @@ type Templates struct {
 
 	Platform Platforms                     `toml:"platform"`
 	Feature  map[string]BaseWithoutFeature `toml:"feature"`
-	Profile  map[compile.Profile]Base      `toml:"profile"`
+	Profile  map[build.Profile]Base        `toml:"profile"`
 }
 
 /* ----------------------- Struct: BaseWithoutFeature ----------------------- */
@@ -60,7 +60,7 @@ type Templates struct {
 type BaseWithoutFeature struct {
 	*Base
 
-	Profile map[compile.Profile]Base `toml:"profile"`
+	Profile map[build.Profile]Base `toml:"profile"`
 }
 
 /* ---------------------------- Struct: Platforms --------------------------- */
@@ -73,7 +73,7 @@ type Platforms struct {
 
 /* ------------------------------ Method: Build ----------------------------- */
 
-func (t *Templates) Build(inv compile.Context) (Template, error) { //nolint:cyclop,ireturn
+func (t *Templates) Build(inv build.Context) (Template, error) { //nolint:cyclop,ireturn
 	// Base params (root)
 	var out Template = new(Base)
 
@@ -140,7 +140,7 @@ type LinuxWithFeaturesAndProfile struct {
 	*Linux
 
 	Feature map[string]LinuxWithProfile `toml:"feature"`
-	Profile map[compile.Profile]Linux   `toml:"profile"`
+	Profile map[build.Profile]Linux     `toml:"profile"`
 }
 
 /* ----------------------- Struct: LinuxWithProfile ----------------------- */
@@ -148,7 +148,7 @@ type LinuxWithFeaturesAndProfile struct {
 type LinuxWithProfile struct {
 	*Linux
 
-	Profile map[compile.Profile]Linux `toml:"profile"`
+	Profile map[build.Profile]Linux `toml:"profile"`
 }
 
 /* -------------------------- Impl: templateBuilder ------------------------- */
@@ -156,7 +156,7 @@ type LinuxWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*LinuxWithFeaturesAndProfile)(nil)
 
-func (t *LinuxWithFeaturesAndProfile) build(inv compile.Context, dst Template) error {
+func (t *LinuxWithFeaturesAndProfile) build(inv build.Context, dst Template) error {
 	// Root-level params
 	if err := t.Linux.MergeInto(dst); err != nil {
 		return err
@@ -196,7 +196,7 @@ type MacOSWithFeaturesAndProfile struct {
 	*MacOS
 
 	Feature map[string]MacOSWithProfile `toml:"feature"`
-	Profile map[compile.Profile]MacOS   `toml:"profile"`
+	Profile map[build.Profile]MacOS     `toml:"profile"`
 }
 
 /* ----------------------- Struct: MacOSWithProfile ----------------------- */
@@ -204,7 +204,7 @@ type MacOSWithFeaturesAndProfile struct {
 type MacOSWithProfile struct {
 	*MacOS
 
-	Profile map[compile.Profile]MacOS `toml:"profile"`
+	Profile map[build.Profile]MacOS `toml:"profile"`
 }
 
 /* -------------------------- Impl: templateBuilder ------------------------- */
@@ -212,7 +212,7 @@ type MacOSWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*MacOSWithFeaturesAndProfile)(nil)
 
-func (t *MacOSWithFeaturesAndProfile) build(inv compile.Context, dst Template) error {
+func (t *MacOSWithFeaturesAndProfile) build(inv build.Context, dst Template) error {
 	// Root-level params
 	if err := t.MacOS.MergeInto(dst); err != nil {
 		return err
@@ -252,7 +252,7 @@ type WindowsWithFeaturesAndProfile struct {
 	*Windows
 
 	Feature map[string]WindowsWithProfile `toml:"feature"`
-	Profile map[compile.Profile]Windows   `toml:"profile"`
+	Profile map[build.Profile]Windows     `toml:"profile"`
 }
 
 /* ----------------------- Struct: WindowsWithProfile ----------------------- */
@@ -260,7 +260,7 @@ type WindowsWithFeaturesAndProfile struct {
 type WindowsWithProfile struct {
 	*Windows
 
-	Profile map[compile.Profile]Windows `toml:"profile"`
+	Profile map[build.Profile]Windows `toml:"profile"`
 }
 
 /* -------------------------- Impl: templateBuilder ------------------------- */
@@ -268,7 +268,7 @@ type WindowsWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*WindowsWithFeaturesAndProfile)(nil)
 
-func (t *WindowsWithFeaturesAndProfile) build(inv compile.Context, dst Template) error {
+func (t *WindowsWithFeaturesAndProfile) build(inv build.Context, dst Template) error {
 	// Root-level params
 	if err := t.Windows.MergeInto(dst); err != nil {
 		return err
