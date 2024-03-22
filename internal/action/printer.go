@@ -19,7 +19,7 @@ type WithDescription[T Action] struct {
 }
 
 // Compile-time check that 'Action' is implemented.
-var _ Action = (*Function)(nil)
+var _ Action = (*WithDescription[Function])(nil)
 
 /* ------------------------------ Impl: Runner ------------------------------ */
 
@@ -35,12 +35,20 @@ func (d WithDescription[T]) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped action.
 func (d WithDescription[T]) After(a Action) Action { //nolint:ireturn
+	if a == nil {
+		return d
+	}
+
 	return Sequence{Action: d, Pre: a} //nolint:exhaustruct
 }
 
 // AndThen creates a new action which executes the wrapped action and then the
 // provided action.
 func (d WithDescription[T]) AndThen(a Action) Action { //nolint:ireturn
+	if a == nil {
+		return d
+	}
+
 	return Sequence{Action: d, Post: a} //nolint:exhaustruct
 }
 
@@ -49,4 +57,10 @@ func (d WithDescription[T]) AndThen(a Action) Action { //nolint:ireturn
 // Sprint displays the action without actually executing it.
 func (d WithDescription[T]) Sprint() string {
 	return fmt.Sprintf("%T:\n  %s", d.Action, d.Description)
+}
+
+/* --------------------------- Impl: fmt.Stringer --------------------------- */
+
+func (d WithDescription[T]) String() string {
+	return d.Sprint()
 }

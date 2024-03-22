@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/charmbracelet/log"
 
@@ -38,6 +40,10 @@ func (p *Process) Run(ctx context.Context) error {
 // After creates a new action which executes the provided action and then the
 // wrapped function.
 func (p *Process) After(a Action) Action { //nolint:ireturn
+	if a == nil {
+		return p
+	}
+
 	if p == nil {
 		return a
 	}
@@ -48,6 +54,10 @@ func (p *Process) After(a Action) Action { //nolint:ireturn
 // AndThen creates a new action which executes the wrapped function and then the
 // provided action.
 func (p *Process) AndThen(a Action) Action { //nolint:ireturn
+	if a == nil {
+		return p
+	}
+
 	if p == nil {
 		return a
 	}
@@ -68,4 +78,13 @@ func (p *Process) Sprint() string {
 		p.Directory,
 		exec.Process(*p).String(),
 	)
+}
+
+/* --------------------------- Impl: fmt.Stringer --------------------------- */
+
+func (p *Process) String() string {
+	env := p.Environment
+	slices.Sort(env)
+
+	return strings.Join(env, " ") + " " + strings.Join(p.Args, " ")
 }
