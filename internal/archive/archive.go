@@ -12,16 +12,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/coffeebeats/gdbuild/internal/ioutil"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
-const (
-	extensionTarGZ = ".tar.gz"
-
-	// Only write to 'out'; create a new file/overwrite an existing.
-	copyFileWriteFlag = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-)
+const extensionTarGZ = ".tar.gz"
 
 var (
 	ErrExtractFailed = errors.New("extract failed")
@@ -205,28 +199,9 @@ func extractTarFile(
 		}
 
 	case tar.TypeReg:
-		if err := copyFile(ctx, archive, mode, out); err != nil {
+		if err := osutil.CopyReaderWithMode(ctx, archive, mode, out); err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-/* --------------------------- Function: copyFile --------------------------- */
-
-// A shared helper function which copies the contents of an 'io.Reader' to a new
-// file created with the specified 'os.FileMode'.
-func copyFile(ctx context.Context, f io.Reader, mode fs.FileMode, out string) error {
-	dst, err := os.OpenFile(out, copyFileWriteFlag, mode)
-	if err != nil {
-		return err
-	}
-
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, ioutil.NewReaderWithContext(ctx, f.Read)); err != nil {
-		return err
 	}
 
 	return nil
