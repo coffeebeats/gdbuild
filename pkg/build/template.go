@@ -411,7 +411,7 @@ func NewVerifyArtifactsAction(
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "validate generated artifacts: " + strings.Join(required, ", "),
+		Description: "validate generated artifacts: " + strings.Join(artifacts, ", "),
 	}
 }
 
@@ -425,7 +425,7 @@ func NewMoveArtifactsAction(
 	inv *Invocation,
 	artifacts []string,
 ) action.WithDescription[action.Function] {
-	fn := func(_ context.Context) error {
+	fn := func(ctx context.Context) error {
 		pathOut := inv.PathOut.String()
 		if err := osutil.EnsureDir(pathOut, osutil.ModeUserRWXGroupRX); err != nil {
 			return err
@@ -436,17 +436,15 @@ func NewMoveArtifactsAction(
 			return err
 		}
 
-		ff, err := os.ReadDir(pathBin.String())
-		if err != nil {
-			return err
-		}
+		for _, a := range artifacts {
+			pathArtifact := filepath.Join(pathBin.String(), a)
 
-		for _, f := range ff {
-			log.Debugf("moving artifact %s: %s", f.Name(), pathOut)
+			log.Debugf("copying artifact %s to directory: %s", a, pathOut)
 
-			if err := os.Rename(
-				filepath.Join(pathBin.String(), f.Name()),
-				filepath.Join(pathOut, f.Name()),
+			if err := osutil.CopyFile(
+				ctx,
+				pathArtifact,
+				filepath.Join(pathOut, a),
 			); err != nil {
 				return err
 			}
