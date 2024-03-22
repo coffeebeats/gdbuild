@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
@@ -55,6 +56,12 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 		// Copy the icon file to the correct location.
 		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &inv))
 	}
+
+	// Register the additional console artifact.
+	t.ExtraArtifacts = append(
+		t.ExtraArtifacts,
+		strings.TrimSuffix(t.Binaries[0].Filename(), ".exe")+".console.exe",
+	)
 
 	return t
 }

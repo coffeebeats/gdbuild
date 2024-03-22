@@ -70,9 +70,10 @@ func (c *Base) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 				SCons:           scons,
 			},
 		},
-		Paths:     nil,
-		Prebuild:  c.Hook.PreActions(inv),
-		Postbuild: c.Hook.PostActions(inv),
+		ExtraArtifacts: nil,
+		Paths:          nil,
+		Prebuild:       c.Hook.PreActions(inv),
+		Postbuild:      c.Hook.PostActions(inv),
 	}
 }
 
