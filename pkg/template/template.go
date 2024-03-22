@@ -4,16 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hash/crc32"
-	"io"
 	"os"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/log"
-	"github.com/mitchellh/hashstructure/v2"
 	"golang.org/x/exp/maps"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
@@ -30,7 +26,7 @@ var ErrMissingInput = errors.New("missing input")
 /* -------------------------------------------------------------------------- */
 
 type Templater interface {
-	ToTemplate(cg build.Source, tc build.Context) Template
+	ToTemplate(cg build.Source, tc build.Context) *Template
 }
 
 /* -------------------------------------------------------------------------- */
@@ -83,82 +79,14 @@ func (t *Template) Artifacts() []string {
 	return maps.Keys(artifacts)
 }
 
-/* --------------------------- Method: AddToPaths --------------------------- */
+/* --------------------- Method: RegisterDependencyPath --------------------- */
 
-// AddToPaths is a convenience function for registering a 'Path' dependency, but
-// only if it hasn't been added yet.
-func (t *Template) AddToPaths(path pathutil.Path) {
+// RegisterDependencyPath is a convenience function for registering a 'Path'
+// dependency, but only if it hasn't been added yet.
+func (t *Template) RegisterDependencyPath(path pathutil.Path) {
 	if !slices.Contains(t.Paths, path) {
 		t.Paths = append(t.Paths, path)
 	}
-}
-
-/* ---------------------------- Method: Checksum ---------------------------- */
-
-// Checksum produces a checksum hash of the export template specification. When
-// the checksums of two 'Template' definitions matches, the resulting export
-// templates will be equivalent.
-//
-// NOTE: This implementation relies on producers of 'Template' to correctly
-// register all file system dependencies within 'Paths'.
-func (t *Template) Checksum() (string, error) {
-	hash, err := hashstructure.Hash(
-		t,
-		hashstructure.FormatV2,
-		&hashstructure.HashOptions{ //nolint:exhaustruct
-			IgnoreZeroValue: true,
-			SlicesAsSets:    true,
-			ZeroNil:         true,
-		},
-	)
-	if err != nil {
-		return "", err
-	}
-
-	cs := crc32.New(crc32.IEEETable)
-
-	// Update the 'crc32' hash with the struct hash.
-	if _, err := io.Copy(cs, strings.NewReader(strconv.FormatUint(hash, 16))); err != nil {
-		return "", err
-	}
-
-	for _, p := range t.uniquePaths() {
-		root := p.String()
-
-		log.Debugf("hashing files rooted at path: %s", root)
-
-		if err := osutil.HashFiles(cs, root); err != nil {
-			return "", err
-		}
-	}
-
-	return strconv.FormatUint(uint64(cs.Sum32()), 16), nil
-}
-
-/* --------------------------- Method: uniquePaths -------------------------- */
-
-// uniquePaths returns the unique list of expanded path dependencies.
-func (t *Template) uniquePaths() []pathutil.Path {
-	paths := t.Paths
-
-	for _, b := range t.Builds {
-		paths = append(paths, b.CustomModules...)
-
-		if b.CustomPy != "" {
-			paths = append(paths, b.CustomPy)
-		}
-
-		switch g := b.Source; {
-		case g.PathSource != "":
-			paths = append(paths, g.PathSource)
-		case g.VersionFile != "":
-			paths = append(paths, g.VersionFile)
-		}
-	}
-
-	slices.Sort(paths)
-
-	return slices.Compact(paths)
 }
 
 /* -------------------------------------------------------------------------- */

@@ -35,7 +35,7 @@ var _ Template = (*Windows)(nil)
 
 /* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *Windows) ToTemplate(g build.Source, bc build.Context) template.Template {
+func (c *Windows) ToTemplate(g build.Source, bc build.Context) *template.Template {
 	t := c.Base.ToTemplate(g, bc)
 
 	t.Builds[0].Platform = platform.OSWindows
@@ -54,7 +54,7 @@ func (c *Windows) ToTemplate(g build.Source, bc build.Context) template.Template
 	}
 
 	if c.PathIcon != "" {
-		t.AddToPaths(c.PathIcon)
+		t.RegisterDependencyPath(c.PathIcon)
 
 		// Copy the icon file to the correct location.
 		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &bc.Invoke))

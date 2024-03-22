@@ -42,7 +42,7 @@ var _ Template = (*Base)(nil)
 
 /* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *Base) ToTemplate(src build.Source, bc build.Context) template.Template {
+func (c *Base) ToTemplate(src build.Source, bc build.Context) *template.Template {
 	s := c.SCons
 
 	// Append environment-specified arguments.
@@ -58,7 +58,7 @@ func (c *Base) ToTemplate(src build.Source, bc build.Context) template.Template 
 		s.CacheSizeLimit = csl
 	}
 
-	return template.Template{
+	return &template.Template{
 		Builds: []build.Build{
 			{
 				Arch:            c.Arch,

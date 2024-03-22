@@ -25,12 +25,12 @@ var (
 // export template artifact archive within the store.
 //
 // NOTE: This does *not* mean the template archive exists.
-func TemplateArchive(storePath string, t template.Template) (string, error) {
+func TemplateArchive(storePath string, t *template.Template) (string, error) {
 	if storePath == "" {
 		return "", ErrMissingStore
 	}
 
-	cs, err := t.Checksum()
+	cs, err := template.Checksum(t)
 	if err != nil {
 		return "", err
 	}

@@ -30,7 +30,7 @@ func TestBuildTemplate(t *testing.T) {
 		files map[string]string
 		index uint // The root manifest (defaults to '0').
 
-		assert func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error)
+		assert func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error)
 	}{
 		{
 			name: "empty 'config.extends' returns an error",
@@ -39,12 +39,12 @@ func TestBuildTemplate(t *testing.T) {
 				"gdbuild.toml": `config.extends = ""`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
 				// Then: There's an error denoting the failure.
 				assert.ErrorIs(t, err, config.ErrInvalidInput)
 
 				// Then: The template is empty.
-				assert.Equal(t, template.Template{}, got)
+				assert.Equal(t, (*template.Template)(nil), got)
 			},
 		},
 		{
@@ -63,14 +63,14 @@ func TestBuildTemplate(t *testing.T) {
 				"gdbuild.toml": `godot.version = "4.0.0"`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
 				// Then: The template matches expectations.
 				assert.Equal(
 					t,
-					template.Template{
+					&template.Template{
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -107,14 +107,14 @@ func TestBuildTemplate(t *testing.T) {
 					vulkan = { sdk_path = "$TEST_TMPDIR/vulkan" }`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
 				// Then: The template matches expectations.
 				assert.Equal(
 					t,
-					template.Template{
+					&template.Template{
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -175,14 +175,14 @@ func TestBuildTemplate(t *testing.T) {
 				"gdbuild.toml": `godot.version = "4.0.0"`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
 				// Then: The template matches expectations.
 				assert.Equal(
 					t,
-					template.Template{
+					&template.Template{
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -225,7 +225,7 @@ func TestBuildTemplate(t *testing.T) {
 					use_mingw = false`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
@@ -241,7 +241,7 @@ func TestBuildTemplate(t *testing.T) {
 
 				assert.Equal(
 					t,
-					template.Template{
+					&template.Template{
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,

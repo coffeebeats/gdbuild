@@ -33,7 +33,7 @@ var _ Template = (*MacOS)(nil)
 
 /* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *MacOS) ToTemplate(g build.Source, bc build.Context) template.Template { //nolint:funlen
+func (c *MacOS) ToTemplate(g build.Source, bc build.Context) *template.Template { //nolint:funlen
 	switch a := c.Base.Arch; a {
 	case platform.ArchAmd64, platform.ArchArm64:
 		t := c.Base.ToTemplate(g, bc)
@@ -49,7 +49,7 @@ func (c *MacOS) ToTemplate(g build.Source, bc build.Context) template.Template {
 
 		if c.Vulkan.PathSDK != "" {
 			scons.ExtraArgs = append(scons.ExtraArgs, "vulkan_sdk_path="+c.Vulkan.PathSDK.String())
-			t.AddToPaths(c.Vulkan.PathSDK)
+			t.RegisterDependencyPath(c.Vulkan.PathSDK)
 		}
 
 		return t

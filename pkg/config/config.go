@@ -38,7 +38,7 @@ type configuration struct {
 
 // BuildTemplate creates a `Template` instance which contains an action for
 // compiling Godot based on the specified configuration.
-func (m *Manifest) BuildTemplate(bc build.Context) (template.Template, error) { //nolint:cyclop,funlen
+func (m *Manifest) BuildTemplate(bc build.Context) (*template.Template, error) { //nolint:cyclop,funlen
 	var merged struct {
 		source   build.Source
 		template cfgtemplate.Template
@@ -57,7 +57,7 @@ func (m *Manifest) BuildTemplate(bc build.Context) (template.Template, error) { 
 		// First, determine whether this manifest extends another one.
 
 		if err := cfg.manifest.Config.Extends.RelTo(bc.Invoke.PathManifest); err != nil {
-			return template.Template{}, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"%w: cannot find inherited manifest: %w",
 				config.ErrInvalidInput,
 				err,
@@ -70,7 +70,7 @@ func (m *Manifest) BuildTemplate(bc build.Context) (template.Template, error) { 
 		if _, ok := visited[extends]; !ok && extends != "" {
 			baseManifest, err := ParseFile(extends.String())
 			if err != nil {
-				return template.Template{}, fmt.Errorf("cannot parse inherited manifest: %w", err)
+				return nil, fmt.Errorf("cannot parse inherited manifest: %w", err)
 			}
 
 			bc.Invoke.PathManifest = extends
@@ -85,23 +85,23 @@ func (m *Manifest) BuildTemplate(bc build.Context) (template.Template, error) { 
 
 		// Configure 'Godot' properties.
 		if err := cfg.manifest.Godot.Configure(bc.Invoke); err != nil {
-			return template.Template{}, err
+			return nil, err
 		}
 
 		// Merge 'Godot' properties.
 		if err := config.Merge(&merged.source, cfg.manifest.Godot); err != nil {
-			return template.Template{}, err
+			return nil, err
 		}
 
 		// Build 'Template' properties.
 		t, err := cfg.manifest.Template.Build(bc)
 		if err != nil {
-			return template.Template{}, err
+			return nil, err
 		}
 
 		// Configure 'Template' properties.
 		if err := t.Configure(bc.Invoke); err != nil {
-			return template.Template{}, err
+			return nil, err
 		}
 
 		if merged.template == nil {
@@ -112,17 +112,17 @@ func (m *Manifest) BuildTemplate(bc build.Context) (template.Template, error) { 
 
 		// Merge 'Template' properties.
 		if err := t.MergeInto(merged.template); err != nil {
-			return template.Template{}, err
+			return nil, err
 		}
 	}
 
 	if merged.template == nil {
-		return template.Template{}, fmt.Errorf("%w: failed to build template", ErrMissingInput)
+		return nil, fmt.Errorf("%w: failed to build template", ErrMissingInput)
 	}
 
 	// Validate 'Template' properties.
 	if err := merged.template.Validate(bc.Invoke); err != nil {
-		return template.Template{}, err
+		return nil, err
 	}
 
 	return merged.template.ToTemplate(merged.source, bc), nil
