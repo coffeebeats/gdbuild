@@ -29,12 +29,12 @@ var (
 )
 
 /* -------------------------------------------------------------------------- */
-/*                                Struct: Godot                               */
+/*                               Struct: Source                               */
 /* -------------------------------------------------------------------------- */
 
-// Godot defines options and settings for which Godot version to use. Note that
+// Source defines options and settings for which Godot version to use. Note that
 // only one of these options can be used at a time, but one *must* be specified.
-type Godot struct {
+type Source struct {
 	// PathSource is a path to a directory containing the Godot source code.
 	PathSource pathutil.Path `hash:"ignore" toml:"src_path"`
 	// Version is a specific version label to download.
@@ -47,14 +47,14 @@ type Godot struct {
 
 // IsEmpty returns whether all properties are unset, implying there is no need
 // to vendor Godot source code.
-func (c *Godot) IsEmpty() bool {
+func (c *Source) IsEmpty() bool {
 	return c.PathSource == "" && c.Version == "" && c.VersionFile == ""
 }
 
 /* ---------------------------- Method: VendorTo ---------------------------- */
 
 // VendorTo vendors the Godot source code to the specified directory.
-func (c *Godot) VendorTo(ctx context.Context, out string) error {
+func (c *Source) VendorTo(ctx context.Context, out string) error {
 	if c.IsEmpty() {
 		return fmt.Errorf("%w: no Godot version or source path set", ErrMissingInput)
 	}
@@ -99,7 +99,7 @@ func (c *Godot) VendorTo(ctx context.Context, out string) error {
 
 /* ---------------------------- config.Configurer --------------------------- */
 
-func (c *Godot) Configure(ctx config.Context) error {
+func (c *Source) Configure(ctx config.Context) error {
 	if err := c.PathSource.RelTo(ctx.PathManifest); err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (c *Godot) Configure(ctx config.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Godot) Validate(_ config.Context) error { //nolint:cyclop,funlen
+func (c *Source) Validate(_ config.Context) error { //nolint:cyclop,funlen
 	if c.IsEmpty() {
 		return fmt.Errorf("%w: no Godot version specified in manifest", ErrMissingInput)
 	}
@@ -181,15 +181,15 @@ func (c *Godot) Validate(_ config.Context) error { //nolint:cyclop,funlen
 
 // NewVendorGodotAction creates an 'action.Action' which vendors Godot source
 // code into the build directory.
-func NewVendorGodotAction(g *Godot, inv *config.Context) action.WithDescription[action.Function] {
+func NewVendorGodotAction(src *Source, inv *config.Context) action.WithDescription[action.Function] {
 	fn := func(ctx context.Context) error {
-		if g.IsEmpty() {
+		if src.IsEmpty() {
 			log.Debug("no Godot version set; skipping vendoring of source code")
 
 			return nil
 		}
 
-		pathSource, err := filepath.Abs(g.PathSource.String())
+		pathSource, err := filepath.Abs(src.PathSource.String())
 		if err != nil {
 			return err
 		}
@@ -209,7 +209,7 @@ func NewVendorGodotAction(g *Godot, inv *config.Context) action.WithDescription[
 			return err
 		}
 
-		return g.VendorTo(ctx, pathBuild)
+		return src.VendorTo(ctx, pathBuild)
 	}
 
 	return action.WithDescription[action.Function]{

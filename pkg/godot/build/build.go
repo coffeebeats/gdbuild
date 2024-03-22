@@ -35,8 +35,8 @@ type Build struct {
 	// Env is a map of environment variables to set during the build step.
 	Env map[string]string
 
-	// Godot is the source code specification for the build.
-	Godot Godot
+	// Source is the source code specification for the build.
+	Source Source
 
 	// Optimize is the level of optimization for the Godot export template.
 	Optimize Optimize

@@ -33,7 +33,7 @@ var _ Template = (*MacOS)(nil)
 
 /* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *MacOS) ToTemplate(g build.Godot, bc build.Context) template.Template { //nolint:funlen
+func (c *MacOS) ToTemplate(g build.Source, bc build.Context) template.Template { //nolint:funlen
 	switch a := c.Base.Arch; a {
 	case platform.ArchAmd64, platform.ArchArm64:
 		t := c.Base.ToTemplate(g, bc)

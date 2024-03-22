@@ -42,7 +42,7 @@ var _ Template = (*Base)(nil)
 
 /* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *Base) ToTemplate(g build.Godot, bc build.Context) template.Template {
+func (c *Base) ToTemplate(src build.Source, bc build.Context) template.Template {
 	s := c.SCons
 
 	// Append environment-specified arguments.
@@ -66,7 +66,7 @@ func (c *Base) ToTemplate(g build.Godot, bc build.Context) template.Template {
 				CustomPy:        c.PathCustomPy,
 				DoublePrecision: config.Dereference(c.DoublePrecision),
 				Env:             c.Env,
-				Godot:           g,
+				Source:          src,
 				Optimize:        c.Optimize,
 				Platform:        bc.Platform,
 				Profile:         bc.Profile,

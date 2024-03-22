@@ -30,7 +30,7 @@ var ErrMissingInput = errors.New("missing input")
 /* -------------------------------------------------------------------------- */
 
 type Templater interface {
-	ToTemplate(cg build.Godot, tc build.Context) Template
+	ToTemplate(cg build.Source, tc build.Context) Template
 }
 
 /* -------------------------------------------------------------------------- */
@@ -148,7 +148,7 @@ func (t *Template) uniquePaths() []pathutil.Path {
 			paths = append(paths, b.CustomPy)
 		}
 
-		switch g := b.Godot; {
+		switch g := b.Source; {
 		case g.PathSource != "":
 			paths = append(paths, g.PathSource)
 		case g.VersionFile != "":
@@ -287,7 +287,7 @@ func (c compilation) Action() (action.Action, error) { //nolint:ireturn
 	actions = append(
 		actions,
 		t.Prebuild,
-		build.NewVendorGodotAction(&t.Builds[0].Godot, &c.context.Invoke),
+		build.NewVendorGodotAction(&t.Builds[0].Source, &c.context.Invoke),
 	)
 
 	for _, b := range t.Builds {

@@ -35,7 +35,7 @@ var _ Template = (*Windows)(nil)
 
 /* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *Windows) ToTemplate(g build.Godot, bc build.Context) template.Template {
+func (c *Windows) ToTemplate(g build.Source, bc build.Context) template.Template {
 	t := c.Base.ToTemplate(g, bc)
 
 	t.Builds[0].Platform = platform.OSWindows

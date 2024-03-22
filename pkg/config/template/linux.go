@@ -25,7 +25,7 @@ var _ Template = (*Linux)(nil)
 
 /* -------------------------- Impl: template.Templater ------------------------- */
 
-func (c *Linux) ToTemplate(g build.Godot, bc build.Context) template.Template {
+func (c *Linux) ToTemplate(g build.Source, bc build.Context) template.Template {
 	t := c.Base.ToTemplate(g, bc)
 
 	t.Builds[0].Platform = platform.OSLinux

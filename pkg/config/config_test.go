@@ -74,7 +74,7 @@ func TestBuildTemplate(t *testing.T) {
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Godot:    build.Godot{Version: "4.0.0"},
+								Source:   build.Source{Version: "4.0.0"},
 								Platform: platform.OSLinux,
 								Profile:  build.ProfileDebug,
 							},
@@ -118,7 +118,7 @@ func TestBuildTemplate(t *testing.T) {
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Godot:    build.Godot{Version: "4.0.0"},
+								Source:   build.Source{Version: "4.0.0"},
 								Platform: platform.OSMacOS,
 								Profile:  build.ProfileDebug,
 								SCons: build.SCons{
@@ -130,7 +130,7 @@ func TestBuildTemplate(t *testing.T) {
 							},
 							{
 								Arch:     platform.ArchArm64,
-								Godot:    build.Godot{Version: "4.0.0"},
+								Source:   build.Source{Version: "4.0.0"},
 								Platform: platform.OSMacOS,
 								Profile:  build.ProfileDebug,
 								SCons: build.SCons{
@@ -186,7 +186,7 @@ func TestBuildTemplate(t *testing.T) {
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Godot:    build.Godot{Version: "4.0.0"},
+								Source:   build.Source{Version: "4.0.0"},
 								Platform: platform.OSWindows,
 								Profile:  build.ProfileDebug,
 							},
@@ -245,7 +245,7 @@ func TestBuildTemplate(t *testing.T) {
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Godot:    build.Godot{Version: "4.2.1"},
+								Source:   build.Source{Version: "4.2.1"},
 								Platform: platform.OSWindows,
 								Profile:  build.ProfileDebug,
 								SCons:    build.SCons{},

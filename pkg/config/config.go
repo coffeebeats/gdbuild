@@ -24,7 +24,7 @@ type Manifest struct {
 	// Config contains GDBuild configuration-related settings.
 	Config Config `toml:"config"`
 	// Godot contains settings on which Godot version/source code to use.
-	Godot build.Godot `toml:"godot"`
+	Godot build.Source `toml:"godot"`
 	// Template includes settings for building custom export templates.
 	Template template.Templates `toml:"template"`
 }
@@ -40,7 +40,7 @@ type configuration struct {
 // compiling Godot based on the specified configuration.
 func (m *Manifest) BuildTemplate(bc build.Context) (godottemplate.Template, error) { //nolint:cyclop,funlen
 	var merged struct {
-		godot    build.Godot
+		godot    build.Source
 		template template.Template
 	}
 
