@@ -15,7 +15,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
-	"github.com/coffeebeats/gdbuild/pkg/template"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
 
 var ErrPrintHashUsage = errors.New("cannot set option with '--print-hash'")

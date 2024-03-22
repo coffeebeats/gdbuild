@@ -7,7 +7,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
-	godottemplate "github.com/coffeebeats/gdbuild/pkg/template"
+	godottemplate "github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
 
 var (

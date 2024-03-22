@@ -8,7 +8,7 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/godot/compile"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
-	"github.com/coffeebeats/gdbuild/pkg/template"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
 
 /* -------------------------------------------------------------------------- */

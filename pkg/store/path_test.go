@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/coffeebeats/gdbuild/internal/archive"
-	"github.com/coffeebeats/gdbuild/pkg/template"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 )
 
 /* -------------------------- Test: TemplateArchive ------------------------- */
