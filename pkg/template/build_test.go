@@ -1,4 +1,4 @@
-package config_test
+package template
 
 import (
 	"io"
@@ -16,10 +16,9 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
-	configtemplate "github.com/coffeebeats/gdbuild/pkg/config/template"
+	"github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 func TestBuildTemplate(t *testing.T) {
@@ -30,7 +29,7 @@ func TestBuildTemplate(t *testing.T) {
 		files map[string]string
 		index uint // The root manifest (defaults to '0').
 
-		assert func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error)
+		assert func(t *testing.T, bc *build.Context, tmp string, got *build.Template, err error)
 	}{
 		{
 			name: "empty 'config.extends' returns an error",
@@ -39,12 +38,12 @@ func TestBuildTemplate(t *testing.T) {
 				"gdbuild.toml": `config.extends = ""`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *build.Template, err error) {
 				// Then: There's an error denoting the failure.
-				assert.ErrorIs(t, err, config.ErrInvalidInput)
+				assert.ErrorIs(t, err, ErrInvalidInput)
 
 				// Then: The template is empty.
-				assert.Equal(t, (*template.Template)(nil), got)
+				assert.Equal(t, (*build.Template)(nil), got)
 			},
 		},
 		{
@@ -63,14 +62,14 @@ func TestBuildTemplate(t *testing.T) {
 				"gdbuild.toml": `godot.version = "4.0.0"`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *build.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
 				// Then: The template matches expectations.
 				assert.Equal(
 					t,
-					&template.Template{
+					&build.Template{
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -107,14 +106,14 @@ func TestBuildTemplate(t *testing.T) {
 					vulkan = { sdk_path = "$TEST_TMPDIR/vulkan" }`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *build.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
 				// Then: The template matches expectations.
 				assert.Equal(
 					t,
-					&template.Template{
+					&build.Template{
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -175,14 +174,14 @@ func TestBuildTemplate(t *testing.T) {
 				"gdbuild.toml": `godot.version = "4.0.0"`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *build.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
 				// Then: The template matches expectations.
 				assert.Equal(
 					t,
-					&template.Template{
+					&build.Template{
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -225,7 +224,7 @@ func TestBuildTemplate(t *testing.T) {
 					use_mingw = false`,
 			},
 
-			assert: func(t *testing.T, bc *build.Context, tmp string, got *template.Template, err error) {
+			assert: func(t *testing.T, bc *build.Context, tmp string, got *build.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
 
@@ -236,12 +235,12 @@ func TestBuildTemplate(t *testing.T) {
 
 				// NOTE: Function actions can't be checked, so separately test them.
 				assert.NotNil(t, got.Prebuild)
-				assert.IsType(t, configtemplate.NewCopyImageFileAction(image, &bc.Invoke), got.Prebuild)
+				assert.IsType(t, template.NewCopyImageFileAction(image, &bc.Invoke), got.Prebuild)
 				got.Prebuild = nil
 
 				assert.Equal(
 					t,
-					&template.Template{
+					&build.Template{
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -279,18 +278,13 @@ func TestBuildTemplate(t *testing.T) {
 			require.NoError(t, err)
 
 			// When: The 'Template' is built.
-			got, err := m.BuildTemplate(tc.bc)
+			got, err := Build(m, tc.bc)
 
 			// Then: Results match expectations.
 			require.NotNil(t, tc.assert)
 			tc.assert(t, &tc.bc, tmp, got, err)
 		})
 	}
-}
-
-type configuration struct {
-	filename string
-	manifest string
 }
 
 func writeFile(t *testing.T, tmp, path string, doc string) {

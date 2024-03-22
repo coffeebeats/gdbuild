@@ -10,7 +10,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -31,12 +30,12 @@ type MacOS struct {
 // Compile-time check that 'Template' is implemented.
 var _ Template = (*MacOS)(nil)
 
-/* -------------------------- Impl: template.Templater ------------------------- */
+/* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *MacOS) ToTemplate(g build.Source, bc build.Context) *template.Template { //nolint:funlen
+func (c *MacOS) Template(g build.Source, bc build.Context) *build.Template { //nolint:funlen
 	switch a := c.Base.Arch; a {
 	case platform.ArchAmd64, platform.ArchArm64:
-		t := c.Base.ToTemplate(g, bc)
+		t := c.Base.Template(g, bc)
 
 		t.Builds[0].Platform = platform.OSMacOS
 
@@ -58,13 +57,13 @@ func (c *MacOS) ToTemplate(g build.Source, bc build.Context) *template.Template 
 		amd64 := *c
 		amd64.Base.Arch = platform.ArchAmd64
 
-		templateAmd64 := amd64.ToTemplate(g, bc)
+		templateAmd64 := amd64.Template(g, bc)
 
 		// Next, create the 'arm64' binary.
 		arm64 := *c
 		arm64.Base.Arch = platform.ArchArm64
 
-		templateArm64 := arm64.ToTemplate(g, bc)
+		templateArm64 := arm64.Template(g, bc)
 
 		// Finally, merge the two binaries together.
 
@@ -99,7 +98,7 @@ func (c *MacOS) ToTemplate(g build.Source, bc build.Context) *template.Template 
 		// Construct the output 'Template'. This is because nothing else needs
 		// to be copied over from the arch-specific templates and this avoid the
 		// need to deduplicate properties.
-		t := c.Base.ToTemplate(g, bc)
+		t := c.Base.Template(g, bc)
 
 		// Register the additional artifact.
 		t.ExtraArtifacts = append(t.ExtraArtifacts, templateNameUniversal)

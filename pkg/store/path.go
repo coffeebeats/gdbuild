@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/archive"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
@@ -25,7 +26,7 @@ var (
 // export template artifact archive within the store.
 //
 // NOTE: This does *not* mean the template archive exists.
-func TemplateArchive(storePath string, t *template.Template) (string, error) {
+func TemplateArchive(storePath string, t *build.Template) (string, error) {
 	if storePath == "" {
 		return "", ErrMissingStore
 	}

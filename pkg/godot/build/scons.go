@@ -93,12 +93,12 @@ func (c *SCons) PathCacheFromEnv() pathutil.Path {
 
 /* ---------------------------- config.Configurer --------------------------- */
 
-func (c *SCons) Configure(inv config.Context) error {
+func (c *SCons) Configure(bc config.Context) error {
 	if p := os.Getenv(envSConsCache); p != "" {
 		c.PathCache = pathutil.Path(p)
 	}
 
-	if err := c.PathCache.RelTo(inv.PathManifest); err != nil {
+	if err := c.PathCache.RelTo(bc.PathManifest); err != nil {
 		return err
 	}
 

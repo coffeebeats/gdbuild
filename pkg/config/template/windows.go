@@ -13,7 +13,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -33,10 +32,10 @@ type Windows struct {
 // Compile-time check that 'Template' is implemented.
 var _ Template = (*Windows)(nil)
 
-/* -------------------------- Impl: template.Templater ------------------------- */
+/* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Windows) ToTemplate(g build.Source, bc build.Context) *template.Template {
-	t := c.Base.ToTemplate(g, bc)
+func (c *Windows) Template(g build.Source, bc build.Context) *build.Template {
+	t := c.Base.Template(g, bc)
 
 	t.Builds[0].Platform = platform.OSWindows
 

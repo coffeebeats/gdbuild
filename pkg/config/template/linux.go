@@ -6,7 +6,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -23,10 +22,10 @@ type Linux struct {
 // Compile-time check that 'Template' is implemented.
 var _ Template = (*Linux)(nil)
 
-/* -------------------------- Impl: template.Templater ------------------------- */
+/* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Linux) ToTemplate(g build.Source, bc build.Context) *template.Template {
-	t := c.Base.ToTemplate(g, bc)
+func (c *Linux) Template(g build.Source, bc build.Context) *build.Template {
+	t := c.Base.Template(g, bc)
 
 	t.Builds[0].Platform = platform.OSLinux
 

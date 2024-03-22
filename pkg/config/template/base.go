@@ -7,7 +7,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -40,9 +39,9 @@ type Base struct {
 // Compile-time check that 'Template' is implemented.
 var _ Template = (*Base)(nil)
 
-/* -------------------------- Impl: template.Templater ------------------------- */
+/* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Base) ToTemplate(src build.Source, bc build.Context) *template.Template {
+func (c *Base) Template(src build.Source, bc build.Context) *build.Template {
 	s := c.SCons
 
 	// Append environment-specified arguments.
@@ -58,7 +57,7 @@ func (c *Base) ToTemplate(src build.Source, bc build.Context) *template.Template
 		s.CacheSizeLimit = csl
 	}
 
-	return &template.Template{
+	return &build.Template{
 		Builds: []build.Build{
 			{
 				Arch:            c.Arch,

@@ -29,14 +29,14 @@ type Configurable interface {
 // invocation. Note that 'Configure' must *not* set default values as this
 // method might be called prior to complete resolution of user inputs.
 type Configurer interface {
-	Configure(inv Context) error
+	Configure(c Context) error
 }
 
 /* -------------------------- Interface: Validator -------------------------- */
 
 // Validator is a type which can validate itself.
 type Validator interface {
-	Validate(inv Context) error
+	Validate(c Context) error
 }
 
 /* ---------------------------- Interface: Merger --------------------------- */

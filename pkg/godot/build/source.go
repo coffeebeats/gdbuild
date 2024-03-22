@@ -177,11 +177,31 @@ func (c *Source) Validate(_ config.Context) error { //nolint:cyclop,funlen
 	return nil
 }
 
+/* --------------------------- Impl: config.Merger -------------------------- */
+
+func (c *Source) MergeInto(other any) error {
+	if c == nil || other == nil {
+		return nil
+	}
+
+	dst, ok := other.(*Source)
+	if !ok {
+		return fmt.Errorf(
+			"%w: expected a '%T' but was '%T'",
+			config.ErrInvalidInput,
+			new(Source),
+			other,
+		)
+	}
+
+	return config.Merge(dst, *c)
+}
+
 /* --------------------- Function: NewVendorGodotAction --------------------- */
 
 // NewVendorGodotAction creates an 'action.Action' which vendors Godot source
 // code into the build directory.
-func NewVendorGodotAction(src *Source, inv *config.Context) action.WithDescription[action.Function] {
+func NewVendorGodotAction(src *Source, cc *config.Context) action.WithDescription[action.Function] {
 	fn := func(ctx context.Context) error {
 		if src.IsEmpty() {
 			log.Debug("no Godot version set; skipping vendoring of source code")
@@ -194,7 +214,7 @@ func NewVendorGodotAction(src *Source, inv *config.Context) action.WithDescripti
 			return err
 		}
 
-		pathBuild, err := filepath.Abs(inv.PathBuild.String())
+		pathBuild, err := filepath.Abs(cc.PathBuild.String())
 		if err != nil {
 			return err
 		}
@@ -214,6 +234,6 @@ func NewVendorGodotAction(src *Source, inv *config.Context) action.WithDescripti
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "vendor godot source code: " + inv.PathBuild.String(),
+		Description: "vendor godot source code: " + cc.PathBuild.String(),
 	}
 }

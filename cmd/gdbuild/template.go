@@ -168,7 +168,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				Profile:  pr,
 			}
 
-			t, err := m.BuildTemplate(bc)
+			t, err := template.Build(m, bc)
 			if err != nil {
 				return err
 			}
@@ -184,7 +184,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return nil
 			}
 
-			action, err := template.Compile(t, &bc)
+			action, err := template.Action(t, &bc)
 			if err != nil {
 				return err
 			}
