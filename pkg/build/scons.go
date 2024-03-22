@@ -3,11 +3,16 @@ package build
 import (
 	"errors"
 	"os"
+	"strconv"
+	"strings"
+
+	"github.com/charmbracelet/log"
 )
 
 const (
-	EnvSConsCache = "SCONS_CACHE"
-	EnvSConsFlags = "SCONSFLAGS"
+	envSConsCache          = "SCONS_CACHE"
+	envSConsCacheSizeLimit = "SCONS_CACHE_LIMIT"
+	envSConsFlags          = "SCONSFLAGS"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -25,6 +30,8 @@ type SCons struct {
 	// CXXFlags are additional 'CXXFLAGS' to append to the SCons build command.
 	// Note that 'CXXFLAGS=...' will be appended *before* 'ExtraArgs'.
 	CXXFlags []string `hash:"set" toml:"cxxflags"`
+	// CacheSizeLimit is the limit in MiB.
+	CacheSizeLimit *uint32 `hash:"ignore" toml:"cache_size_limit"` // Ignore; doesn't affect binary.
 	// Command contains arguments used to invoke SCons. Defaults to ["scons"].
 	Command []string `hash:"set" toml:"command"`
 	// ExtraArgs are additional arguments to append to the SCons build command.
@@ -33,15 +40,58 @@ type SCons struct {
 	// build command.
 	LinkFlags []string `hash:"set" toml:"link_flags"`
 	// PathCache is the path to the SCons cache, relative to the manifest.
-	PathCache Path `hash:"ignore" toml:"cache_path"`
-	// CacheSizeLimit is the limit in MiB.
-	CacheSizeLimit *uint `toml:"cache_size_limit"`
+	PathCache Path `hash:"ignore" toml:"cache_path"` // Ignore; doesn't affect binary.
+}
+
+/* ---------------------- Method: CacheSizeLimitFromEnv --------------------- */
+
+// CacheSizeLimitFromEnv returns a SCons cache size limit set via environment
+// variable.
+func (c *SCons) CacheSizeLimitFromEnv() *uint32 {
+	cslRaw := os.Getenv(envSConsCacheSizeLimit)
+	if cslRaw == "" {
+		return nil
+	}
+
+	csl, err := strconv.ParseInt(cslRaw, 10, 32)
+	if err != nil {
+		log.Warnf(
+			"found invalid environment variable '%s' (expected u32): %s",
+			envSConsCacheSizeLimit,
+			cslRaw,
+		)
+
+		return nil
+	}
+
+	cslU32 := uint32(csl)
+
+	return &cslU32
+}
+
+/* ------------------------ Method: ExtraArgsFromEnv ------------------------ */
+
+// ExtraArgsFromEnv returns extra SCons arguments set via environment variable.
+func (c *SCons) ExtraArgsFromEnv() []string {
+	argsRaw := os.Getenv(envSConsFlags)
+	if argsRaw == "" {
+		return nil
+	}
+
+	return strings.Split(argsRaw, " ")
+}
+
+/* ------------------------ Method: PathCacheFromEnv ------------------------ */
+
+// PathCacheFromEnv returns a SCons cache path set via environment variable.
+func (c *SCons) PathCacheFromEnv() Path {
+	return Path(os.Getenv(envSConsCache))
 }
 
 /* ---------------------------- config.Configurer --------------------------- */
 
 func (c *SCons) Configure(inv Invocation) error {
-	if p := os.Getenv(EnvSConsCache); p != "" {
+	if p := os.Getenv(envSConsCache); p != "" {
 		c.PathCache = Path(p)
 	}
 

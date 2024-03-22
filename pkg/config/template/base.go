@@ -40,6 +40,21 @@ var _ Template = (*Base)(nil)
 /* -------------------------- Impl: build.Templater ------------------------- */
 
 func (c *Base) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
+	scons := c.SCons
+
+	// Append environment-specified arguments.
+	scons.ExtraArgs = append(scons.ExtraArgs, scons.ExtraArgsFromEnv()...)
+
+	// Override the cache path using an environment-specified path.
+	if pc := scons.PathCacheFromEnv(); pc != "" {
+		scons.PathCache = pc
+	}
+
+	// Override the cache size limit using an environment-specified path.
+	if csl := scons.CacheSizeLimitFromEnv(); csl != nil {
+		scons.CacheSizeLimit = csl
+	}
+
 	return build.Template{
 		Binaries: []build.Binary{
 			{
@@ -52,7 +67,7 @@ func (c *Base) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
 				Optimize:        c.Optimize,
 				Platform:        inv.Platform,
 				Profile:         inv.Profile,
-				SCons:           c.SCons,
+				SCons:           scons,
 			},
 		},
 		Paths:     nil,

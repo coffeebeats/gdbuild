@@ -45,11 +45,11 @@ type Template struct {
 
 	// Prebuild contains an ordered list of actions to execute prior to
 	// compilation of the export templates.
-	Prebuild []action.Action `hash:"set,string"`
+	Prebuild action.Action `hash:"string"`
 
 	// Postbuild contains an ordered list of actions to execute after
 	// compilation of the export templates.
-	Postbuild []action.Action `hash:"set,string"`
+	Postbuild action.Action `hash:"string"`
 }
 
 /* --------------------------- Method: AddToPaths --------------------------- */
@@ -141,11 +141,11 @@ type Binary struct {
 
 	// CustomModules is a list of paths to custom modules to include in the
 	// template build.
-	CustomModules []Path `hash:"ignore"`
+	CustomModules []Path `hash:"ignore"` // Ignore; paths are separately hashed.
 
 	// CustomPy is a path to a 'custom.py' file which defines export template
 	// build options.
-	CustomPy Path `hash:"ignore"`
+	CustomPy Path `hash:"ignore"` // Ignore; path is separately hashed.
 
 	// DoublePrecision enables double floating-point precision.
 	DoublePrecision bool
@@ -187,7 +187,7 @@ func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 
 	// Define the SCons cache path.
 	if path := scons.PathCache; path != "" {
-		cmd.Environment = append(cmd.Environment, EnvSConsCache+"="+path.String())
+		cmd.Environment = append(cmd.Environment, envSConsCache+"="+path.String())
 	}
 
 	// Add specified environment variables.
@@ -200,33 +200,35 @@ func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	cmd.Environment = append(cmd.Environment, os.Environ()...)
 
 	// Set the SCons cache size limit, if one was set.
-	if l := scons.CacheSizeLimit; l != nil {
+	if csl := scons.CacheSizeLimit; csl != nil {
 		cmd.Environment = append(
 			cmd.Environment,
-			fmt.Sprintf("SCONS_CACHE_LIMIT=%d", *scons.CacheSizeLimit),
+			fmt.Sprintf("%s=%d", envSConsCacheSizeLimit, *csl),
 		)
 	}
 
 	// Build the SCons command/argument list.
-	cmd.Args = append(cmd.Args, scons.Command...)
-	cmd.Args = append(cmd.Args, "-j"+strconv.Itoa(runtime.NumCPU()))
+	var args []string
+
+	// Add multi-core support.
+	args = append(args, "-j"+strconv.Itoa(runtime.NumCPU()))
 
 	// Specify the 'platform' argument.
-	cmd.Args = append(cmd.Args, b.Platform.String())
+	args = append(args, b.Platform.String())
 
 	// Add the achitecture setting (note that this requires the 'build.Arch'
 	// values to match what SCons expects).
-	cmd.Args = append(cmd.Args, "arch="+b.Arch.String())
+	args = append(args, "arch="+b.Arch.String())
 
 	// Specify which target to build.
-	cmd.Args = append(cmd.Args, "target="+inv.Profile.TargetName())
+	args = append(args, "target="+inv.Profile.TargetName())
 
 	// Add stricter warning handling.
-	cmd.Args = append(cmd.Args, "warnings=extra", "werror=yes")
+	args = append(args, "warnings=extra", "werror=yes")
 
 	// Handle a verbose flag.
 	if inv.Verbose {
-		cmd.Args = append(cmd.Args, "verbose=yes")
+		args = append(args, "verbose=yes")
 	}
 
 	// Append 'custom_modules' argument.
@@ -236,12 +238,12 @@ func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 			modules[i] = m.String()
 		}
 
-		cmd.Args = append(cmd.Args, fmt.Sprintf(`custom_modules="%s"`, strings.Join(modules, ",")))
+		args = append(args, fmt.Sprintf(`custom_modules="%s"`, strings.Join(modules, ",")))
 	}
 
 	// Append the 'precision' argument.
 	if b.DoublePrecision {
-		cmd.Args = append(cmd.Args, "precision=double")
+		args = append(args, "precision=double")
 	}
 
 	// Append profile/optimization-related arguments.
@@ -252,8 +254,8 @@ func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 			optimize = b.Optimize
 		}
 
-		cmd.Args = append(
-			cmd.Args,
+		args = append(
+			args,
 			"production=yes",
 			fmt.Sprintf("optimize=%s", optimize),
 		)
@@ -264,8 +266,8 @@ func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 			optimize = b.Optimize
 		}
 
-		cmd.Args = append(
-			cmd.Args,
+		args = append(
+			args,
 			"debug_symbols=yes",
 			"dev_mode=yes",
 			fmt.Sprintf("optimize=%s", optimize),
@@ -276,8 +278,8 @@ func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 			optimize = b.Optimize
 		}
 
-		cmd.Args = append(
-			cmd.Args,
+		args = append(
+			args,
 			"debug_symbols=yes",
 			"dev_mode=yes",
 			fmt.Sprintf("optimize=%s", optimize),
@@ -287,26 +289,30 @@ func (b *Binary) SConsCommand(inv *Invocation) *action.Process { //nolint:cyclop
 	// Append C/C++ build flags.
 	if len(b.SCons.CCFlags) > 0 {
 		flags := fmt.Sprintf(`CCFLAGS="%s"`, strings.Join(b.SCons.CCFlags, " "))
-		cmd.Args = append(cmd.Args, flags)
+		args = append(args, flags)
 	}
 
 	if len(b.SCons.CFlags) > 0 {
 		flags := fmt.Sprintf(`CFLAGS="%s"`, strings.Join(b.SCons.CFlags, " "))
-		cmd.Args = append(cmd.Args, flags)
+		args = append(args, flags)
 	}
 
 	if len(b.SCons.CXXFlags) > 0 {
 		flags := fmt.Sprintf(`CXXFLAGS="%s"`, strings.Join(b.SCons.CXXFlags, " "))
-		cmd.Args = append(cmd.Args, flags)
+		args = append(args, flags)
 	}
 
 	if len(b.SCons.LinkFlags) > 0 {
 		flags := fmt.Sprintf(`LINKFLAGS="%s"`, strings.Join(b.SCons.LinkFlags, " "))
-		cmd.Args = append(cmd.Args, flags)
+		args = append(args, flags)
 	}
 
 	// Append extra arguments.
-	cmd.Args = append(cmd.Args, b.SCons.ExtraArgs...)
+	args = append(args, b.SCons.ExtraArgs...)
+
+	// Attach the command with arguments to the action.
+	cmd.Args = append(cmd.Args, scons.Command...)
+	cmd.Args = append(cmd.Args, args...)
 
 	return &cmd
 }
@@ -386,18 +392,24 @@ func (c compilation) Action() (action.Action, error) { //nolint:ireturn
 	actions := make(
 		[]action.Action,
 		0,
-		2+len(t.Prebuild)+len(t.Postbuild)+len(t.Binaries),
+		2+1+1+len(t.Binaries),
 	)
 
-	actions = append(actions, t.Prebuild...)
-	actions = append(actions, NewVendorGodotAction(&t.Binaries[0].Godot, inv))
+	actions = append(
+		actions,
+		t.Prebuild,
+		NewVendorGodotAction(&t.Binaries[0].Godot, inv),
+	)
 
 	for _, b := range t.Binaries {
 		actions = append(actions, b.SConsCommand(inv))
 	}
 
-	actions = append(actions, t.Postbuild...)
-	actions = append(actions, NewMoveArtifactsAction(inv))
+	actions = append(
+		actions,
+		t.Postbuild,
+		NewMoveArtifactsAction(inv),
+	)
 
 	return action.InOrder(actions...), nil
 }
