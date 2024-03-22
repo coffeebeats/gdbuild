@@ -96,7 +96,7 @@ func (t *Template) AddToPaths(path Path) {
 //
 // NOTE: This implementation relies on producers of 'Template' to correctly
 // register all file system dependencies within 'Paths'.
-func (t *Template) Checksum(inv *Invocation) (string, error) {
+func (t *Template) Checksum() (string, error) {
 	hash, err := hashstructure.Hash(
 		t,
 		hashstructure.FormatV2,
@@ -117,7 +117,7 @@ func (t *Template) Checksum(inv *Invocation) (string, error) {
 		return "", err
 	}
 
-	for _, p := range t.uniquePaths(inv) {
+	for _, p := range t.uniquePaths() {
 		root := p.String()
 
 		log.Debugf("hashing files rooted at path: %s", root)
@@ -133,7 +133,7 @@ func (t *Template) Checksum(inv *Invocation) (string, error) {
 /* --------------------------- Method: uniquePaths -------------------------- */
 
 // uniquePaths returns the unique list of expanded path dependencies.
-func (t *Template) uniquePaths(_ *Invocation) []Path {
+func (t *Template) uniquePaths() []Path {
 	paths := t.Paths
 
 	for _, b := range t.Binaries {
@@ -416,12 +416,12 @@ func NewVerifyArtifactsAction(
 }
 
 /* -------------------------------------------------------------------------- */
-/*                      Function: NewMoveArtifactsAction                      */
+/*                      Function: NewCopyArtifactsAction                      */
 /* -------------------------------------------------------------------------- */
 
-// NewMoveArtifactsAction creates an 'action.Action' which moves the generated
+// NewCopyArtifactsAction creates an 'action.Action' which moves the generated
 // Godot artifacts to the output directory.
-func NewMoveArtifactsAction(
+func NewCopyArtifactsAction(
 	inv *Invocation,
 	artifacts []string,
 ) action.WithDescription[action.Function] {
@@ -502,7 +502,7 @@ func (c compilation) Action() (action.Action, error) { //nolint:ireturn
 		actions,
 		t.Postbuild,
 		NewVerifyArtifactsAction(inv, t.Artifacts()),
-		NewMoveArtifactsAction(inv, t.Artifacts()),
+		NewCopyArtifactsAction(inv, t.Artifacts()),
 	)
 
 	return action.InOrder(actions...), nil
