@@ -12,7 +12,6 @@ Compile an export template for the specified Godot platform `PLATFORM`.
 
 - `--dry-run` — log the build command without running it
 - `--print-hash` — log the unique hash of the export template (skips compilation)
-- `--print-hash` — log the unique hash of the export template (skips compilation)
 
 - `-c`, `--config <PATH>` — use the `gdbuild` configuration file found at `PATH`
   - Default value: `$PWD` (current working directory)
