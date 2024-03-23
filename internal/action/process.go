@@ -86,5 +86,11 @@ func (p *Process) String() string {
 	env := p.Environment
 	slices.Sort(env)
 
-	return strings.Join(env, " ") + " " + strings.Join(p.Args, " ")
+	processStr := fmt.Sprintf(
+		"%s %s",
+		strings.Join(env, " "),
+		strings.Join(p.Args, " "),
+	)
+
+	return strings.TrimSpace(processStr)
 }
