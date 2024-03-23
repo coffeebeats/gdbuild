@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
-	internalconfig "github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/exec"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
@@ -49,13 +48,11 @@ func TestBuildTemplate(t *testing.T) {
 			name: "empty template is correctly converted into default for linux",
 
 			bc: build.Context{
-				Invoke: internalconfig.Context{
-					PathBuild:    "$TEST_TMPDIR/build",
-					PathManifest: "$TEST_TMPDIR/gdbuild.toml",
-					PathOut:      "$TEST_TMPDIR/dist",
-				},
-				Platform: platform.OSLinux,
-				Profile:  build.ProfileDebug,
+				PathBuild:    "$TEST_TMPDIR/build",
+				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
+				PathOut:      "$TEST_TMPDIR/dist",
+				Platform:     platform.OSLinux,
+				Profile:      build.ProfileDebug,
 			},
 			files: map[string]string{
 				"gdbuild.toml": `godot.version = "4.0.0"`,
@@ -89,11 +86,11 @@ func TestBuildTemplate(t *testing.T) {
 			name: "empty template is correctly converted into default for macos",
 
 			bc: build.Context{
-				Invoke: internalconfig.Context{PathBuild: "$TEST_TMPDIR/build",
-					PathManifest: "$TEST_TMPDIR/gdbuild.toml",
-					PathOut:      "$TEST_TMPDIR/dist"},
-				Platform: platform.OSMacOS,
-				Profile:  build.ProfileDebug,
+				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
+				PathOut:      "$TEST_TMPDIR/dist",
+				PathBuild:    "$TEST_TMPDIR/build",
+				Platform:     platform.OSMacOS,
+				Profile:      build.ProfileDebug,
 			},
 			files: map[string]string{
 				"vulkan/": "", // Create an empty directory.
@@ -163,11 +160,11 @@ func TestBuildTemplate(t *testing.T) {
 			name: "empty template is correctly converted into default for windows",
 
 			bc: build.Context{
-				Invoke: internalconfig.Context{PathBuild: "$TEST_TMPDIR/build",
-					PathManifest: "$TEST_TMPDIR/gdbuild.toml",
-					PathOut:      "$TEST_TMPDIR/dist"},
-				Platform: platform.OSWindows,
-				Profile:  build.ProfileDebug,
+				PathBuild:    "$TEST_TMPDIR/build",
+				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
+				PathOut:      "$TEST_TMPDIR/dist",
+				Platform:     platform.OSWindows,
+				Profile:      build.ProfileDebug,
 			},
 			files: map[string]string{
 				"gdbuild.toml": `godot.version = "4.0.0"`,
@@ -199,11 +196,11 @@ func TestBuildTemplate(t *testing.T) {
 			name: "inherited template is correctly populated",
 
 			bc: build.Context{
-				Invoke: internalconfig.Context{PathBuild: "$TEST_TMPDIR/build",
-					PathManifest: "$TEST_TMPDIR/gdbuild.toml",
-					PathOut:      "$TEST_TMPDIR/dist"},
-				Platform: platform.OSWindows,
-				Profile:  build.ProfileDebug,
+				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
+				PathOut:      "$TEST_TMPDIR/dist",
+				PathBuild:    "$TEST_TMPDIR/build",
+				Platform:     platform.OSWindows,
+				Profile:      build.ProfileDebug,
 			},
 			files: map[string]string{
 				"parent.toml": `
@@ -234,7 +231,7 @@ func TestBuildTemplate(t *testing.T) {
 
 				// NOTE: Function actions can't be checked, so separately test them.
 				assert.NotNil(t, got.Prebuild)
-				assert.IsType(t, template.NewCopyImageFileAction(image, &bc.Invoke), got.Prebuild)
+				assert.IsType(t, template.NewCopyImageFileAction(image, bc), got.Prebuild)
 				got.Prebuild = nil
 
 				assert.Equal(
@@ -272,12 +269,12 @@ func TestBuildTemplate(t *testing.T) {
 			}
 
 			// Given: The root manifest is parsed.
-			doc := tc.files[filepath.Base(tc.bc.Invoke.PathManifest.String())]
+			doc := tc.files[filepath.Base(tc.bc.PathManifest.String())]
 			m, err := config.Parse([]byte(doc))
 			require.NoError(t, err)
 
 			// When: The 'Template' is built.
-			got, err := Build(m, tc.bc)
+			got, err := Build(m, &tc.bc)
 
 			// Then: Results match expectations.
 			require.NotNil(t, tc.assert)

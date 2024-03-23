@@ -98,12 +98,12 @@ func (c *Source) VendorTo(ctx context.Context, out string) error {
 
 /* ---------------------------- config.Configurer --------------------------- */
 
-func (c *Source) Configure(ctx config.Context) error {
-	if err := c.PathSource.RelTo(ctx.PathManifest); err != nil {
+func (c *Source) Configure(bc *Context) error {
+	if err := c.PathSource.RelTo(bc.PathManifest); err != nil {
 		return err
 	}
 
-	if err := c.VersionFile.RelTo(ctx.PathManifest); err != nil {
+	if err := c.VersionFile.RelTo(bc.PathManifest); err != nil {
 		return err
 	}
 
@@ -112,7 +112,7 @@ func (c *Source) Configure(ctx config.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Source) Validate(_ config.Context) error { //nolint:cyclop,funlen
+func (c *Source) Validate(_ *Context) error { //nolint:cyclop,funlen
 	if c.IsEmpty() {
 		return fmt.Errorf("%w: no Godot version specified in manifest", ErrMissingInput)
 	}
@@ -200,7 +200,7 @@ func (c *Source) MergeInto(other any) error {
 
 // NewVendorGodotAction creates an 'action.Action' which vendors Godot source
 // code into the build directory.
-func NewVendorGodotAction(src *Source, cc *config.Context) action.WithDescription[action.Function] {
+func NewVendorGodotAction(src *Source, cc *Context) action.WithDescription[action.Function] {
 	fn := func(ctx context.Context) error {
 		if src.IsEmpty() {
 			log.Debug("no Godot version set; skipping vendoring of source code")

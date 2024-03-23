@@ -24,7 +24,7 @@ var _ Template = (*Linux)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Linux) Template(g build.Source, bc build.Context) *build.Template {
+func (c *Linux) Template(g build.Source, bc *build.Context) *build.Template {
 	t := c.Base.Template(g, bc)
 
 	t.Builds[0].Platform = platform.OSLinux
@@ -45,7 +45,7 @@ func (c *Linux) Template(g build.Source, bc build.Context) *build.Template {
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Linux) Configure(bc config.Context) error {
+func (c *Linux) Configure(bc *build.Context) error {
 	if err := c.Base.Configure(bc); err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (c *Linux) Configure(bc config.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Linux) Validate(bc config.Context) error {
+func (c *Linux) Validate(bc *build.Context) error {
 	if err := c.Base.Validate(bc); err != nil {
 		return err
 	}

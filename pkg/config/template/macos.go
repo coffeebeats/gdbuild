@@ -32,7 +32,7 @@ var _ Template = (*MacOS)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *MacOS) Template(g build.Source, bc build.Context) *build.Template { //nolint:funlen
+func (c *MacOS) Template(g build.Source, bc *build.Context) *build.Template { //nolint:funlen
 	switch a := c.Base.Arch; a {
 	case platform.ArchAmd64, platform.ArchArm64:
 		t := c.Base.Template(g, bc)
@@ -79,11 +79,11 @@ func (c *MacOS) Template(g build.Source, bc build.Context) *build.Template { //n
 		)
 
 		cmdLipo := &action.Process{
-			Directory:   bc.Invoke.BinPath().String(),
+			Directory:   bc.BinPath().String(),
 			Environment: nil,
 
 			Shell:   exec.DefaultShell(),
-			Verbose: bc.Invoke.Verbose,
+			Verbose: bc.Verbose,
 
 			Args: append(
 				lipo,
@@ -125,7 +125,7 @@ func (c *MacOS) Template(g build.Source, bc build.Context) *build.Template { //n
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *MacOS) Configure(bc config.Context) error {
+func (c *MacOS) Configure(bc *build.Context) error {
 	if err := c.Base.Configure(bc); err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (c *MacOS) Configure(bc config.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *MacOS) Validate(bc config.Context) error {
+func (c *MacOS) Validate(bc *build.Context) error {
 	if err := c.Base.Validate(bc); err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ type Vulkan struct {
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Vulkan) Configure(bc config.Context) error {
+func (c *Vulkan) Configure(bc *build.Context) error {
 	if err := c.PathSDK.RelTo(bc.PathManifest); err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (c *Vulkan) Configure(bc config.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Vulkan) Validate(_ config.Context) error {
+func (c *Vulkan) Validate(_ *build.Context) error {
 	if err := c.PathSDK.CheckIsDir(); err != nil {
 		return fmt.Errorf("%w: missing path to Vulkan SDK", err)
 	}

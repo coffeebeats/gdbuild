@@ -34,7 +34,7 @@ var _ Template = (*Windows)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Windows) Template(g build.Source, bc build.Context) *build.Template {
+func (c *Windows) Template(g build.Source, bc *build.Context) *build.Template {
 	t := c.Base.Template(g, bc)
 
 	t.Builds[0].Platform = platform.OSWindows
@@ -56,7 +56,7 @@ func (c *Windows) Template(g build.Source, bc build.Context) *build.Template {
 		t.RegisterDependencyPath(c.PathIcon)
 
 		// Copy the icon file to the correct location.
-		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &bc.Invoke))
+		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, bc))
 	}
 
 	// Register the additional console artifact.
@@ -70,7 +70,7 @@ func (c *Windows) Template(g build.Source, bc build.Context) *build.Template {
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Windows) Configure(bc config.Context) error {
+func (c *Windows) Configure(bc *build.Context) error {
 	if err := c.Base.Configure(bc); err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (c *Windows) Configure(bc config.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Windows) Validate(bc config.Context) error {
+func (c *Windows) Validate(bc *build.Context) error {
 	if err := c.Base.Validate(bc); err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (c *Windows) MergeInto(other any) error {
 // icon image into the Godot source code.
 func NewCopyImageFileAction(
 	pathImage osutil.Path,
-	bc *config.Context,
+	bc *build.Context,
 ) action.WithDescription[action.Function] {
 	pathDst := filepath.Join(bc.PathBuild.String(), "platform/windows/godot.ico")
 

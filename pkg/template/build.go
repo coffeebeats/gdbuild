@@ -21,13 +21,13 @@ var (
 
 // Build creates a `Template` instance which contains an action for
 // compiling Godot based on the specified configuration.
-func Build(m *config.Manifest, bc build.Context) (*build.Template, error) { //nolint:cyclop,funlen
+func Build(m *config.Manifest, bc *build.Context) (*build.Template, error) { //nolint:cyclop,funlen
 	var merged struct {
 		source   build.Source
 		template template.Template
 	}
 
-	toBuild := []configuration{{context: &bc, manifest: m}}
+	toBuild := []configuration{{context: bc, manifest: m}}
 	visited := map[osutil.Path]struct{}{}
 
 	for len(toBuild) > 0 {
@@ -39,7 +39,7 @@ func Build(m *config.Manifest, bc build.Context) (*build.Template, error) { //no
 
 		// First, determine whether this manifest extends another one.
 
-		if err := cfg.manifest.Config.Extends.RelTo(bc.Invoke.PathManifest); err != nil {
+		if err := cfg.manifest.Config.Extends.RelTo(bc.PathManifest); err != nil {
 			return nil, fmt.Errorf(
 				"%w: cannot find inherited manifest: %w",
 				ErrInvalidInput,
@@ -56,7 +56,7 @@ func Build(m *config.Manifest, bc build.Context) (*build.Template, error) { //no
 				return nil, fmt.Errorf("cannot parse inherited manifest: %w", err)
 			}
 
-			bc.Invoke.PathManifest = extends
+			bc.PathManifest = extends
 
 			base := configuration{context: &bc, manifest: baseManifest}
 			toBuild = append(toBuild, base, cfg)
@@ -67,7 +67,7 @@ func Build(m *config.Manifest, bc build.Context) (*build.Template, error) { //no
 		}
 
 		// Configure 'Godot' properties.
-		if err := cfg.manifest.Godot.Configure(bc.Invoke); err != nil {
+		if err := cfg.manifest.Godot.Configure(&bc); err != nil {
 			return nil, err
 		}
 
@@ -77,13 +77,13 @@ func Build(m *config.Manifest, bc build.Context) (*build.Template, error) { //no
 		}
 
 		// Build 'Template' properties.
-		t, err := cfg.manifest.Template.Build(bc)
+		t, err := cfg.manifest.Template.Build(&bc)
 		if err != nil {
 			return nil, err
 		}
 
 		// Configure 'Template' properties.
-		if err := t.Configure(bc.Invoke); err != nil {
+		if err := t.Configure(&bc); err != nil {
 			return nil, err
 		}
 
@@ -104,7 +104,7 @@ func Build(m *config.Manifest, bc build.Context) (*build.Template, error) { //no
 	}
 
 	// Validate 'Template' properties.
-	if err := merged.template.Validate(bc.Invoke); err != nil {
+	if err := merged.template.Validate(bc); err != nil {
 		return nil, err
 	}
 

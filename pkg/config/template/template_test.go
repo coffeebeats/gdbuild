@@ -191,7 +191,7 @@ func TestTemplateBuild(t *testing.T) {
 		require.NoError(t, err)
 
 		// When: The 'Template' type is built from 'Templates'.
-		got, err := m.Template.Build(tc.bc)
+		got, err := m.Template.Build(&tc.bc)
 
 		// Then: The error matches expectations.
 		assert.ErrorIs(t, err, tc.err)

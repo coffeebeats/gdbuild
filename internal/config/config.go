@@ -17,9 +17,9 @@ var (
 /*                           Interface: Configurable                          */
 /* -------------------------------------------------------------------------- */
 
-type Configurable interface {
-	Configurer
-	Validator
+type Configurable[T any] interface {
+	Configurer[T]
+	Validator[T]
 	Merger
 }
 
@@ -28,15 +28,15 @@ type Configurable interface {
 // Configurer is a type which can configure itself based on the current
 // invocation. Note that 'Configure' must *not* set default values as this
 // method might be called prior to complete resolution of user inputs.
-type Configurer interface {
-	Configure(c Context) error
+type Configurer[T any] interface {
+	Configure(c T) error
 }
 
 /* -------------------------- Interface: Validator -------------------------- */
 
 // Validator is a type which can validate itself.
-type Validator interface {
-	Validate(c Context) error
+type Validator[T any] interface {
+	Validate(c T) error
 }
 
 /* ---------------------------- Interface: Merger --------------------------- */

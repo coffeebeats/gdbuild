@@ -10,7 +10,6 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
 
-	internalconfig "github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
@@ -156,18 +155,16 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			log.Debugf("using build directory: %s", pathBuild)
 
 			bc := build.Context{
-				Invoke: internalconfig.Context{
-					PathBuild:    osutil.Path(pathBuild),
-					PathManifest: osutil.Path(pathManifest),
-					PathOut:      osutil.Path(pathOut),
-					Verbose:      log.GetLevel() == log.DebugLevel,
-				},
-				Features: features,
-				Platform: pl,
-				Profile:  pr,
+				Features:     features,
+				PathBuild:    osutil.Path(pathBuild),
+				PathManifest: osutil.Path(pathManifest),
+				PathOut:      osutil.Path(pathOut),
+				Platform:     pl,
+				Profile:      pr,
+				Verbose:      log.GetLevel() == log.DebugLevel,
 			}
 
-			t, err := template.Build(m, bc)
+			t, err := template.Build(m, &bc)
 			if err != nil {
 				return err
 			}

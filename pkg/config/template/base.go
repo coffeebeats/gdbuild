@@ -41,7 +41,7 @@ var _ Template = (*Base)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Base) Template(src build.Source, bc build.Context) *build.Template {
+func (c *Base) Template(src build.Source, bc *build.Context) *build.Template {
 	s := c.SCons
 
 	// Append environment-specified arguments.
@@ -74,14 +74,14 @@ func (c *Base) Template(src build.Source, bc build.Context) *build.Template {
 		},
 		ExtraArtifacts: nil,
 		Paths:          nil,
-		Prebuild:       c.Hook.PreActions(bc.Invoke),
-		Postbuild:      c.Hook.PostActions(bc.Invoke),
+		Prebuild:       c.Hook.PreActions(bc),
+		Postbuild:      c.Hook.PostActions(bc),
 	}
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Base) Configure(bc config.Context) error {
+func (c *Base) Configure(bc *build.Context) error {
 	if err := c.PathCustomPy.RelTo(bc.PathManifest); err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (c *Base) Configure(bc config.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Base) Validate(bc config.Context) error {
+func (c *Base) Validate(bc *build.Context) error {
 	for _, m := range c.CustomModules {
 		if err := m.CheckIsDirOrEmpty(); err != nil {
 			return err

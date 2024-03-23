@@ -10,7 +10,6 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
-	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 )
@@ -31,7 +30,7 @@ func Action(t *build.Template, bc *build.Context) (action.Action, error) { //nol
 	actions = append(
 		actions,
 		t.Prebuild,
-		build.NewVendorGodotAction(&t.Builds[0].Source, &bc.Invoke),
+		build.NewVendorGodotAction(&t.Builds[0].Source, bc),
 	)
 
 	for _, b := range t.Builds {
@@ -41,8 +40,8 @@ func Action(t *build.Template, bc *build.Context) (action.Action, error) { //nol
 	actions = append(
 		actions,
 		t.Postbuild,
-		NewVerifyArtifactsAction(&bc.Invoke, t.Artifacts()),
-		NewCopyArtifactsAction(&bc.Invoke, t.Artifacts()),
+		NewVerifyArtifactsAction(bc, t.Artifacts()),
+		NewCopyArtifactsAction(bc, t.Artifacts()),
 	)
 
 	return action.InOrder(actions...), nil
@@ -55,7 +54,7 @@ func Action(t *build.Template, bc *build.Context) (action.Action, error) { //nol
 // NewVerifyArtifactsAction creates an 'action.Action' which verifies that all
 // required artifacts have been generated.
 func NewVerifyArtifactsAction(
-	bc *config.Context,
+	bc *build.Context,
 	artifacts []string,
 ) action.WithDescription[action.Function] {
 	fn := func(_ context.Context) error {
@@ -106,16 +105,16 @@ func NewVerifyArtifactsAction(
 // NewCopyArtifactsAction creates an 'action.Action' which moves the generated
 // Godot artifacts to the output directory.
 func NewCopyArtifactsAction(
-	cc *config.Context,
+	bc *build.Context,
 	artifacts []string,
 ) action.WithDescription[action.Function] {
 	fn := func(ctx context.Context) error {
-		pathOut := cc.PathOut.String()
+		pathOut := bc.PathOut.String()
 		if err := osutil.EnsureDir(pathOut, osutil.ModeUserRWXGroupRX); err != nil {
 			return err
 		}
 
-		pathBin := cc.BinPath()
+		pathBin := bc.BinPath()
 		if err := pathBin.CheckIsDir(); err != nil {
 			return err
 		}
@@ -139,6 +138,6 @@ func NewCopyArtifactsAction(
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "move generated artifacts to output directory: " + cc.PathOut.String(),
+		Description: "move generated artifacts to output directory: " + bc.PathOut.String(),
 	}
 }

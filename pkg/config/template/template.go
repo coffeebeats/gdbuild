@@ -19,9 +19,9 @@ var (
 /* -------------------------------------------------------------------------- */
 
 type Template interface {
-	config.Configurable
+	config.Configurable[*build.Context]
 
-	Template(src build.Source, bc build.Context) *build.Template
+	Template(src build.Source, bc *build.Context) *build.Template
 }
 
 /* -------------------------------------------------------------------------- */
@@ -67,7 +67,7 @@ type Platforms struct {
 
 /* ------------------------------ Method: Build ----------------------------- */
 
-func (t *Templates) Build(bc build.Context) (Template, error) { //nolint:cyclop,ireturn
+func (t *Templates) Build(bc *build.Context) (Template, error) { //nolint:cyclop,ireturn
 	// Base params (root)
 	var out Template = new(Base)
 
@@ -127,7 +127,7 @@ func (t *Templates) Build(bc build.Context) (Template, error) { //nolint:cyclop,
 /* ----------------------- Interface: templateBuilder ----------------------- */
 
 type templateBuilder interface {
-	build(bc build.Context, dst Template) error
+	build(bc *build.Context, dst Template) error
 }
 
 /* -------------------------------------------------------------------------- */
@@ -156,7 +156,7 @@ type LinuxWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*LinuxWithFeaturesAndProfile)(nil)
 
-func (t *LinuxWithFeaturesAndProfile) build(bc build.Context, dst Template) error {
+func (t *LinuxWithFeaturesAndProfile) build(bc *build.Context, dst Template) error {
 	// Root-level params
 	if err := t.Linux.MergeInto(dst); err != nil {
 		return err
@@ -212,7 +212,7 @@ type MacOSWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*MacOSWithFeaturesAndProfile)(nil)
 
-func (t *MacOSWithFeaturesAndProfile) build(bc build.Context, dst Template) error {
+func (t *MacOSWithFeaturesAndProfile) build(bc *build.Context, dst Template) error {
 	// Root-level params
 	if err := t.MacOS.MergeInto(dst); err != nil {
 		return err
@@ -268,7 +268,7 @@ type WindowsWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*WindowsWithFeaturesAndProfile)(nil)
 
-func (t *WindowsWithFeaturesAndProfile) build(bc build.Context, dst Template) error {
+func (t *WindowsWithFeaturesAndProfile) build(bc *build.Context, dst Template) error {
 	// Root-level params
 	if err := t.Windows.MergeInto(dst); err != nil {
 		return err

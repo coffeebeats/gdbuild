@@ -78,8 +78,8 @@ func (b *Build) Filename() string {
 func (b *Build) SConsCommand(c *Context) *action.Process { //nolint:cyclop,funlen
 	var cmd action.Process
 
-	cmd.Directory = c.Invoke.PathBuild.String()
-	cmd.Verbose = c.Invoke.Verbose
+	cmd.Directory = c.PathBuild.String()
+	cmd.Verbose = c.Verbose
 
 	scons := b.SCons
 
@@ -130,7 +130,7 @@ func (b *Build) SConsCommand(c *Context) *action.Process { //nolint:cyclop,funle
 	args = append(args, "warnings=extra", "werror=yes")
 
 	// Handle a verbose flag.
-	if c.Invoke.Verbose {
+	if c.Verbose {
 		args = append(args, "verbose=yes")
 	}
 
