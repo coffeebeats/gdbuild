@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.3 (2024-03-23)
+
+## What's Changed
+* feat(store): add a store package for caching template artifacts by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/44
+* fix(ci): fetch full history to enable correct change detection by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/47
+* refactor: huge refactoring of package layout; improves organization by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/48
+* feat(store): cache built artifacts in the store by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/49
+* chore(ci): add temporary logging by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/55
+* fix(ci): correctly report whether changes were detected by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/57
+* fix(ci): lessen fetch depth; remove test logging by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/58
+* fix(build): correctly pass `platform` argument to SCons by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/50
+* feat(cmd): update `template` to utilize store cache; add `force` options to `template` and `target` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/59
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.1.2...v0.1.3
+
 ## 0.1.2 (2024-03-22)
 
 ## What's Changed
