@@ -39,11 +39,16 @@ func Action(t *build.Template, bc *build.Context) (action.Action, error) { //nol
 		actions = append(actions, b.SConsCommand(bc))
 	}
 
+	cacheArtifacts, err := NewCacheArtifactsAction(bc, t)
+	if err != nil {
+		return nil, err
+	}
+
 	actions = append(
 		actions,
 		t.Postbuild,
 		NewVerifyArtifactsAction(bc, t.Artifacts()),
-		NewCacheArtifactsAction(bc, t),
+		cacheArtifacts,
 		NewCopyArtifactsAction(bc, t.Artifacts()),
 	)
 
@@ -110,7 +115,7 @@ func NewVerifyArtifactsAction(
 func NewCacheArtifactsAction(
 	bc *build.Context,
 	t *build.Template,
-) action.WithDescription[action.Function] {
+) (action.WithDescription[action.Function], error) {
 	fn := func(_ context.Context) error {
 		pathBin := bc.BinPath()
 		if err := pathBin.CheckIsDir(); err != nil {
@@ -140,10 +145,15 @@ func NewCacheArtifactsAction(
 		return archive.Create(files, pathArchive)
 	}
 
+	storePath, err := store.Path()
+	if err != nil {
+		return action.WithDescription[action.Function]{}, err
+	}
+
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "cache generated artifacts in store",
-	}
+		Description: "cache generated artifacts in store: " + storePath,
+	}, nil
 }
 
 /* -------------------------------------------------------------------------- */
