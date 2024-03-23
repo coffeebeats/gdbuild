@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
 const (
@@ -43,7 +43,7 @@ type SCons struct {
 	// build command.
 	LinkFlags []string `hash:"set" toml:"link_flags"`
 	// PathCache is the path to the SCons cache, relative to the manifest.
-	PathCache pathutil.Path `hash:"ignore" toml:"cache_path"` // Ignore; doesn't affect binary.
+	PathCache osutil.Path `hash:"ignore" toml:"cache_path"` // Ignore; doesn't affect binary.
 }
 
 /* ---------------------- Method: CacheSizeLimitFromEnv --------------------- */
@@ -87,15 +87,15 @@ func (c *SCons) ExtraArgsFromEnv() []string {
 /* ------------------------ Method: PathCacheFromEnv ------------------------ */
 
 // PathCacheFromEnv returns a SCons cache path set via environment variable.
-func (c *SCons) PathCacheFromEnv() pathutil.Path {
-	return pathutil.Path(os.Getenv(envSConsCache))
+func (c *SCons) PathCacheFromEnv() osutil.Path {
+	return osutil.Path(os.Getenv(envSConsCache))
 }
 
 /* ---------------------------- config.Configurer --------------------------- */
 
 func (c *SCons) Configure(bc config.Context) error {
 	if p := os.Getenv(envSConsCache); p != "" {
-		c.PathCache = pathutil.Path(p)
+		c.PathCache = osutil.Path(p)
 	}
 
 	if err := c.PathCache.RelTo(bc.PathManifest); err != nil {

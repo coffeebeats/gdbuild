@@ -11,7 +11,6 @@ import (
 	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 )
 
@@ -62,7 +61,7 @@ func Checksum(t *build.Template) (string, error) {
 /* -------------------------- Function: uniquePaths ------------------------- */
 
 // uniquePaths returns the unique list of expanded path dependencies.
-func uniquePaths(t *build.Template) []pathutil.Path {
+func uniquePaths(t *build.Template) []osutil.Path {
 	paths := t.Paths
 
 	for _, b := range t.Builds {

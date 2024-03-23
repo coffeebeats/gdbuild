@@ -12,7 +12,6 @@ import (
 
 	internalconfig "github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/template"
@@ -158,9 +157,9 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			bc := build.Context{
 				Invoke: internalconfig.Context{
-					PathBuild:    pathutil.Path(pathBuild),
-					PathManifest: pathutil.Path(pathManifest),
-					PathOut:      pathutil.Path(pathOut),
+					PathBuild:    osutil.Path(pathBuild),
+					PathManifest: osutil.Path(pathManifest),
+					PathOut:      osutil.Path(pathOut),
 					Verbose:      log.GetLevel() == log.DebugLevel,
 				},
 				Features: features,

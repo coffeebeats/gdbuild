@@ -6,7 +6,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -29,7 +29,7 @@ type Template struct {
 	// Paths is a list of additional files and folders which this template
 	// depends on. Useful for recording dependencies which are defined in
 	// otherwise opaque properties like 'Hook'.
-	Paths []pathutil.Path `hash:"set"`
+	Paths []osutil.Path `hash:"set"`
 
 	// Prebuild contains an ordered list of actions to execute prior to
 	// compilation of the export templates.
@@ -63,7 +63,7 @@ func (t *Template) Artifacts() []string {
 
 // RegisterDependencyPath is a convenience function for registering a 'Path'
 // dependency, but only if it hasn't been added yet.
-func (t *Template) RegisterDependencyPath(path pathutil.Path) {
+func (t *Template) RegisterDependencyPath(path osutil.Path) {
 	if !slices.Contains(t.Paths, path) {
 		t.Paths = append(t.Paths, path)
 	}

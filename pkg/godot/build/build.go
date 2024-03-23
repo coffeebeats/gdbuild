@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
@@ -23,11 +23,11 @@ type Build struct {
 
 	// CustomModules is a list of paths to custom modules to include in the
 	// template build.
-	CustomModules []pathutil.Path `hash:"ignore"` // Ignore; paths are separately hashed.
+	CustomModules []osutil.Path `hash:"ignore"` // Ignore; paths are separately hashed.
 
 	// CustomPy is a path to a 'custom.py' file which defines export template
 	// build options.
-	CustomPy pathutil.Path `hash:"ignore"` // Ignore; path is separately hashed.
+	CustomPy osutil.Path `hash:"ignore"` // Ignore; path is separately hashed.
 
 	// DoublePrecision enables double floating-point precision.
 	DoublePrecision bool

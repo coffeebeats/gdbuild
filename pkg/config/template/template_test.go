@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
@@ -54,7 +54,7 @@ func TestTemplateBuild(t *testing.T) {
 					Arch:         platform.ArchArm64,
 					Env:          map[string]string{"VAR": "123"},
 					Optimize:     build.OptimizeSpeedTrace,
-					PathCustomPy: pathutil.Path("a/b/custom.py"),
+					PathCustomPy: osutil.Path("a/b/custom.py"),
 				},
 			},
 		},
@@ -179,7 +179,7 @@ func TestTemplateBuild(t *testing.T) {
 
 			want: &template.Windows{
 				UseMinGW: pointer(true),
-				PathIcon: pathutil.Path("a/b/icon.ico"),
+				PathIcon: osutil.Path("a/b/icon.ico"),
 				Base:     &template.Base{},
 			},
 		},

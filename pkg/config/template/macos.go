@@ -7,7 +7,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/exec"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
@@ -108,7 +108,7 @@ func (c *MacOS) Template(g build.Source, bc build.Context) *build.Template { //n
 
 		// Construct a list of paths with duplicates removed. This is preferred
 		// over duplicating the code used to decide which paths are dependencies.
-		paths := make([]pathutil.Path, 0, len(templateAmd64.Paths)+len(templateArm64.Paths))
+		paths := make([]osutil.Path, 0, len(templateAmd64.Paths)+len(templateArm64.Paths))
 		paths = append(paths, templateAmd64.Paths...)
 		paths = append(paths, templateArm64.Paths...)
 		slices.Sort(paths)
@@ -193,7 +193,7 @@ type Vulkan struct {
 	Dynamic *bool `toml:"use_volk"`
 
 	// PathSDK is the path to the Vulkan SDK root.
-	PathSDK pathutil.Path `toml:"sdk_path"`
+	PathSDK osutil.Path `toml:"sdk_path"`
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */

@@ -1,4 +1,4 @@
-package pathutil
+package osutil
 
 import (
 	"errors"
@@ -7,12 +7,7 @@ import (
 	"path/filepath"
 )
 
-var (
-	// ErrInvalidInput is returned when a function is provided invalid input.
-	ErrInvalidInput = errors.New("invalid input")
-	// ErrMissingInput is returned when a function is missing required input.
-	ErrMissingInput = errors.New("missing input")
-)
+var ErrMissingInput = errors.New("missing input")
 
 /* -------------------------------------------------------------------------- */
 /*                                 Type: Path                                 */

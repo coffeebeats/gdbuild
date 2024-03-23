@@ -16,7 +16,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
 )
 
 var (
@@ -36,11 +35,11 @@ var (
 // only one of these options can be used at a time, but one *must* be specified.
 type Source struct {
 	// PathSource is a path to a directory containing the Godot source code.
-	PathSource pathutil.Path `hash:"ignore" toml:"src_path"`
+	PathSource osutil.Path `hash:"ignore" toml:"src_path"`
 	// Version is a specific version label to download.
 	Version string `toml:"version"`
 	// VersionFile is a file containing just the a version label to download.
-	VersionFile pathutil.Path `hash:"ignore" toml:"version_file"`
+	VersionFile osutil.Path `hash:"ignore" toml:"version_file"`
 }
 
 /* ----------------------------- Method: IsEmpty ---------------------------- */

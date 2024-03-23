@@ -10,7 +10,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
@@ -26,7 +26,7 @@ type Windows struct {
 	UseMinGW *bool `toml:"use_mingw"`
 
 	// PathIcon is a path to a Windows application icon.
-	PathIcon pathutil.Path `toml:"icon_path"`
+	PathIcon osutil.Path `toml:"icon_path"`
 }
 
 // Compile-time check that 'Template' is implemented.
@@ -127,7 +127,7 @@ func (c *Windows) MergeInto(other any) error {
 // NewCopyImageFileAction creates an 'action.Action' which places the specified
 // icon image into the Godot source code.
 func NewCopyImageFileAction(
-	pathImage pathutil.Path,
+	pathImage osutil.Path,
 	bc *config.Context,
 ) action.WithDescription[action.Function] {
 	pathDst := filepath.Join(bc.PathBuild.String(), "platform/windows/godot.ico")

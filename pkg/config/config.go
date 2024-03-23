@@ -2,8 +2,8 @@ package config
 
 import (
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
-	cfgtemplate "github.com/coffeebeats/gdbuild/pkg/config/template"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 )
 
@@ -23,7 +23,7 @@ type Manifest struct {
 	// Godot contains settings on which Godot version/source code to use.
 	Godot build.Source `toml:"godot"`
 	// Template includes settings for building custom export templates.
-	Template cfgtemplate.Templates `toml:"template"`
+	Template template.Templates `toml:"template"`
 }
 
 /* -------------------------------------------------------------------------- */
@@ -36,5 +36,5 @@ type Config struct {
 	// override rules work the same as within a manifest; any primitive values
 	// will override those defined in the base configuration, while arrays will
 	// be appended to the base configuration's arrays.
-	Extends pathutil.Path `toml:"extends"`
+	Extends osutil.Path `toml:"extends"`
 }

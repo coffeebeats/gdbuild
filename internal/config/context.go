@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -18,19 +18,19 @@ type Context struct {
 	// PathBuild is the directory in which to build the template in. All input
 	// artifacts will be copied here and the SCons build command will be
 	// executed within this directory. Defaults to a temporary directory.
-	PathBuild pathutil.Path
+	PathBuild osutil.Path
 	// PathManifest is the path to the GDBuild manifest. This is used to locate
 	// relative paths in various other properties.
-	PathManifest pathutil.Path
+	PathManifest osutil.Path
 	// PathOut is the directory in which to move built artifacts to.
-	PathOut pathutil.Path
+	PathOut osutil.Path
 }
 
 /* ----------------------------- Method: BinPath ---------------------------- */
 
 // BinPath returns the path to the Godot template artifacts are compilation.
-func (c *Context) BinPath() pathutil.Path {
-	return pathutil.Path(filepath.Join(c.PathBuild.String(), "bin"))
+func (c *Context) BinPath() osutil.Path {
+	return osutil.Path(filepath.Join(c.PathBuild.String(), "bin"))
 }
 
 /* ----------------------------- Impl: Validator ---------------------------- */

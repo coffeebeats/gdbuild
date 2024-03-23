@@ -14,7 +14,6 @@ import (
 	internalconfig "github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/exec"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
@@ -141,7 +140,7 @@ func TestBuildTemplate(t *testing.T) {
 							},
 						},
 						ExtraArtifacts: []string{"godot.macos.template_debug.universal"},
-						Paths:          []pathutil.Path{pathutil.Path(filepath.Join(tmp, "vulkan"))},
+						Paths:          []osutil.Path{osutil.Path(filepath.Join(tmp, "vulkan"))},
 						Prebuild:       nil,
 						Postbuild: &action.Process{
 							Directory: filepath.Join(tmp, "build/bin"),
@@ -229,7 +228,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Nil(t, err)
 
 				// Given: The expected icon path.
-				image := pathutil.Path(filepath.Join(tmp, "icon.ico"))
+				image := osutil.Path(filepath.Join(tmp, "icon.ico"))
 
 				// Then: The template matches expectations.
 
@@ -251,7 +250,7 @@ func TestBuildTemplate(t *testing.T) {
 							},
 						},
 						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
-						Paths:          []pathutil.Path{image},
+						Paths:          []osutil.Path{image},
 					},
 					got,
 				)

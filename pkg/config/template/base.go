@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
@@ -20,7 +20,7 @@ type Base struct {
 	Arch platform.Arch `toml:"arch"`
 	// CustomModules is a list of paths to custom modules to include in the
 	// template build.
-	CustomModules []pathutil.Path `toml:"custom_modules"`
+	CustomModules []osutil.Path `toml:"custom_modules"`
 	// DoublePrecision enables double floating-point precision.
 	DoublePrecision *bool `toml:"double_precision"`
 	// Env is a map of environment variables to set during the build step.
@@ -31,7 +31,7 @@ type Base struct {
 	Optimize build.Optimize `toml:"optimize"`
 	// PathCustomPy is a path to a 'custom.py' file which defines export
 	// template build options.
-	PathCustomPy pathutil.Path `toml:"custom_py_path"`
+	PathCustomPy osutil.Path `toml:"custom_py_path"`
 	// SCons contains build command-related settings.
 	SCons build.SCons `toml:"scons"`
 }

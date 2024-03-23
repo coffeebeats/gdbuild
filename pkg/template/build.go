@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/coffeebeats/gdbuild/internal/pathutil"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
@@ -28,7 +28,7 @@ func Build(m *config.Manifest, bc build.Context) (*build.Template, error) { //no
 	}
 
 	toBuild := []configuration{{context: &bc, manifest: m}}
-	visited := map[pathutil.Path]struct{}{}
+	visited := map[osutil.Path]struct{}{}
 
 	for len(toBuild) > 0 {
 		// Remove the next manifest from the queue.
