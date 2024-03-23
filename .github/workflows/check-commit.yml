@@ -47,6 +47,29 @@ jobs:
           files: |
             **/*.go
 
+  testing:
+    needs: ["changes"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+
+    steps:
+      - name: Log metadata
+        run: |
+          echo "has_change: '${{ needs.changes.outputs.has_change }}'"
+          echo "has_source_change: '${{ needs.changes.outputs.has_source_change }}'"
+
+          echo "needs.changes.outputs.has_source_change == 'true': '${{ needs.changes.outputs.has_source_change == 'true' }}'"
+          echo "needs.changes.outputs.has_change == 'true': '${{ needs.changes.outputs.has_change == 'true' }}'"
+
+          echo "fromJSON(has_change): '${{ fromJson(needs.changes.outputs.has_change) }}'"
+          echo "fromJSON(has_source_change): '${{ fromJson(needs.changes.outputs.has_source_change) }}'"
+
+          echo "fromJSON(has_change) == 'true': '${{ fromJson(needs.changes.outputs.has_change) == 'true' }}'"
+          echo "fromJSON(has_source_change) == 'true': '${{ fromJson(needs.changes.outputs.has_source_change) == 'true' }}'"
+
+          echo "fromJSON(has_change) == true: '${{ fromJson(needs.changes.outputs.has_change) == true }}'"
+          echo "fromJSON(has_source_change) == true: '${{ fromJson(needs.changes.outputs.has_source_change) == true }}'"
+
   format:
     needs: ["changes"]
     if: |
