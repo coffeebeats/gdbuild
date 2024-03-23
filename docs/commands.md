@@ -11,6 +11,7 @@ Compile an export template for the specified Godot platform `PLATFORM`.
 ### Options
 
 - `--dry-run` — log the build command without running it
+- `--force` — build the export template even if it was cached in the store
 - `--print-hash` — log the unique hash of the export template (skips compilation)
 
 - `-c`, `--config <PATH>` — use the `gdbuild` configuration file found at `PATH`
@@ -39,6 +40,7 @@ Compile any required export template(s) and then export the specified `TARGET`.
 ### Options
 
 - `--dry-run` — log the build command without running it
+- `--force` - export the target even if it was cached in the store (does not rebuild the export template)
 
 - `-p`, `--path <PATH>` — use the Godot project found at `PATH`
   - Default value: `$PWD` (current working directory)

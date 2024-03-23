@@ -32,6 +32,10 @@ func NewTarget() *cli.Command { //nolint:funlen
 				Name:  "dry-run",
 				Usage: "log the build command without running it",
 			},
+			&cli.BoolFlag{
+				Name:  "force",
+				Usage: "export the target even if it was cached in the store (does not rebuild the export template)",
+			},
 			&cli.PathFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
