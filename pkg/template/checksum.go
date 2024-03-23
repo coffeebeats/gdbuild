@@ -1,7 +1,7 @@
 package template
 
 import (
-	"hash/crc32"
+	"hash/crc64"
 	"io"
 	"slices"
 	"strconv"
@@ -38,9 +38,9 @@ func Checksum(t *build.Template) (string, error) {
 		return "", err
 	}
 
-	cs := crc32.New(crc32.IEEETable)
+	cs := crc64.New(crc64.MakeTable(crc64.ECMA))
 
-	// Update the 'crc32' hash with the struct hash.
+	// Update the 'crc64' hash with the struct hash.
 	if _, err := io.Copy(cs, strings.NewReader(strconv.FormatUint(hash, 16))); err != nil {
 		return "", err
 	}
@@ -55,7 +55,7 @@ func Checksum(t *build.Template) (string, error) {
 		}
 	}
 
-	return strconv.FormatUint(uint64(cs.Sum32()), 16), nil
+	return strconv.FormatUint(cs.Sum64(), 16), nil
 }
 
 /* -------------------------- Function: uniquePaths ------------------------- */

@@ -19,8 +19,8 @@ var (
 /*                               Function: Build                              */
 /* -------------------------------------------------------------------------- */
 
-// Build creates a `Template` instance which contains an action for
-// compiling Godot based on the specified configuration.
+// Build creates a `Template` instance which contains an action for compiling
+// Godot based on the specified configuration.
 func Build(m *config.Manifest, bc *build.Context) (*build.Template, error) { //nolint:cyclop,funlen
 	var merged struct {
 		source   build.Source
@@ -35,6 +35,7 @@ func Build(m *config.Manifest, bc *build.Context) (*build.Template, error) { //n
 		cfg := toBuild[0]
 		toBuild = toBuild[1:]
 
+		// Copy build context so it can be modified.
 		bc := *cfg.context
 
 		// First, determine whether this manifest extends another one.
