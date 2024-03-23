@@ -29,6 +29,10 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Log info
+        run: |
+          echo ${{ github.event_name }}
+
       - name: Check for any non-source code changes
         id: check-non-source
         uses: tj-actions/changed-files@v43
