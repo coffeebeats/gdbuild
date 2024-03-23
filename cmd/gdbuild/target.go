@@ -96,7 +96,7 @@ func NewTarget() *cli.Command { //nolint:funlen
 
 			// Determine paths for export context.
 
-			pathOut, err := parseWorkDir(c.Path("out"))
+			pathOut, err := parseWorkDir(c.Path("out"), c.Bool("dry-run"))
 			if err != nil {
 				return err
 			}

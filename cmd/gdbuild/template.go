@@ -115,7 +115,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			// Determine paths for build context.
 
-			pathOut, err := parseWorkDir(c.Path("out"))
+			pathOut, err := parseWorkDir(c.Path("out"), c.Bool("dry-run"))
 			if err != nil {
 				return err
 			}
@@ -212,15 +212,17 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 /* ------------------------- Function: parseWorkDir ------------------------- */
 
-func parseWorkDir(path string) (string, error) {
+func parseWorkDir(path string, dryRun bool) (string, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return "", err
 		}
 
-		if err := os.MkdirAll(path, osutil.ModeUserRWXGroupRX); err != nil {
-			return "", err
+		if !dryRun {
+			if err := os.MkdirAll(path, osutil.ModeUserRWXGroupRX); err != nil {
+				return "", err
+			}
 		}
 	}
 
