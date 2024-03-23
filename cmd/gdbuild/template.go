@@ -73,6 +73,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 		},
 
 		Action: func(c *cli.Context) error {
+			// Validate arguments.
 			platformInput := c.Args().First()
 			if platformInput == "" {
 				return UsageError{ctx: c, err: fmt.Errorf("%w: 'platform'", ErrMissingInput)}
@@ -84,6 +85,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 					err: fmt.Errorf("%w: %s", ErrTooManyArguments, strings.Join(c.Args().Slice()[1:], " "))}
 			}
 
+			// Validate flag options.
 			if c.IsSet("release") && c.IsSet("release_debug") {
 				return UsageError{ctx: c, err: ErrTargetUsageProfiles}
 			}
@@ -103,12 +105,36 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				log.SetLevel(log.ErrorLevel)
 			}
 
+			// Determine path to store.
+			storePath, err := touchStore()
+			if err != nil {
+				return err
+			}
+
+			log.Debugf("using store at path: %s", storePath)
+
+			// Determine paths for build context.
+
 			pathOut, err := parseWorkDir(c.Path("out"))
 			if err != nil {
 				return err
 			}
 
 			log.Debugf("placing template artifacts at path: %s", pathOut)
+
+			pathBuild := c.Path("build-dir")
+			if pathBuild == "" {
+				p, err := os.MkdirTemp("", "gdbuild-*")
+				if err != nil {
+					return err
+				}
+
+				defer os.RemoveAll(p)
+
+				pathBuild = p
+			}
+
+			log.Debugf("using build directory: %s", pathBuild)
 
 			// Parse manifest.
 			pathManifest, err := parseManifestPath(c.Path("config"))
@@ -123,7 +149,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			log.Debugf("using manifest at path: %s", pathManifest)
 
-			// Collect build modifiers.
+			// Evaluate build context.
 
 			features := c.StringSlice("feature")
 
@@ -139,20 +165,6 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			}
 
 			log.Infof("platform: %s", pl)
-
-			pathBuild := c.Path("build-dir")
-			if pathBuild == "" {
-				p, err := os.MkdirTemp("", "gdbuild-*")
-				if err != nil {
-					return err
-				}
-
-				defer os.RemoveAll(p)
-
-				pathBuild = p
-			}
-
-			log.Debugf("using build directory: %s", pathBuild)
 
 			bc := build.Context{
 				Features:     features,
