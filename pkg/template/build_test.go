@@ -69,7 +69,7 @@ func TestBuildTemplate(t *testing.T) {
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Source:   build.Source{Version: "4.0.0"},
+								Source:   build.Source{Version: mustParseVersion(t, "4.0.0")},
 								Platform: platform.OSLinux,
 								Profile:  build.ProfileDebug,
 							},
@@ -113,7 +113,7 @@ func TestBuildTemplate(t *testing.T) {
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Source:   build.Source{Version: "4.0.0"},
+								Source:   build.Source{Version: mustParseVersion(t, "4.0.0")},
 								Platform: platform.OSMacOS,
 								Profile:  build.ProfileDebug,
 								SCons: build.SCons{
@@ -125,7 +125,7 @@ func TestBuildTemplate(t *testing.T) {
 							},
 							{
 								Arch:     platform.ArchArm64,
-								Source:   build.Source{Version: "4.0.0"},
+								Source:   build.Source{Version: mustParseVersion(t, "4.0.0")},
 								Platform: platform.OSMacOS,
 								Profile:  build.ProfileDebug,
 								SCons: build.SCons{
@@ -181,7 +181,7 @@ func TestBuildTemplate(t *testing.T) {
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Source:   build.Source{Version: "4.0.0"},
+								Source:   build.Source{Version: mustParseVersion(t, "4.0.0")},
 								Platform: platform.OSWindows,
 								Profile:  build.ProfileDebug,
 							},
@@ -240,7 +240,7 @@ func TestBuildTemplate(t *testing.T) {
 						Builds: []build.Build{
 							{
 								Arch:     platform.ArchAmd64,
-								Source:   build.Source{Version: "4.2.1"},
+								Source:   build.Source{Version: mustParseVersion(t, "4.2.1")},
 								Platform: platform.OSWindows,
 								Profile:  build.ProfileDebug,
 								SCons:    build.SCons{},
@@ -281,6 +281,15 @@ func TestBuildTemplate(t *testing.T) {
 			tc.assert(t, &tc.bc, tmp, got, err)
 		})
 	}
+}
+
+func mustParseVersion(t *testing.T, text string) build.Version {
+	var out build.Version
+
+	err := out.UnmarshalText([]byte(text))
+	require.NoError(t, err)
+
+	return out
 }
 
 func writeFile(t *testing.T, tmp, path string, doc string) {
