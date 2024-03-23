@@ -105,6 +105,10 @@ func Build(m *config.Manifest, bc *build.Context) (*build.Template, error) { //n
 	}
 
 	// Validate 'Template' properties.
+	if err := merged.source.Validate(bc); err != nil {
+		return nil, err
+	}
+
 	if err := merged.template.Validate(bc); err != nil {
 		return nil, err
 	}
