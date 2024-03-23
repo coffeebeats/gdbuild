@@ -10,6 +10,7 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 )
 
+// Add a comment.
 const envStore = "GDBUILD_HOME"
 
 var (
