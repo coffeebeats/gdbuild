@@ -69,6 +69,7 @@ func NewTarget() *cli.Command { //nolint:funlen
 		},
 
 		Action: func(c *cli.Context) error {
+			// Validate arguments.
 			target := c.Args().First()
 			if target == "" {
 				return UsageError{ctx: c, err: fmt.Errorf("%w: target", ErrMissingInput)}
@@ -80,18 +81,28 @@ func NewTarget() *cli.Command { //nolint:funlen
 					err: fmt.Errorf("%w: %s", ErrTooManyArguments, strings.Join(c.Args().Slice()[1:], " "))}
 			}
 
+			// Validate flag options.
 			if c.IsSet("release") && c.IsSet("release_debug") {
 				return UsageError{ctx: c, err: ErrTargetUsageProfiles}
 			}
 
-			pathOut, err := parseWorkDir(c.Path("out"))
+			// Determine path to store.
+			storePath, err := touchStore()
+			if err != nil {
+				return err
+			}
+
+			log.Debugf("using store at path: %s", storePath)
+
+			// Determine paths for export context.
+
+			pathOut, err := parseWorkDir(c.Path("out"), c.Bool("dry-run"))
 			if err != nil {
 				return err
 			}
 
 			log.Debugf("placing template artifacts at path: %s", pathOut)
 
-			// Parse manifest.
 			pathManifest, err := parseManifestPath(c.Path("config"))
 			if err != nil {
 				return err
@@ -104,7 +115,7 @@ func NewTarget() *cli.Command { //nolint:funlen
 
 			log.Debugf("using manifest at path: %s", pathManifest)
 
-			// Collect build modifiers.
+			// Evaluate export context.
 
 			features := c.StringSlice("feature")
 
