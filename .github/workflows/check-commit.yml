@@ -33,7 +33,6 @@ jobs:
         id: check-non-source
         uses: tj-actions/changed-files@v43
         with:
-          since_last_remote_commit: false
           files: |
             .github/actions/**
             .github/workflows/**
@@ -45,7 +44,6 @@ jobs:
         id: check-source
         uses: tj-actions/changed-files@v43
         with:
-          since_last_remote_commit: false
           files: |
             **/*.go
 
