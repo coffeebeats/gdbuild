@@ -1,10 +1,13 @@
-package build
+package osutil
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 )
+
+var ErrMissingInput = errors.New("missing input")
 
 /* -------------------------------------------------------------------------- */
 /*                                 Type: Path                                 */

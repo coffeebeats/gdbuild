@@ -9,7 +9,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -49,7 +49,7 @@ func Parse(bb []byte) (*Manifest, error) {
 
 // Parse parses a 'Manifest' struct from a 'toml' file.
 func ParseFile(path string) (*Manifest, error) {
-	if err := build.Path(path).CheckIsFile(); err != nil {
+	if err := osutil.Path(path).CheckIsFile(); err != nil {
 		return nil, fmt.Errorf(
 			"%w: expected a path to a 'gdbuild.toml' manifest file",
 			config.ErrInvalidInput,

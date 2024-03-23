@@ -3,48 +3,51 @@ package build
 import (
 	"fmt"
 	"path/filepath"
+
+	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 /* -------------------------------------------------------------------------- */
-/*                             Struct: Invocation                             */
+/*                               Struct: Context                              */
 /* -------------------------------------------------------------------------- */
 
-// Invocation are build command inputs that are invocation-specific. These need
+// build.Context are build command inputs that are invocation-specific. These need
 // to be explicitly set per invocation as they can't be parsed from a GDBuild
 // manifest.
-type Invocation struct {
+type Context struct {
 	// Verbose determines whether to enable additional logging output.
 	Verbose bool
 
 	// Features is the list of feature tags to enable.
 	Features []string
 	// Platform is the target platform to build for.
-	Platform OS
+	Platform platform.OS
 	// Profile is the GDBuild optimization level to build with.
 	Profile Profile
 
 	// PathBuild is the directory in which to build the template in. All input
 	// artifacts will be copied here and the SCons build command will be
 	// executed within this directory. Defaults to a temporary directory.
-	PathBuild Path
+	PathBuild osutil.Path
 	// PathManifest is the path to the GDBuild manifest. This is used to locate
 	// relative paths in various other properties.
-	PathManifest Path
+	PathManifest osutil.Path
 	// PathOut is the directory in which to move built artifacts to.
-	PathOut Path
+	PathOut osutil.Path
 }
 
 /* ----------------------------- Method: BinPath ---------------------------- */
 
 // BinPath returns the path to the Godot template artifacts are compilation.
-func (c *Invocation) BinPath() Path {
-	return Path(filepath.Join(c.PathBuild.String(), "bin"))
+func (c *Context) BinPath() osutil.Path {
+	return osutil.Path(filepath.Join(c.PathBuild.String(), "bin"))
 }
 
-/* ----------------------------- Impl: Validater ---------------------------- */
+/* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Invocation) Validate() error {
-	if _, err := ParseOS(c.Platform.String()); err != nil {
+func (c *Context) Validate() error {
+	if _, err := platform.ParseOS(c.Platform.String()); err != nil {
 		return err
 	}
 

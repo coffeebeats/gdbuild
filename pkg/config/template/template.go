@@ -1,27 +1,27 @@
 package template
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
-var ErrInvalidInput = config.ErrInvalidInput
+var (
+	ErrInvalidInput = errors.New("invalid input")
+	ErrMissingInput = errors.New("missing input")
+)
 
 /* -------------------------------------------------------------------------- */
 /*                             Interface: Template                            */
 /* -------------------------------------------------------------------------- */
 
 type Template interface {
-	config.Configurable
-	build.Templater
-}
+	config.Configurable[*build.Context]
 
-/* ----------------------- Interface: templateBuilder ----------------------- */
-
-type templateBuilder interface {
-	build(inv build.Invocation, dst Template) error
+	Template(src build.Source, bc *build.Context) *build.Template
 }
 
 /* -------------------------------------------------------------------------- */
@@ -67,7 +67,7 @@ type Platforms struct {
 
 /* ------------------------------ Method: Build ----------------------------- */
 
-func (t *Templates) Build(inv build.Invocation) (Template, error) { //nolint:cyclop,ireturn
+func (t *Templates) Build(bc *build.Context) (Template, error) { //nolint:cyclop,ireturn
 	// Base params (root)
 	var out Template = new(Base)
 
@@ -77,7 +77,7 @@ func (t *Templates) Build(inv build.Invocation) (Template, error) { //nolint:cyc
 	}
 
 	// Base params (feature-constrained)
-	for _, f := range inv.Features {
+	for _, f := range bc.Features {
 		bwof := t.Feature[f].Base
 		if err := bwof.MergeInto(out); err != nil {
 			return nil, err
@@ -85,43 +85,49 @@ func (t *Templates) Build(inv build.Invocation) (Template, error) { //nolint:cyc
 	}
 
 	// Base params (profile-constrained)
-	b := t.Profile[inv.Profile]
+	b := t.Profile[bc.Profile]
 	if err := b.MergeInto(out); err != nil {
 		return nil, err
 	}
 
 	// Feature-and-profile-constrained params
-	for _, f := range inv.Features {
-		bwof := t.Feature[f].Profile[inv.Profile]
+	for _, f := range bc.Features {
+		bwof := t.Feature[f].Profile[bc.Profile]
 		if err := bwof.MergeInto(out); err != nil {
 			return nil, err
 		}
 	}
 
-	switch p := inv.Platform; p {
-	case build.OSLinux:
+	switch p := bc.Platform; p {
+	case platform.OSLinux:
 		out = &Linux{Base: out.(*Base)} //nolint:exhaustruct,forcetypeassert
 
-		if err := t.Platform.Linux.build(inv, out); err != nil {
+		if err := t.Platform.Linux.build(bc, out); err != nil {
 			return nil, err
 		}
-	case build.OSMacOS:
+	case platform.OSMacOS:
 		out = &MacOS{Base: out.(*Base)} //nolint:exhaustruct,forcetypeassert
 
-		if err := t.Platform.MacOS.build(inv, out); err != nil {
+		if err := t.Platform.MacOS.build(bc, out); err != nil {
 			return nil, err
 		}
-	case build.OSWindows:
+	case platform.OSWindows:
 		out = &Windows{Base: out.(*Base)} //nolint:exhaustruct,forcetypeassert
 
-		if err := t.Platform.Windows.build(inv, out); err != nil {
+		if err := t.Platform.Windows.build(bc, out); err != nil {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("%w: unsupported platform: %s", config.ErrInvalidInput, p)
+		return nil, fmt.Errorf("%w: unsupported platform: %s", ErrInvalidInput, p)
 	}
 
 	return out, nil
+}
+
+/* ----------------------- Interface: templateBuilder ----------------------- */
+
+type templateBuilder interface {
+	build(bc *build.Context, dst Template) error
 }
 
 /* -------------------------------------------------------------------------- */
@@ -150,28 +156,28 @@ type LinuxWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*LinuxWithFeaturesAndProfile)(nil)
 
-func (t *LinuxWithFeaturesAndProfile) build(inv build.Invocation, dst Template) error {
+func (t *LinuxWithFeaturesAndProfile) build(bc *build.Context, dst Template) error {
 	// Root-level params
 	if err := t.Linux.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-constrained params
-	for _, f := range inv.Features {
+	for _, f := range bc.Features {
 		if err := t.Feature[f].Linux.MergeInto(dst); err != nil {
 			return err
 		}
 	}
 
 	// Profile-constrained params
-	l := t.Profile[inv.Profile]
+	l := t.Profile[bc.Profile]
 	if err := l.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-and-profile-constrained params
-	for _, f := range inv.Features {
-		l := t.Feature[f].Profile[inv.Profile]
+	for _, f := range bc.Features {
+		l := t.Feature[f].Profile[bc.Profile]
 		if err := l.MergeInto(dst); err != nil {
 			return err
 		}
@@ -206,28 +212,28 @@ type MacOSWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*MacOSWithFeaturesAndProfile)(nil)
 
-func (t *MacOSWithFeaturesAndProfile) build(inv build.Invocation, dst Template) error {
+func (t *MacOSWithFeaturesAndProfile) build(bc *build.Context, dst Template) error {
 	// Root-level params
 	if err := t.MacOS.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-constrained params
-	for _, f := range inv.Features {
+	for _, f := range bc.Features {
 		if err := t.Feature[f].MacOS.MergeInto(dst); err != nil {
 			return err
 		}
 	}
 
 	// Profile-constrained params
-	l := t.Profile[inv.Profile]
+	l := t.Profile[bc.Profile]
 	if err := l.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-and-profile-constrained params
-	for _, f := range inv.Features {
-		l := t.Feature[f].Profile[inv.Profile]
+	for _, f := range bc.Features {
+		l := t.Feature[f].Profile[bc.Profile]
 		if err := l.MergeInto(dst); err != nil {
 			return err
 		}
@@ -262,28 +268,28 @@ type WindowsWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*WindowsWithFeaturesAndProfile)(nil)
 
-func (t *WindowsWithFeaturesAndProfile) build(inv build.Invocation, dst Template) error {
+func (t *WindowsWithFeaturesAndProfile) build(bc *build.Context, dst Template) error {
 	// Root-level params
 	if err := t.Windows.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-constrained params
-	for _, f := range inv.Features {
+	for _, f := range bc.Features {
 		if err := t.Feature[f].Windows.MergeInto(dst); err != nil {
 			return err
 		}
 	}
 
 	// Profile-constrained params
-	l := t.Profile[inv.Profile]
+	l := t.Profile[bc.Profile]
 	if err := l.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-and-profile-constrained params
-	for _, f := range inv.Features {
-		l := t.Feature[f].Profile[inv.Profile]
+	for _, f := range bc.Features {
+		l := t.Feature[f].Profile[bc.Profile]
 		if err := l.MergeInto(dst); err != nil {
 			return err
 		}

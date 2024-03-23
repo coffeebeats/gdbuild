@@ -6,9 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/config/template"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 func TestTemplateBuild(t *testing.T) {
@@ -16,7 +18,7 @@ func TestTemplateBuild(t *testing.T) {
 		name string
 
 		doc string
-		inv build.Invocation
+		bc  build.Context
 
 		want template.Template
 		err  error
@@ -24,21 +26,21 @@ func TestTemplateBuild(t *testing.T) {
 		{
 			name: "invalid platform returns an error",
 
-			inv: build.Invocation{Platform: build.OSUnknown},
+			bc: build.Context{Platform: platform.OSUnknown},
 
 			err: template.ErrInvalidInput,
 		},
 		{
 			name: "an empty document returns an empty template",
 
-			inv: build.Invocation{Platform: build.OSWindows},
+			bc: build.Context{Platform: platform.OSWindows},
 
 			want: &template.Windows{Base: &template.Base{}},
 		},
 		{
 			name: "base properties are correctly populated",
 
-			inv: build.Invocation{Platform: build.OSWindows},
+			bc: build.Context{Platform: platform.OSWindows},
 			doc: `
 			[template]
 			arch = "arm64"
@@ -49,19 +51,19 @@ func TestTemplateBuild(t *testing.T) {
 
 			want: &template.Windows{
 				Base: &template.Base{
-					Arch:         build.ArchArm64,
+					Arch:         platform.ArchArm64,
 					Env:          map[string]string{"VAR": "123"},
 					Optimize:     build.OptimizeSpeedTrace,
-					PathCustomPy: build.Path("a/b/custom.py"),
+					PathCustomPy: osutil.Path("a/b/custom.py"),
 				},
 			},
 		},
 		{
 			name: "base properties with constraints are correctly populated",
 
-			inv: build.Invocation{
+			bc: build.Context{
 				Features: []string{"test"},
-				Platform: build.OSWindows,
+				Platform: platform.OSWindows,
 				Profile:  build.ProfileReleaseDebug,
 			},
 			doc: `
@@ -77,7 +79,7 @@ func TestTemplateBuild(t *testing.T) {
 
 			want: &template.Windows{
 				Base: &template.Base{
-					Arch:     build.ArchArm64,
+					Arch:     platform.ArchArm64,
 					Env:      map[string]string{"VAR": "123"},
 					Optimize: build.OptimizeSpeedTrace,
 				},
@@ -86,9 +88,9 @@ func TestTemplateBuild(t *testing.T) {
 		{
 			name: "base properties in platform constraints are correctly populated",
 
-			inv: build.Invocation{
+			bc: build.Context{
 				Features: []string{"test"},
-				Platform: build.OSWindows,
+				Platform: platform.OSWindows,
 				Profile:  build.ProfileReleaseDebug,
 			},
 			doc: `
@@ -104,7 +106,7 @@ func TestTemplateBuild(t *testing.T) {
 
 			want: &template.Windows{
 				Base: &template.Base{
-					Arch:     build.ArchArm64,
+					Arch:     platform.ArchArm64,
 					Env:      map[string]string{"VAR": "123"},
 					Optimize: build.OptimizeSpeedTrace,
 				},
@@ -113,7 +115,7 @@ func TestTemplateBuild(t *testing.T) {
 		{
 			name: "windows-specific properties are correctly populated",
 
-			inv: build.Invocation{Platform: build.OSWindows},
+			bc:  build.Context{Platform: platform.OSWindows},
 			doc: "[template.platform.windows]\nuse_mingw = true",
 
 			want: &template.Windows{
@@ -124,8 +126,8 @@ func TestTemplateBuild(t *testing.T) {
 		{
 			name: "linux-specific properties with constraints are correctly populated",
 
-			inv: build.Invocation{
-				Platform: build.OSLinux,
+			bc: build.Context{
+				Platform: platform.OSLinux,
 				Profile:  build.ProfileRelease,
 			},
 			doc: `[template.platform.linux.profile.release]
@@ -139,9 +141,9 @@ func TestTemplateBuild(t *testing.T) {
 		{
 			name: "macos-specific properties with constraints are correctly populated",
 
-			inv: build.Invocation{
+			bc: build.Context{
 				Features: []string{"test"},
-				Platform: build.OSMacOS,
+				Platform: platform.OSMacOS,
 				Profile:  build.ProfileRelease,
 			},
 			doc: `
@@ -164,9 +166,9 @@ func TestTemplateBuild(t *testing.T) {
 		{
 			name: "windows-specific properties with constraints are correctly populated",
 
-			inv: build.Invocation{
+			bc: build.Context{
 				Features: []string{"test"},
-				Platform: build.OSWindows,
+				Platform: platform.OSWindows,
 				Profile:  build.ProfileRelease,
 			},
 			doc: `[template.platform.windows.profile.release]
@@ -177,7 +179,7 @@ func TestTemplateBuild(t *testing.T) {
 
 			want: &template.Windows{
 				UseMinGW: pointer(true),
-				PathIcon: build.Path("a/b/icon.ico"),
+				PathIcon: osutil.Path("a/b/icon.ico"),
 				Base:     &template.Base{},
 			},
 		},
@@ -189,7 +191,7 @@ func TestTemplateBuild(t *testing.T) {
 		require.NoError(t, err)
 
 		// When: The 'Template' type is built from 'Templates'.
-		got, err := m.Template.Build(tc.inv)
+		got, err := m.Template.Build(&tc.bc)
 
 		// Then: The error matches expectations.
 		assert.ErrorIs(t, err, tc.err)

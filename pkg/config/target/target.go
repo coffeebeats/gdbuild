@@ -1,6 +1,6 @@
 package target
 
-import "github.com/coffeebeats/gdbuild/pkg/build"
+import "github.com/coffeebeats/gdbuild/pkg/godot/build"
 
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Base                                */

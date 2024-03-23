@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 )
 
 const (
@@ -48,7 +48,7 @@ func Clear(storePath string) error {
 /* -------------------------------------------------------------------------- */
 
 // Return whether the store has the specified version cached.
-func Has(storePath string, t build.Template) (bool, error) {
+func Has(storePath string, t *build.Template) (bool, error) {
 	if storePath == "" {
 		return false, ErrMissingStore
 	}
@@ -75,7 +75,7 @@ func Has(storePath string, t build.Template) (bool, error) {
 /* -------------------------------------------------------------------------- */
 
 // Removes the specified version from the store.
-func Remove(storePath string, t build.Template) error {
+func Remove(storePath string, t *build.Template) error {
 	if storePath == "" {
 		return ErrMissingStore
 	}

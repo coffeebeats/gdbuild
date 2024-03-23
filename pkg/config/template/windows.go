@@ -10,7 +10,9 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/build"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -24,25 +26,25 @@ type Windows struct {
 	UseMinGW *bool `toml:"use_mingw"`
 
 	// PathIcon is a path to a Windows application icon.
-	PathIcon build.Path `toml:"icon_path"`
+	PathIcon osutil.Path `toml:"icon_path"`
 }
 
 // Compile-time check that 'Template' is implemented.
 var _ Template = (*Windows)(nil)
 
-/* -------------------------- Impl: build.Templater ------------------------- */
+/* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template {
-	t := c.Base.ToTemplate(g, inv)
+func (c *Windows) Template(g build.Source, bc *build.Context) *build.Template {
+	t := c.Base.Template(g, bc)
 
-	t.Binaries[0].Platform = build.OSWindows
+	t.Builds[0].Platform = platform.OSWindows
 
-	if c.Base.Arch == build.ArchUnknown {
-		t.Binaries[0].Arch = build.ArchAmd64
+	if c.Base.Arch == platform.ArchUnknown {
+		t.Builds[0].Arch = platform.ArchAmd64
 	}
 
-	scons := &t.Binaries[0].SCons
-	if inv.Profile.IsRelease() {
+	scons := &t.Builds[0].SCons
+	if bc.Profile.IsRelease() {
 		scons.ExtraArgs = append(scons.ExtraArgs, "lto=full")
 	}
 
@@ -51,16 +53,16 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 	}
 
 	if c.PathIcon != "" {
-		t.AddToPaths(c.PathIcon)
+		t.RegisterDependencyPath(c.PathIcon)
 
 		// Copy the icon file to the correct location.
-		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, &inv))
+		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, bc))
 	}
 
 	// Register the additional console artifact.
 	t.ExtraArtifacts = append(
 		t.ExtraArtifacts,
-		strings.TrimSuffix(t.Binaries[0].Filename(), ".exe")+".console.exe",
+		strings.TrimSuffix(t.Builds[0].Filename(), ".exe")+".console.exe",
 	)
 
 	return t
@@ -68,12 +70,12 @@ func (c *Windows) ToTemplate(g build.Godot, inv build.Invocation) build.Template
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Windows) Configure(inv build.Invocation) error {
-	if err := c.Base.Configure(inv); err != nil {
+func (c *Windows) Configure(bc *build.Context) error {
+	if err := c.Base.Configure(bc); err != nil {
 		return err
 	}
 
-	if err := c.PathIcon.RelTo(inv.PathManifest); err != nil {
+	if err := c.PathIcon.RelTo(bc.PathManifest); err != nil {
 		return err
 	}
 
@@ -82,12 +84,12 @@ func (c *Windows) Configure(inv build.Invocation) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Windows) Validate(inv build.Invocation) error {
-	if err := c.Base.Validate(inv); err != nil {
+func (c *Windows) Validate(bc *build.Context) error {
+	if err := c.Base.Validate(bc); err != nil {
 		return err
 	}
 
-	if !c.Base.Arch.IsOneOf(build.ArchAmd64, build.ArchI386, build.ArchUnknown) {
+	if !c.Base.Arch.IsOneOf(platform.ArchAmd64, platform.ArchI386, platform.ArchUnknown) {
 		return fmt.Errorf("%w: unsupport architecture: %s", config.ErrInvalidInput, c.Base.Arch)
 	}
 
@@ -125,10 +127,10 @@ func (c *Windows) MergeInto(other any) error {
 // NewCopyImageFileAction creates an 'action.Action' which places the specified
 // icon image into the Godot source code.
 func NewCopyImageFileAction(
-	pathImage build.Path,
-	inv *build.Invocation,
+	pathImage osutil.Path,
+	bc *build.Context,
 ) action.WithDescription[action.Function] {
-	pathDst := filepath.Join(inv.PathBuild.String(), "platform/windows/godot.ico")
+	pathDst := filepath.Join(bc.PathBuild.String(), "platform/windows/godot.ico")
 
 	fn := func(_ context.Context) error {
 		dst, err := os.Create(pathDst)

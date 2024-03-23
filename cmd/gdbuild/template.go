@@ -11,8 +11,9 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/build"
 	"github.com/coffeebeats/gdbuild/pkg/config"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 var ErrPrintHashUsage = errors.New("cannot set option with '--print-hash'")
@@ -153,22 +154,22 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			log.Debugf("using build directory: %s", pathBuild)
 
-			inv := build.Invocation{
-				Verbose:      log.GetLevel() == log.DebugLevel,
+			bc := build.Context{
 				Features:     features,
-				PathBuild:    build.Path(pathBuild),
-				PathOut:      build.Path(pathOut),
-				PathManifest: build.Path(pathManifest),
+				PathBuild:    osutil.Path(pathBuild),
+				PathManifest: osutil.Path(pathManifest),
+				PathOut:      osutil.Path(pathOut),
 				Platform:     pl,
 				Profile:      pr,
+				Verbose:      log.GetLevel() == log.DebugLevel,
 			}
 
-			t, err := m.BuildTemplate(inv)
+			t, err := template.Build(m, &bc)
 			if err != nil {
 				return err
 			}
 
-			cs, err := t.Checksum()
+			cs, err := template.Checksum(t)
 			if err != nil {
 				return err
 			}
@@ -179,7 +180,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return nil
 			}
 
-			action, err := build.Compile(&t, &inv)
+			action, err := template.Action(t, &bc)
 			if err != nil {
 				return err
 			}
