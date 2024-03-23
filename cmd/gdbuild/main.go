@@ -12,6 +12,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
+
+	"github.com/coffeebeats/gdbuild/pkg/store"
 )
 
 const (
@@ -180,34 +182,6 @@ func newStyleWithColor(name string, ansiColor int) lipgloss.Style {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                          Function: versionPrinter                          */
-/* -------------------------------------------------------------------------- */
-
-// versionPrinter prints a 'gdbuild' version string to the terminal.
-func versionPrinter(cCtx *cli.Context) {
-	log.Printf("gdbuild %s", cCtx.App.Version)
-}
-
-/* -------------------------------------------------------------------------- */
-/*                         Function: parseManifestPath                        */
-/* -------------------------------------------------------------------------- */
-
-func parseManifestPath(path string) (string, error) {
-	path = filepath.Clean(path)
-
-	info, err := os.Stat(path)
-	if err != nil {
-		return "", fmt.Errorf("%w: %s: %w", ErrInvalidManifestPath, path, err)
-	}
-
-	if info.IsDir() {
-		return "", fmt.Errorf("%w: %s", ErrInvalidManifestPath, path)
-	}
-
-	return path, nil
-}
-
-/* -------------------------------------------------------------------------- */
 /*                          Function: newVerboseFlag                          */
 /* -------------------------------------------------------------------------- */
 
@@ -232,4 +206,52 @@ func newVerboseFlag() *cli.BoolFlag {
 			return nil
 		},
 	}
+}
+
+/* -------------------------------------------------------------------------- */
+/*                         Function: parseManifestPath                        */
+/* -------------------------------------------------------------------------- */
+
+func parseManifestPath(path string) (string, error) {
+	path = filepath.Clean(path)
+
+	info, err := os.Stat(path)
+	if err != nil {
+		return "", fmt.Errorf("%w: %s: %w", ErrInvalidManifestPath, path, err)
+	}
+
+	if info.IsDir() {
+		return "", fmt.Errorf("%w: %s", ErrInvalidManifestPath, path)
+	}
+
+	return path, nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                            Function: touchStore                            */
+/* -------------------------------------------------------------------------- */
+
+// touchStore determines the store path and ensures it has the expected layout.
+func touchStore() (string, error) {
+	// Determine the store path.
+	storePath, err := store.Path()
+	if err != nil {
+		return "", err
+	}
+
+	// Ensure the store exists.
+	if err := store.Touch(storePath); err != nil {
+		return "", err
+	}
+
+	return storePath, nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Function: versionPrinter                          */
+/* -------------------------------------------------------------------------- */
+
+// versionPrinter prints a 'gdbuild' version string to the terminal.
+func versionPrinter(cCtx *cli.Context) {
+	log.Printf("gdbuild %s", cCtx.App.Version)
 }
