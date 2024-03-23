@@ -10,8 +10,10 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
+	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/store"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -41,6 +43,7 @@ func Action(t *build.Template, bc *build.Context) (action.Action, error) { //nol
 		actions,
 		t.Postbuild,
 		NewVerifyArtifactsAction(bc, t.Artifacts()),
+		NewCacheArtifactsAction(bc, t),
 		NewCopyArtifactsAction(bc, t.Artifacts()),
 	)
 
@@ -95,6 +98,51 @@ func NewVerifyArtifactsAction(
 	return action.WithDescription[action.Function]{
 		Action:      fn,
 		Description: "validate generated artifacts: " + strings.Join(artifacts, ", "),
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+/*                      Function: NewCacheArtifactsAction                     */
+/* -------------------------------------------------------------------------- */
+
+// NewCacheArtifactsAction creates an 'action.Action' which caches the generated
+// Godot artifacts in the 'gdbuild' store.
+func NewCacheArtifactsAction(
+	bc *build.Context,
+	t *build.Template,
+) action.WithDescription[action.Function] {
+	fn := func(_ context.Context) error {
+		pathBin := bc.BinPath()
+		if err := pathBin.CheckIsDir(); err != nil {
+			return err
+		}
+
+		pathStore, err := store.Path()
+		if err != nil {
+			return err
+		}
+
+		var files []string
+
+		for _, a := range t.Artifacts() {
+			pathArtifact := filepath.Join(pathBin.String(), a)
+
+			log.Debugf("caching artifact in store: %s", a)
+
+			files = append(files, pathArtifact)
+		}
+
+		pathArchive, err := store.TemplateArchive(pathStore, t)
+		if err != nil {
+			return err
+		}
+
+		return archive.Create(files, pathArchive)
+	}
+
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "cache generated artifacts in store",
 	}
 }
 

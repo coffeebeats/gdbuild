@@ -8,7 +8,6 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
-	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 /* -------------------------- Test: TemplateArchive ------------------------- */
@@ -39,7 +38,7 @@ func TestTemplateArchive(t *testing.T) {
 			store: storeName,
 
 			want: func() string {
-				cs, err := template.Checksum(&build.Template{})
+				cs, err := (&build.Template{}).Checksum()
 				assert.NoError(t, err)
 
 				return filepath.Join(

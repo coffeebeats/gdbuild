@@ -8,7 +8,6 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
-	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
 const envStore = "GDBUILD_HOME"
@@ -31,7 +30,7 @@ func TemplateArchive(storePath string, t *build.Template) (string, error) {
 		return "", ErrMissingStore
 	}
 
-	cs, err := template.Checksum(t)
+	cs, err := t.Checksum()
 	if err != nil {
 		return "", err
 	}
