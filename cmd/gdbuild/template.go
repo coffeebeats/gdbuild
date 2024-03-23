@@ -10,9 +10,11 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
 
+	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/store"
 	"github.com/coffeebeats/gdbuild/pkg/template"
 )
 
@@ -33,6 +35,10 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			&cli.BoolFlag{
 				Name:  "dry-run",
 				Usage: "log the build command without running it",
+			},
+			&cli.BoolFlag{
+				Name:  "force",
+				Usage: "build the export template even if it was cached in the store",
 			},
 			&cli.BoolFlag{
 				Name:  "print-hash",
@@ -181,16 +187,38 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
-			cs, err := t.Checksum()
-			if err != nil {
-				return err
-			}
-
 			if c.Bool("print-hash") {
+				cs, err := t.Checksum()
+				if err != nil {
+					return err
+				}
+
 				log.Print(cs)
 
 				return nil
 			}
+
+			// Try returning a cached template first.
+
+			hasTemplate, err := store.Has(storePath, t)
+			if err != nil {
+				return err
+			}
+
+			if hasTemplate && !c.Bool("force") {
+				log.Info("found template in cache; skipping build.")
+
+				pathArchive, err := store.TemplateArchive(storePath, t)
+				if err != nil {
+					return err
+				}
+
+				log.Debugf("extracting cached template: %s", pathArchive)
+
+				return archive.Extract(c.Context, pathArchive, pathOut)
+			}
+
+			// Template was not cached; execute build action.
 
 			action, err := template.Action(t, &bc)
 			if err != nil {
@@ -199,8 +227,6 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			if c.Bool("dry-run") {
 				log.Print(action.Sprint())
-
-				log.Debug("template hash: " + cs)
 
 				return nil
 			}
