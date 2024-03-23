@@ -169,7 +169,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
-			cs, err := template.Checksum(t)
+			cs, err := t.Checksum()
 			if err != nil {
 				return err
 			}
