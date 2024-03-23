@@ -117,7 +117,7 @@ func (b *Build) SConsCommand(c *Context) *action.Process { //nolint:cyclop,funle
 	args = append(args, "-j"+strconv.Itoa(runtime.NumCPU()))
 
 	// Specify the 'platform' argument.
-	args = append(args, b.Platform.String())
+	args = append(args, "platform="+b.Platform.String())
 
 	// Add the achitecture setting (note that this requires the 'platform.Arch'
 	// values to match what SCons expects).
