@@ -12,9 +12,9 @@ import (
 /*                               Struct: Context                              */
 /* -------------------------------------------------------------------------- */
 
-// build.Context are build command inputs that are invocation-specific. These need
-// to be explicitly set per invocation as they can't be parsed from a GDBuild
-// manifest.
+// Context contains build command inputs that are invocation-specific. These
+// need to be explicitly set per invocation as they can't be parsed from a
+// GDBuild manifest.
 type Context struct {
 	// Verbose determines whether to enable additional logging output.
 	Verbose bool

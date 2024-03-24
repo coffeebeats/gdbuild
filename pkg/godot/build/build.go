@@ -1,6 +1,7 @@
 package build
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -13,6 +14,12 @@ import (
 )
 
 const envEncryptionKey = "SCRIPT_AES256_ENCRYPTION_KEY"
+
+var (
+	ErrConflictingValue = errors.New("conflicting setting")
+	ErrInvalidInput     = errors.New("invalid input")
+	ErrMissingInput     = errors.New("missing input")
+)
 
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Build                               */
