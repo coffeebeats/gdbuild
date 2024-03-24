@@ -59,3 +59,16 @@ Compile any required export template(s) and then export the specified `TARGET`.
   - Example values (assuming they are present in GDBuild manifest):
     - `client` (define under `target.client` heading)
     - `dlc` (define under `target.dlc` heading; no export template required)
+
+## **gdbuild `init`**
+
+Initialize a Godot project with a GDBuild manifest.
+
+### Usage
+
+`gdbuild init [OPTIONS]`
+
+### Options
+
+- `-p`, `--path <PATH>` — use the Godot project found at `PATH`
+  - Default value: `$PWD` (current working directory)
