@@ -28,7 +28,7 @@ type Template interface {
 /*                              Struct: Templates                             */
 /* -------------------------------------------------------------------------- */
 
-// Template defines the parameters for building a Godot export template for a
+// Templates defines the parameters for building a Godot export template for a
 // specified platform. A 'Template' definition can be customized based on
 // 'feature', 'platform', and 'profile' labels used in the property names. Note
 // that each specifier label can only be used once per property name (i.e.

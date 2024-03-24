@@ -1,88 +1,300 @@
 package target
 
-import "github.com/coffeebeats/gdbuild/pkg/godot/build"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/coffeebeats/gdbuild/internal/config"
+	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+)
+
+var (
+	ErrInvalidInput = errors.New("invalid input")
+	ErrMissingInput = errors.New("missing input")
+)
 
 /* -------------------------------------------------------------------------- */
-/*                                Struct: Base                                */
+/*                             Interface: Exporter                            */
 /* -------------------------------------------------------------------------- */
 
-// Base specifies a single, platform-agnostic exportable artifact within the
-// Godot project.
-type Base struct {
-	// Name is the display name of the target. Not used by Godot.
-	Name string
+type Exporter interface {
+	config.Configurable[*build.Context]
 
-	// DefaultFeatures contains the slice of Godot project feature tags to build
-	// with.
-	DefaultFeatures []string `toml:"default_features"`
-	// Hook defines commands to be run before or after the target artifact is
-	// generated.
-	Hook build.Hook `toml:"hook"`
-	// Options are 'export_presets.cfg' overrides, specifically the preset
-	// 'options' table, for the exported artifact.
-	Options map[string]any `toml:"options"`
-	// PackFiles defines the game files exported as part of this artifact.
-	PackFiles []PackFile `toml:"pack_files"`
-	// Runnable is whether the export artifact should be executable. This should
-	// be true for client and server targets and false for artifacts like DLC.
-	Runnable *bool `toml:"runnable"`
-	// Server configures the target as a server-only executable, enabling some
-	// optimizations like disabling graphics.
-	Server *bool `toml:"server"`
+	Export(src build.Source, bc *build.Context) *export.Export
 }
 
 /* -------------------------------------------------------------------------- */
-/*                              Struct: PackFile                              */
+/*                               Struct: Targets                              */
 /* -------------------------------------------------------------------------- */
 
-// PackFile defines instructions for assembling one or more '.pck' files
-// containing exported game files.
-type PackFile struct {
-	// Embed defines whether the associated '.pck' file should be embedded in
-	// the binary. If true, then the target this 'PackFile' is associated with
-	// must be runnable.
-	Embed *bool `toml:"embed"`
-	// Encrypt determines whether or not to encrypt the game files contained in
-	// the resulting '.pck' files.
-	Encrypt *bool `toml:"encrypt"`
-	// Glob is a slice of glob expressions to match game files against. These
-	// will be evaluated from the directory containing the GDBuild manifest.
-	Glob []string `toml:"glob"`
-	// PackFilePartition is a ruleset for how to split the files matched by
-	// 'glob' into one or more '.pck' files.
-	Partition PackFilePartition `toml:"partition"`
-	// Zip defines whether to compress the matching game files. The pack files
-	// will use the '.zip' extension instead of '.pck'.
-	Zip *bool `toml:"zip"`
-}
-
-/* ------------------------ Struct: PackFilePartition ----------------------- */
-
-// PackFilePartition describes how to automatically partition a collection of
-// files into multiple '.pck' files.
+// Targets defines the parameters for exporting a game binary or pack file for
+// a specified platform. A 'Target' definition can be customized  based on
+// 'feature', 'platform', and 'profile' labels used in the property names. Note
+// that each specifier label can only be used once per property name (i.e.
+// 'target.profile.release.profile.debug' is not allowed). Additionally, the
+// order of specifiers is strict: 'platform' < 'feature' < 'profile'.
 //
-// NOTE: This struct contains multiple different expressions of limits, multiple
-// of which may be true at a time. If any of the contained rules would trigger a
-// new '.pck' to be formed within a partition, then that rule will be respected.
-type PackFilePartition struct {
-	// Depth is the maximum folder depth from the project directory containing
-	// the GDBuild manifest to split files between. Any folders past this depth
-	// limit will all be included within the same '.pck' file.
-	Depth uint `toml:"depth"`
-	// Limit describes limits on the files within individual '.pck' files in the
-	// partition.
-	Limit PackFilePartitionLimit `toml:"limit"`
+// For example, the following are all valid table names:
+//
+//	[target]
+//	[target.profile.release]
+//	[target.platform.macos.feature.client]
+//	[target.platform.linux.feature.server.profile.release_debug]
+type Targets struct {
+	*Base
+
+	Platform Platforms                     `toml:"platform"`
+	Feature  map[string]BaseWithoutFeature `toml:"feature"`
+	Profile  map[build.Profile]Base        `toml:"profile"`
 }
 
-/* --------------------- Struct: PackFilePartitionLimit --------------------- */
+/* ----------------------- Struct: BaseWithoutFeature ----------------------- */
 
-// PackFilePartitionLimit describes limits used to determine when a new '.pck'
-// file within a partition should be started.
-type PackFilePartitionLimit struct {
-	// Size is a human-readable file size limit that all '.pck' files within the
-	// partition must adhere to.
-	Size string `toml:"size"`
-	// Files is the maximum count of files within a single '.pck' file within a
-	// partition.
-	Files uint `toml:"files"`
+type BaseWithoutFeature struct {
+	*Base
+
+	Profile map[build.Profile]Base `toml:"profile"`
+}
+
+/* ---------------------------- Struct: Platforms --------------------------- */
+
+type Platforms struct {
+	Linux   LinuxWithFeaturesAndProfile   `toml:"linux"`
+	MacOS   MacOSWithFeaturesAndProfile   `toml:"macos"`
+	Windows WindowsWithFeaturesAndProfile `toml:"windows"`
+}
+
+/* ------------------------------ Method: Build ----------------------------- */
+
+func (t *Targets) Build(bc *build.Context) (Exporter, error) { //nolint:cyclop,ireturn
+	// Target params (root)
+	var out Exporter = new(Base)
+
+	// Target params (root)
+	if err := t.Base.MergeInto(out); err != nil {
+		return nil, err
+	}
+
+	// Target params (feature-constrained)
+	for _, f := range bc.Features {
+		bwof := t.Feature[f].Base
+		if err := bwof.MergeInto(out); err != nil {
+			return nil, err
+		}
+	}
+
+	// Target params (profile-constrained)
+	b := t.Profile[bc.Profile]
+	if err := b.MergeInto(out); err != nil {
+		return nil, err
+	}
+
+	// Feature-and-profile-constrained params
+	for _, f := range bc.Features {
+		bwof := t.Feature[f].Profile[bc.Profile]
+		if err := bwof.MergeInto(out); err != nil {
+			return nil, err
+		}
+	}
+
+	switch p := bc.Platform; p {
+	case platform.OSLinux:
+		out = &Linux{Base: out.(*Base)} //nolint:forcetypeassert
+
+		if err := t.Platform.Linux.build(bc, out); err != nil {
+			return nil, err
+		}
+	case platform.OSMacOS:
+		out = &MacOS{Base: out.(*Base)} //nolint:forcetypeassert
+
+		if err := t.Platform.MacOS.build(bc, out); err != nil {
+			return nil, err
+		}
+	case platform.OSWindows:
+		out = &Windows{Base: out.(*Base)} //nolint:forcetypeassert
+
+		if err := t.Platform.Windows.build(bc, out); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("%w: unsupported platform: %s", ErrInvalidInput, p)
+	}
+
+	return out, nil
+}
+
+/* ----------------------- Interface: templateBuilder ----------------------- */
+
+type templateBuilder interface {
+	build(bc *build.Context, dst Exporter) error
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               Platform: Linux                              */
+/* -------------------------------------------------------------------------- */
+
+/* ------------------ Struct: LinuxWithFeaturesAndProfile ----------------- */
+
+type LinuxWithFeaturesAndProfile struct {
+	*Linux
+
+	Feature map[string]LinuxWithProfile `toml:"feature"`
+	Profile map[build.Profile]Linux     `toml:"profile"`
+}
+
+/* ----------------------- Struct: LinuxWithProfile ----------------------- */
+
+type LinuxWithProfile struct {
+	*Linux
+
+	Profile map[build.Profile]Linux `toml:"profile"`
+}
+
+/* -------------------------- Impl: templateBuilder ------------------------- */
+
+// Compile-time check that 'Builder' is implemented.
+var _ templateBuilder = (*LinuxWithFeaturesAndProfile)(nil)
+
+func (t *LinuxWithFeaturesAndProfile) build(bc *build.Context, dst Exporter) error {
+	// Root-level params
+	if err := t.Linux.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-constrained params
+	for _, f := range bc.Features {
+		if err := t.Feature[f].Linux.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	// Profile-constrained params
+	l := t.Profile[bc.Profile]
+	if err := l.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-and-profile-constrained params
+	for _, f := range bc.Features {
+		l := t.Feature[f].Profile[bc.Profile]
+		if err := l.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               Platform: MacOS                              */
+/* -------------------------------------------------------------------------- */
+
+/* ------------------ Struct: MacOSWithFeaturesAndProfile ----------------- */
+
+type MacOSWithFeaturesAndProfile struct {
+	*MacOS
+
+	Feature map[string]MacOSWithProfile `toml:"feature"`
+	Profile map[build.Profile]MacOS     `toml:"profile"`
+}
+
+/* ----------------------- Struct: MacOSWithProfile ----------------------- */
+
+type MacOSWithProfile struct {
+	*MacOS
+
+	Profile map[build.Profile]MacOS `toml:"profile"`
+}
+
+/* -------------------------- Impl: templateBuilder ------------------------- */
+
+// Compile-time check that 'Builder' is implemented.
+var _ templateBuilder = (*MacOSWithFeaturesAndProfile)(nil)
+
+func (t *MacOSWithFeaturesAndProfile) build(bc *build.Context, dst Exporter) error {
+	// Root-level params
+	if err := t.MacOS.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-constrained params
+	for _, f := range bc.Features {
+		if err := t.Feature[f].MacOS.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	// Profile-constrained params
+	l := t.Profile[bc.Profile]
+	if err := l.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-and-profile-constrained params
+	for _, f := range bc.Features {
+		l := t.Feature[f].Profile[bc.Profile]
+		if err := l.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              Platform: Windows                             */
+/* -------------------------------------------------------------------------- */
+
+/* ------------------ Struct: WindowsWithFeaturesAndProfile ----------------- */
+
+type WindowsWithFeaturesAndProfile struct {
+	*Windows
+
+	Feature map[string]WindowsWithProfile `toml:"feature"`
+	Profile map[build.Profile]Windows     `toml:"profile"`
+}
+
+/* ----------------------- Struct: WindowsWithProfile ----------------------- */
+
+type WindowsWithProfile struct {
+	*Windows
+
+	Profile map[build.Profile]Windows `toml:"profile"`
+}
+
+/* -------------------------- Impl: templateBuilder ------------------------- */
+
+// Compile-time check that 'Builder' is implemented.
+var _ templateBuilder = (*WindowsWithFeaturesAndProfile)(nil)
+
+func (t *WindowsWithFeaturesAndProfile) build(bc *build.Context, dst Exporter) error {
+	// Root-level params
+	if err := t.Windows.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-constrained params
+	for _, f := range bc.Features {
+		if err := t.Feature[f].Windows.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	// Profile-constrained params
+	l := t.Profile[bc.Profile]
+	if err := l.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-and-profile-constrained params
+	for _, f := range bc.Features {
+		l := t.Feature[f].Profile[bc.Profile]
+		if err := l.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

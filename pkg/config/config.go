@@ -12,6 +12,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/config/target"
 	"github.com/coffeebeats/gdbuild/pkg/config/template"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 )
@@ -31,6 +32,8 @@ type Manifest struct {
 	Config Config `toml:"config"`
 	// Godot contains settings on which Godot version/source code to use.
 	Godot build.Source `toml:"godot"`
+	// Target includes settings for exporting Godot game executables and packs.
+	Target map[string]target.Targets `toml:"target"`
 	// Template includes settings for building custom export templates.
 	Template template.Templates `toml:"template"`
 }
@@ -110,6 +113,16 @@ func defaultContents() string {
 [godot]
   # The version of Godot to use for compiling and exporting.
   version = "4.2.1-stable"
+
+[target.client]
+  runnable = true
+  server   = false
+
+  default_features = ["steam"]
+
+  pack_files = [
+    {glob = ["*"], embed = true, encrypt = true},
+  ]
 
 [template]
   # A path to a 'custom.py' file which defines export template build options.
