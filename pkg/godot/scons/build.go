@@ -1,4 +1,4 @@
-package build
+package scons
 
 import (
 	"errors"
@@ -10,7 +10,9 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 const envEncryptionKey = "SCRIPT_AES256_ENCRYPTION_KEY"
@@ -51,16 +53,16 @@ type Build struct {
 	Env map[string]string
 
 	// Source is the source code specification for the build.
-	Source Source
+	Source engine.Source
 
 	// Optimize is the level of optimization for the Godot export template.
-	Optimize Optimize
+	Optimize engine.Optimize
 
 	// Platform defines which OS/platform to build for.
 	Platform platform.OS
 
 	// Profile is the optimization level of the template.
-	Profile Profile
+	Profile engine.Profile
 
 	// SCons contains a specification for how to invoke the compiler.
 	SCons SCons
@@ -70,7 +72,7 @@ type Build struct {
 
 // TemplateName returns the base name of the export template defined by the
 // specified parameters.
-func TemplateName(pl platform.OS, arch platform.Arch, pr Profile) string {
+func TemplateName(pl platform.OS, arch platform.Arch, pr engine.Profile) string {
 	name := fmt.Sprintf("godot.%s.%s.%s", pl, pr.TargetName(), arch)
 	if pl == platform.OSWindows {
 		name += ".exe"
@@ -97,7 +99,7 @@ func (b *Build) Filename() string {
 /* -------------------------- Method: SConsCommand -------------------------- */
 
 // SConsCommand returns the 'SCons' command to build the export template.
-func (b *Build) SConsCommand(c *Context) *action.Process { //nolint:cyclop,funlen
+func (b *Build) SConsCommand(c *run.Context) *action.Process { //nolint:cyclop,funlen
 	var cmd action.Process
 
 	cmd.Directory = c.PathBuild.String()
@@ -178,9 +180,9 @@ func (b *Build) SConsCommand(c *Context) *action.Process { //nolint:cyclop,funle
 
 	// Append profile/optimization-related arguments.
 	switch c.Profile {
-	case ProfileRelease:
-		optimize := OptimizeSpeed
-		if b.Optimize != OptimizeUnknown {
+	case engine.ProfileRelease:
+		optimize := engine.OptimizeSpeed
+		if b.Optimize != engine.OptimizeUnknown {
 			optimize = b.Optimize
 		}
 
@@ -190,9 +192,9 @@ func (b *Build) SConsCommand(c *Context) *action.Process { //nolint:cyclop,funle
 			fmt.Sprintf("optimize=%s", optimize),
 		)
 
-	case ProfileReleaseDebug:
-		optimize := OptimizeSpeedTrace
-		if b.Optimize != OptimizeUnknown {
+	case engine.ProfileReleaseDebug:
+		optimize := engine.OptimizeSpeedTrace
+		if b.Optimize != engine.OptimizeUnknown {
 			optimize = b.Optimize
 		}
 
@@ -203,8 +205,8 @@ func (b *Build) SConsCommand(c *Context) *action.Process { //nolint:cyclop,funle
 			fmt.Sprintf("optimize=%s", optimize),
 		)
 	default: // ProfileDebug
-		optimize := OptimizeDebug
-		if b.Optimize != OptimizeUnknown {
+		optimize := engine.OptimizeDebug
+		if b.Optimize != engine.OptimizeUnknown {
 			optimize = b.Optimize
 		}
 

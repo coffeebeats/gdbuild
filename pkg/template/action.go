@@ -2,6 +2,7 @@ package template
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,9 +13,12 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
 )
+
+var ErrMissingInput = errors.New("missing input")
 
 /* -------------------------------------------------------------------------- */
 /*                              Function: Action                              */
@@ -22,7 +26,7 @@ import (
 
 // Action creates a new 'action.Action' which executes the specified processes
 // for compiling the export template.
-func Action(t *build.Template, bc *build.Context) (action.Action, error) { //nolint:ireturn
+func Action(t *template.Template, rc *run.Context) (action.Action, error) { //nolint:ireturn
 	actions := make(
 		[]action.Action,
 		0,
@@ -32,14 +36,14 @@ func Action(t *build.Template, bc *build.Context) (action.Action, error) { //nol
 	actions = append(
 		actions,
 		t.Prebuild,
-		build.NewVendorGodotAction(&t.Builds[0].Source, bc),
+		NewVendorGodotAction(&t.Builds[0].Source, rc),
 	)
 
 	for _, b := range t.Builds {
-		actions = append(actions, b.SConsCommand(bc))
+		actions = append(actions, b.SConsCommand(rc))
 	}
 
-	cacheArtifacts, err := NewCacheArtifactsAction(bc, t)
+	cacheArtifacts, err := NewCacheArtifactsAction(rc, t)
 	if err != nil {
 		return nil, err
 	}
@@ -47,9 +51,9 @@ func Action(t *build.Template, bc *build.Context) (action.Action, error) { //nol
 	actions = append(
 		actions,
 		t.Postbuild,
-		NewVerifyArtifactsAction(bc, t.Artifacts()),
+		NewVerifyArtifactsAction(rc, t.Artifacts()),
 		cacheArtifacts,
-		NewCopyArtifactsAction(bc, t.Artifacts()),
+		NewCopyArtifactsAction(rc, t.Artifacts()),
 	)
 
 	return action.InOrder(actions...), nil
@@ -62,11 +66,11 @@ func Action(t *build.Template, bc *build.Context) (action.Action, error) { //nol
 // NewVerifyArtifactsAction creates an 'action.Action' which verifies that all
 // required artifacts have been generated.
 func NewVerifyArtifactsAction(
-	bc *build.Context,
+	rc *run.Context,
 	artifacts []string,
 ) action.WithDescription[action.Function] {
 	fn := func(_ context.Context) error {
-		pathBin := bc.BinPath()
+		pathBin := rc.BinPath()
 		if err := pathBin.CheckIsDir(); err != nil {
 			return err
 		}
@@ -113,11 +117,11 @@ func NewVerifyArtifactsAction(
 // NewCacheArtifactsAction creates an 'action.Action' which caches the generated
 // Godot artifacts in the 'gdbuild' store.
 func NewCacheArtifactsAction(
-	bc *build.Context,
-	t *build.Template,
+	rc *run.Context,
+	t *template.Template,
 ) (action.WithDescription[action.Function], error) {
 	fn := func(_ context.Context) error {
-		pathBin := bc.BinPath()
+		pathBin := rc.BinPath()
 		if err := pathBin.CheckIsDir(); err != nil {
 			return err
 		}
@@ -163,16 +167,16 @@ func NewCacheArtifactsAction(
 // NewCopyArtifactsAction creates an 'action.Action' which moves the generated
 // Godot artifacts to the output directory.
 func NewCopyArtifactsAction(
-	bc *build.Context,
+	rc *run.Context,
 	artifacts []string,
 ) action.WithDescription[action.Function] {
 	fn := func(ctx context.Context) error {
-		pathOut := bc.PathOut.String()
+		pathOut := rc.PathOut.String()
 		if err := osutil.EnsureDir(pathOut, osutil.ModeUserRWXGroupRX); err != nil {
 			return err
 		}
 
-		pathBin := bc.BinPath()
+		pathBin := rc.BinPath()
 		if err := pathBin.CheckIsDir(); err != nil {
 			return err
 		}
@@ -196,6 +200,6 @@ func NewCopyArtifactsAction(
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "move generated artifacts to output directory: " + bc.PathOut.String(),
+		Description: "move generated artifacts to output directory: " + rc.PathOut.String(),
 	}
 }

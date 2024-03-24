@@ -1,4 +1,4 @@
-package template_test
+package platform_test
 
 import (
 	"testing"
@@ -8,39 +8,44 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
-	"github.com/coffeebeats/gdbuild/pkg/config/template"
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
-	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform/common"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform/linux"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform/macos"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform/windows"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
+	host "github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
-func TestTemplateBuild(t *testing.T) {
+func TestTemplateCombine(t *testing.T) {
 	tests := []struct {
 		name string
 
 		doc string
-		bc  build.Context
+		rc  run.Context
 
-		want template.Template
+		want platform.Templater
 		err  error
 	}{
 		{
 			name: "invalid platform returns an error",
 
-			bc: build.Context{Platform: platform.OSUnknown},
+			rc: run.Context{Platform: host.OSUnknown},
 
-			err: template.ErrInvalidInput,
+			err: config.ErrInvalidInput,
 		},
 		{
 			name: "an empty document returns an empty template",
 
-			bc: build.Context{Platform: platform.OSWindows},
+			rc: run.Context{Platform: host.OSWindows},
 
-			want: &template.Windows{Base: &template.Base{}},
+			want: &windows.Template{Template: &common.Template{}},
 		},
 		{
 			name: "base properties are correctly populated",
 
-			bc: build.Context{Platform: platform.OSWindows},
+			rc: run.Context{Platform: host.OSWindows},
 			doc: `
 			[template]
 			arch = "arm64"
@@ -49,11 +54,11 @@ func TestTemplateBuild(t *testing.T) {
 			custom_py_path = "a/b/custom.py"
 			`,
 
-			want: &template.Windows{
-				Base: &template.Base{
-					Arch:         platform.ArchArm64,
+			want: &windows.Template{
+				Template: &common.Template{
+					Arch:         host.ArchArm64,
 					Env:          map[string]string{"VAR": "123"},
-					Optimize:     build.OptimizeSpeedTrace,
+					Optimize:     engine.OptimizeSpeedTrace,
 					PathCustomPy: osutil.Path("a/b/custom.py"),
 				},
 			},
@@ -61,10 +66,10 @@ func TestTemplateBuild(t *testing.T) {
 		{
 			name: "base properties with constraints are correctly populated",
 
-			bc: build.Context{
+			rc: run.Context{
 				Features: []string{"test"},
-				Platform: platform.OSWindows,
-				Profile:  build.ProfileReleaseDebug,
+				Platform: host.OSWindows,
+				Profile:  engine.ProfileReleaseDebug,
 			},
 			doc: `
 			[template.profile.release_debug]
@@ -77,21 +82,21 @@ func TestTemplateBuild(t *testing.T) {
 			optimize = "speed_trace"
 			`,
 
-			want: &template.Windows{
-				Base: &template.Base{
-					Arch:     platform.ArchArm64,
+			want: &windows.Template{
+				Template: &common.Template{
+					Arch:     host.ArchArm64,
 					Env:      map[string]string{"VAR": "123"},
-					Optimize: build.OptimizeSpeedTrace,
+					Optimize: engine.OptimizeSpeedTrace,
 				},
 			},
 		},
 		{
 			name: "base properties in platform constraints are correctly populated",
 
-			bc: build.Context{
+			rc: run.Context{
 				Features: []string{"test"},
-				Platform: platform.OSWindows,
-				Profile:  build.ProfileReleaseDebug,
+				Platform: host.OSWindows,
+				Profile:  engine.ProfileReleaseDebug,
 			},
 			doc: `
 			[template.platform.windows.profile.release_debug]
@@ -104,47 +109,47 @@ func TestTemplateBuild(t *testing.T) {
 			optimize = "speed_trace"
 			`,
 
-			want: &template.Windows{
-				Base: &template.Base{
-					Arch:     platform.ArchArm64,
+			want: &windows.Template{
+				Template: &common.Template{
+					Arch:     host.ArchArm64,
 					Env:      map[string]string{"VAR": "123"},
-					Optimize: build.OptimizeSpeedTrace,
+					Optimize: engine.OptimizeSpeedTrace,
 				},
 			},
 		},
 		{
 			name: "windows-specific properties are correctly populated",
 
-			bc:  build.Context{Platform: platform.OSWindows},
+			rc:  run.Context{Platform: host.OSWindows},
 			doc: "[template.platform.windows]\nuse_mingw = true",
 
-			want: &template.Windows{
+			want: &windows.Template{
 				UseMinGW: pointer(true),
-				Base:     &template.Base{},
+				Template: &common.Template{},
 			},
 		},
 		{
 			name: "linux-specific properties with constraints are correctly populated",
 
-			bc: build.Context{
-				Platform: platform.OSLinux,
-				Profile:  build.ProfileRelease,
+			rc: run.Context{
+				Platform: host.OSLinux,
+				Profile:  engine.ProfileRelease,
 			},
 			doc: `[template.platform.linux.profile.release]
 			use_llvm = true`,
 
-			want: &template.Linux{
-				UseLLVM: pointer(true),
-				Base:    &template.Base{},
+			want: &linux.Template{
+				UseLLVM:  pointer(true),
+				Template: &common.Template{},
 			},
 		},
 		{
 			name: "macos-specific properties with constraints are correctly populated",
 
-			bc: build.Context{
+			rc: run.Context{
 				Features: []string{"test"},
-				Platform: platform.OSMacOS,
-				Profile:  build.ProfileRelease,
+				Platform: host.OSMacOS,
+				Profile:  engine.ProfileRelease,
 			},
 			doc: `
 			[template.platform.macos.feature.test]
@@ -157,19 +162,19 @@ func TestTemplateBuild(t *testing.T) {
 			lipo_command = ["c"]
 			vulkan = { use_volk = true }`,
 
-			want: &template.MacOS{
-				Base:        &template.Base{},
+			want: &macos.Template{
+				Template:    &common.Template{},
 				LipoCommand: []string{"a", "b", "c"},
-				Vulkan:      template.Vulkan{Dynamic: pointer(true)},
+				Vulkan:      macos.Vulkan{Dynamic: pointer(true)},
 			},
 		},
 		{
 			name: "windows-specific properties with constraints are correctly populated",
 
-			bc: build.Context{
+			rc: run.Context{
 				Features: []string{"test"},
-				Platform: platform.OSWindows,
-				Profile:  build.ProfileRelease,
+				Platform: host.OSWindows,
+				Profile:  engine.ProfileRelease,
 			},
 			doc: `[template.platform.windows.profile.release]
 			use_mingw = true
@@ -177,10 +182,10 @@ func TestTemplateBuild(t *testing.T) {
 			[template.platform.windows.feature.test]
 			icon_path = "a/b/icon.ico"`,
 
-			want: &template.Windows{
+			want: &windows.Template{
 				UseMinGW: pointer(true),
 				PathIcon: osutil.Path("a/b/icon.ico"),
-				Base:     &template.Base{},
+				Template: &common.Template{},
 			},
 		},
 	}
@@ -191,7 +196,7 @@ func TestTemplateBuild(t *testing.T) {
 		require.NoError(t, err)
 
 		// When: The 'Template' type is built from 'Templates'.
-		got, err := m.Template.Build(&tc.bc)
+		got, err := m.Template.Combine(&tc.rc)
 
 		// Then: The error matches expectations.
 		assert.ErrorIs(t, err, tc.err)

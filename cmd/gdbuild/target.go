@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/coffeebeats/gdbuild/pkg/config"
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
@@ -154,17 +154,17 @@ func parsePlatform(platformInput string) (platform.OS, error) {
 	return godotPlatform, nil
 }
 
-func parseProfile(releaseInput, releaseDebugInput bool) build.Profile {
-	var profile build.Profile
+func parseProfile(releaseInput, releaseDebugInput bool) engine.Profile {
+	var pr engine.Profile
 
 	switch {
 	case releaseInput:
-		profile = build.ProfileRelease
+		pr = engine.ProfileRelease
 	case releaseDebugInput:
-		profile = build.ProfileReleaseDebug
+		pr = engine.ProfileReleaseDebug
 	default:
-		profile = build.ProfileDebug
+		pr = engine.ProfileDebug
 	}
 
-	return profile
+	return pr
 }

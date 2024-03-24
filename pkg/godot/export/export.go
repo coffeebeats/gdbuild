@@ -3,7 +3,7 @@ package export
 import (
 	"errors"
 
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 var (
@@ -25,7 +25,7 @@ type Export struct {
 	Features []string
 	// Hook defines commands to be run before or after the target artifact is
 	// generated.
-	Hook build.Hook
+	Hook run.Hook
 	// Options are 'export_presets.cfg' overrides, specifically the preset
 	// 'options' table, for the exported artifact.
 	Options map[string]any
