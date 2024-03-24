@@ -1,4 +1,4 @@
-package target
+package common
 
 import (
 	"fmt"
@@ -10,12 +10,12 @@ import (
 )
 
 /* -------------------------------------------------------------------------- */
-/*                                Struct: Base                                */
+/*                               Struct: Target                               */
 /* -------------------------------------------------------------------------- */
 
-// Base specifies a single, platform-agnostic exportable artifact within the
+// Target specifies a single, platform-agnostic exportable artifact within the
 // Godot project.
-type Base struct {
+type Target struct {
 	// Name is the display name of the target. Not used by Godot.
 	Name string
 
@@ -42,38 +42,93 @@ type Base struct {
 
 /* ----------------------------- Impl: Exporter ----------------------------- */
 
-func (b *Base) Export(_ engine.Source, _ *run.Context) *export.Export {
+func (t *Target) Collect(_ engine.Source, _ *run.Context) *export.Export {
 	return nil
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (b *Base) Configure(_ *run.Context) error {
+func (t *Target) Configure(_ *run.Context) error {
 	return nil
 }
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (b *Base) Validate(_ *run.Context) error {
+func (t *Target) Validate(_ *run.Context) error {
 	return nil
 }
 
 /* --------------------------- Impl: config.Merger -------------------------- */
 
-func (b *Base) MergeInto(other any) error {
-	if b == nil || other == nil {
+func (t *Target) MergeInto(other any) error {
+	if t == nil || other == nil {
 		return nil
 	}
 
-	dst, ok := other.(*Base)
+	dst, ok := other.(*Target)
 	if !ok {
 		return fmt.Errorf(
 			"%w: expected a '%T' but was '%T'",
 			config.ErrInvalidInput,
-			new(Base),
+			new(Target),
 			other,
 		)
 	}
 
-	return config.Merge(dst, *b)
+	return config.Merge(dst, *t)
+}
+
+/* -------------------------------------------------------------------------- */
+/*                    Struct: TargetWithFeaturesAndProfile                    */
+/* -------------------------------------------------------------------------- */
+
+type TargetWithFeaturesAndProfile struct {
+	*Target
+
+	Feature map[string]TargetWithProfile `toml:"feature"`
+	Profile map[engine.Profile]Target    `toml:"profile"`
+}
+
+/* ------------------------ Struct: TargetWithProfile ----------------------- */
+
+type TargetWithProfile struct {
+	*Target
+
+	Profile map[engine.Profile]Target `toml:"profile"`
+}
+
+/* ---------------------- Impl: platform.targetBuilder ---------------------- */
+
+func (t *TargetWithFeaturesAndProfile) Build(rc *run.Context, dst *Target) error {
+	if t == nil {
+		return nil
+	}
+
+	// Root-level params
+	if err := t.Target.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-constrained params
+	for _, f := range rc.Features {
+		if err := t.Feature[f].Target.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	// Profile-constrained params
+	l := t.Profile[rc.Profile]
+	if err := l.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-and-profile-constrained params
+	for _, f := range rc.Features {
+		l := t.Feature[f].Profile[rc.Profile]
+		if err := l.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

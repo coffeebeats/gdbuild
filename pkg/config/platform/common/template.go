@@ -1,4 +1,4 @@
-package template
+package common
 
 import (
 	"fmt"
@@ -16,12 +16,12 @@ import (
 )
 
 /* -------------------------------------------------------------------------- */
-/*                                Struct: Base                                */
+/*                              Struct: Template                              */
 /* -------------------------------------------------------------------------- */
 
-// Base contains platform-agnostic settings for constructing a custom Godot
+// Template contains platform-agnostic settings for constructing a custom Godot
 // export template.
-type Base struct {
+type Template struct {
 	// Arch is the CPU architecture of the Godot export template.
 	Arch platform.Arch `toml:"arch"`
 	// CustomModules is a list of paths to custom modules to include in the
@@ -44,13 +44,10 @@ type Base struct {
 	SCons build.SCons `toml:"scons"`
 }
 
-// Compile-time check that 'Template' is implemented.
-var _ Template = (*Base)(nil)
-
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Base) Template(src engine.Source, rc *run.Context) *template.Template {
-	s := c.SCons
+func (t Template) Collect(src engine.Source, rc *run.Context) *template.Template {
+	s := t.SCons
 
 	// Append environment-specified arguments.
 	s.ExtraArgs = append(s.ExtraArgs, s.ExtraArgsFromEnv()...)
@@ -70,26 +67,29 @@ func (c *Base) Template(src engine.Source, rc *run.Context) *template.Template {
 	var encryptionKey string
 	if ek := build.EncryptionKeyFromEnv(); ek != "" {
 		encryptionKey = ek
-	} else if c.EncryptionKey != "" {
-		ek := os.ExpandEnv(c.EncryptionKey)
+	} else if t.EncryptionKey != "" {
+		ek := os.ExpandEnv(t.EncryptionKey)
 		if ek != "" {
 			encryptionKey = ek
 		} else {
-			log.Warnf("encryption key set in manifest, but value was empty: %s", c.EncryptionKey)
+			log.Warnf(
+				"encryption key set in manifest, but value was empty: %s",
+				t.EncryptionKey,
+			)
 		}
 	}
 
 	return &template.Template{
 		Builds: []build.Build{
 			{
-				Arch:            c.Arch,
-				CustomModules:   c.CustomModules,
-				CustomPy:        c.PathCustomPy,
-				DoublePrecision: config.Dereference(c.DoublePrecision),
+				Arch:            t.Arch,
+				CustomModules:   t.CustomModules,
+				CustomPy:        t.PathCustomPy,
+				DoublePrecision: config.Dereference(t.DoublePrecision),
 				EncryptionKey:   encryptionKey,
-				Env:             c.Env,
+				Env:             t.Env,
 				Source:          src,
-				Optimize:        c.Optimize,
+				Optimize:        t.Optimize,
 				Platform:        rc.Platform,
 				Profile:         rc.Profile,
 				SCons:           s,
@@ -97,27 +97,27 @@ func (c *Base) Template(src engine.Source, rc *run.Context) *template.Template {
 		},
 		ExtraArtifacts: nil,
 		Paths:          nil,
-		Prebuild:       c.Hook.PreActions(rc),
-		Postbuild:      c.Hook.PostActions(rc),
+		Prebuild:       t.Hook.PreActions(rc),
+		Postbuild:      t.Hook.PostActions(rc),
 	}
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Base) Configure(rc *run.Context) error {
-	if err := c.PathCustomPy.RelTo(rc.PathManifest); err != nil {
+func (t *Template) Configure(rc *run.Context) error {
+	if err := t.PathCustomPy.RelTo(rc.PathManifest); err != nil {
 		return err
 	}
 
-	for i, m := range c.CustomModules {
+	for i, m := range t.CustomModules {
 		if err := m.RelTo(rc.PathManifest); err != nil {
 			return err
 		}
 
-		c.CustomModules[i] = m
+		t.CustomModules[i] = m
 	}
 
-	if err := c.SCons.Configure(rc); err != nil {
+	if err := t.SCons.Configure(rc); err != nil {
 		return err
 	}
 
@@ -126,22 +126,22 @@ func (c *Base) Configure(rc *run.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Base) Validate(rc *run.Context) error {
-	for _, m := range c.CustomModules {
+func (t *Template) Validate(rc *run.Context) error {
+	for _, m := range t.CustomModules {
 		if err := m.CheckIsDirOrEmpty(); err != nil {
 			return err
 		}
 	}
 
-	if err := c.PathCustomPy.CheckIsFileOrEmpty(); err != nil {
+	if err := t.PathCustomPy.CheckIsFileOrEmpty(); err != nil {
 		return err
 	}
 
-	if err := c.Hook.Validate(rc); err != nil {
+	if err := t.Hook.Validate(rc); err != nil {
 		return err
 	}
 
-	if err := c.SCons.Validate(rc); err != nil {
+	if err := t.SCons.Validate(rc); err != nil {
 		return err
 	}
 
@@ -150,20 +150,75 @@ func (c *Base) Validate(rc *run.Context) error {
 
 /* --------------------------- Impl: config.Merger -------------------------- */
 
-func (c *Base) MergeInto(other any) error {
-	if c == nil || other == nil {
+func (t *Template) MergeInto(other any) error {
+	if t == nil || other == nil {
 		return nil
 	}
 
-	dst, ok := other.(*Base)
+	dst, ok := other.(*Template)
 	if !ok {
 		return fmt.Errorf(
 			"%w: expected a '%T' but was '%T'",
 			config.ErrInvalidInput,
-			new(Base),
+			new(Template),
 			other,
 		)
 	}
 
-	return config.Merge(dst, *c)
+	return config.Merge(dst, *t)
+}
+
+/* -------------------------------------------------------------------------- */
+/*                   Struct: TemplateWithFeaturesAndProfile                   */
+/* -------------------------------------------------------------------------- */
+
+type TemplateWithFeaturesAndProfile struct {
+	*Template
+
+	Feature map[string]TemplateWithProfile `toml:"feature"`
+	Profile map[engine.Profile]Template    `toml:"profile"`
+}
+
+/* ----------------------- Struct: TemplateWithProfile ---------------------- */
+
+type TemplateWithProfile struct {
+	*Template
+
+	Profile map[engine.Profile]Template `toml:"profile"`
+}
+
+/* --------------------- Impl: platform.templateBuilder --------------------- */
+
+func (t *TemplateWithFeaturesAndProfile) Build(rc *run.Context, dst *Template) error {
+	if t == nil {
+		return nil
+	}
+
+	// Root-level params
+	if err := t.Template.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-constrained params
+	for _, f := range rc.Features {
+		if err := t.Feature[f].Template.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	// Profile-constrained params
+	l := t.Profile[rc.Profile]
+	if err := l.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-and-profile-constrained params
+	for _, f := range rc.Features {
+		l := t.Feature[f].Profile[rc.Profile]
+		if err := l.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

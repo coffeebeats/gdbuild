@@ -1,6 +1,7 @@
-package template
+package macos
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/exec"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform/common"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
@@ -15,12 +17,14 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
+var ErrInvalidInput = errors.New("invalid input")
+
 /* -------------------------------------------------------------------------- */
-/*                                Struct: MacOS                               */
+/*                              Struct: Template                              */
 /* -------------------------------------------------------------------------- */
 
-type MacOS struct {
-	*Base
+type Template struct {
+	*common.Template
 
 	// LipoCommand contains arguments used to invoke 'lipo'. Defaults to
 	// ["lipo"]. Only used if 'arch' is set to 'platform.ArchUniversal'.
@@ -30,47 +34,44 @@ type MacOS struct {
 	Vulkan Vulkan `toml:"vulkan"`
 }
 
-// Compile-time check that 'Template' is implemented.
-var _ Template = (*MacOS)(nil)
-
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *MacOS) Template(g engine.Source, rc *run.Context) *template.Template { //nolint:funlen
-	switch a := c.Base.Arch; a {
+func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template { //nolint:funlen
+	switch a := t.Arch; a {
 	case platform.ArchAmd64, platform.ArchArm64:
-		t := c.Base.Template(g, rc)
+		out := t.Template.Collect(g, rc)
 
-		t.Builds[0].Platform = platform.OSMacOS
+		out.Builds[0].Platform = platform.OSMacOS
 
-		scons := &t.Builds[0].SCons
-		if config.Dereference(c.Vulkan.Dynamic) {
+		scons := &out.Builds[0].SCons
+		if config.Dereference(t.Vulkan.Dynamic) {
 			scons.ExtraArgs = append(scons.ExtraArgs, "use_volk=yes")
 		} else {
 			scons.ExtraArgs = append(scons.ExtraArgs, "use_volk=no")
 		}
 
-		if c.Vulkan.PathSDK != "" {
-			scons.ExtraArgs = append(scons.ExtraArgs, "vulkan_sdk_path="+c.Vulkan.PathSDK.String())
-			t.RegisterDependencyPath(c.Vulkan.PathSDK)
+		if t.Vulkan.PathSDK != "" {
+			scons.ExtraArgs = append(scons.ExtraArgs, "vulkan_sdk_path="+t.Vulkan.PathSDK.String())
+			out.RegisterDependencyPath(t.Vulkan.PathSDK)
 		}
 
-		return t
+		return out
 	case platform.ArchUniversal, platform.ArchUnknown:
 		// First, create the 'x86_64' binary.
-		amd64 := *c
-		amd64.Base.Arch = platform.ArchAmd64
+		amd64 := *t
+		amd64.Template.Arch = platform.ArchAmd64
 
-		templateAmd64 := amd64.Template(g, rc)
+		templateAmd64 := amd64.Collect(g, rc)
 
 		// Next, create the 'arm64' binary.
-		arm64 := *c
-		arm64.Base.Arch = platform.ArchArm64
+		arm64 := *t
+		arm64.Template.Arch = platform.ArchArm64
 
-		templateArm64 := arm64.Template(g, rc)
+		templateArm64 := arm64.Collect(g, rc)
 
 		// Finally, merge the two binaries together.
 
-		lipo := c.LipoCommand
+		lipo := t.LipoCommand
 		if len(lipo) == 0 {
 			lipo = append(lipo, "lipo")
 		}
@@ -101,13 +102,13 @@ func (c *MacOS) Template(g engine.Source, rc *run.Context) *template.Template { 
 		// Construct the output 'Template'. This is because nothing else needs
 		// to be copied over from the arch-specific templates and this avoid the
 		// need to deduplicate properties.
-		t := c.Base.Template(g, rc)
+		out := t.Template.Collect(g, rc)
 
 		// Register the additional artifact.
-		t.ExtraArtifacts = append(t.ExtraArtifacts, templateNameUniversal)
+		out.ExtraArtifacts = append(out.ExtraArtifacts, templateNameUniversal)
 
-		t.Builds = []build.Build{templateAmd64.Builds[0], templateArm64.Builds[0]}
-		t.Postbuild = cmdLipo.AndThen(t.Postbuild)
+		out.Builds = []build.Build{templateAmd64.Builds[0], templateArm64.Builds[0]}
+		out.Postbuild = cmdLipo.AndThen(out.Postbuild)
 
 		// Construct a list of paths with duplicates removed. This is preferred
 		// over duplicating the code used to decide which paths are dependencies.
@@ -117,9 +118,9 @@ func (c *MacOS) Template(g engine.Source, rc *run.Context) *template.Template { 
 		slices.Sort(paths)
 		paths = slices.Compact(paths)
 
-		t.Paths = paths
+		out.Paths = paths
 
-		return t
+		return out
 
 	default:
 		panic(fmt.Errorf("%w: unsupported architecture: %s", ErrInvalidInput, a))
@@ -128,12 +129,12 @@ func (c *MacOS) Template(g engine.Source, rc *run.Context) *template.Template { 
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *MacOS) Configure(rc *run.Context) error {
-	if err := c.Base.Configure(rc); err != nil {
+func (t *Template) Configure(rc *run.Context) error {
+	if err := t.Template.Configure(rc); err != nil {
 		return err
 	}
 
-	if err := c.Vulkan.Configure(rc); err != nil {
+	if err := t.Vulkan.Configure(rc); err != nil {
 		return err
 	}
 
@@ -142,23 +143,23 @@ func (c *MacOS) Configure(rc *run.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *MacOS) Validate(rc *run.Context) error {
-	if err := c.Base.Validate(rc); err != nil {
+func (t *Template) Validate(rc *run.Context) error {
+	if err := t.Template.Validate(rc); err != nil {
 		return err
 	}
 
-	if !c.Base.Arch.IsOneOf(
+	if !t.Arch.IsOneOf(
 		platform.ArchAmd64,
 		platform.ArchArm64,
 		platform.ArchUniversal,
 		platform.ArchUnknown,
 	) {
-		return fmt.Errorf("%w: unsupport architecture: %s", config.ErrInvalidInput, c.Base.Arch)
+		return fmt.Errorf("%w: unsupport architecture: %s", config.ErrInvalidInput, t.Arch)
 	}
 
 	// NOTE: Don't check for 'lipo', that should be a runtime check.
 
-	if err := c.Vulkan.Validate(rc); err != nil {
+	if err := t.Vulkan.Validate(rc); err != nil {
 		return err
 	}
 
@@ -167,22 +168,22 @@ func (c *MacOS) Validate(rc *run.Context) error {
 
 /* --------------------------- Impl: config.Merger -------------------------- */
 
-func (c *MacOS) MergeInto(other any) error {
-	if c == nil || other == nil {
+func (t *Template) MergeInto(other any) error {
+	if t == nil || other == nil {
 		return nil
 	}
 
-	dst, ok := other.(*MacOS)
+	dst, ok := other.(*Template)
 	if !ok {
 		return fmt.Errorf(
 			"%w: expected a '%T' but was '%T'",
 			config.ErrInvalidInput,
-			new(MacOS),
+			new(Template),
 			other,
 		)
 	}
 
-	return config.Merge(dst, *c)
+	return config.Merge(dst, *t)
 }
 
 /* -------------------------------------------------------------------------- */
@@ -214,6 +215,61 @@ func (c *Vulkan) Configure(rc *run.Context) error {
 func (c *Vulkan) Validate(_ *run.Context) error {
 	if err := c.PathSDK.CheckIsDir(); err != nil {
 		return fmt.Errorf("%w: missing path to Vulkan SDK", err)
+	}
+
+	return nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                   Struct: TemplateWithFeaturesAndProfile                   */
+/* -------------------------------------------------------------------------- */
+
+type TemplateWithFeaturesAndProfile struct {
+	*Template
+
+	Feature map[string]TemplateWithProfile `toml:"feature"`
+	Profile map[engine.Profile]Template    `toml:"profile"`
+}
+
+/* ----------------------- Struct: TemplateWithProfile ---------------------- */
+
+type TemplateWithProfile struct {
+	*Template
+
+	Profile map[engine.Profile]Template `toml:"profile"`
+}
+
+/* --------------------- Impl: platform.templateBuilder --------------------- */
+
+func (t *TemplateWithFeaturesAndProfile) Build(rc *run.Context, dst *Template) error {
+	if t == nil {
+		return nil
+	}
+
+	// Root-level params
+	if err := t.Template.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-constrained params
+	for _, f := range rc.Features {
+		if err := t.Feature[f].Template.MergeInto(dst); err != nil {
+			return err
+		}
+	}
+
+	// Profile-constrained params
+	l := t.Profile[rc.Profile]
+	if err := l.MergeInto(dst); err != nil {
+		return err
+	}
+
+	// Feature-and-profile-constrained params
+	for _, f := range rc.Features {
+		l := t.Feature[f].Profile[rc.Profile]
+		if err := l.MergeInto(dst); err != nil {
+			return err
+		}
 	}
 
 	return nil

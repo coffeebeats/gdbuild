@@ -1,19 +1,17 @@
-package target
+package config
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform/common"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform/linux"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform/macos"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform/windows"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/run"
-)
-
-var (
-	ErrInvalidInput = errors.New("invalid input")
-	ErrMissingInput = errors.New("missing input")
 )
 
 /* -------------------------------------------------------------------------- */
@@ -23,7 +21,7 @@ var (
 type Exporter interface {
 	config.Configurable[*run.Context]
 
-	Export(src engine.Source, rc *run.Context) *export.Export
+	Collect(src engine.Source, rc *run.Context) *export.Export
 }
 
 /* -------------------------------------------------------------------------- */
@@ -44,43 +42,43 @@ type Exporter interface {
 //	[target.platform.macos.feature.client]
 //	[target.platform.linux.feature.server.profile.release_debug]
 type Targets struct {
-	*Base
+	Target *common.Target
 
-	Platform Platforms                     `toml:"platform"`
-	Feature  map[string]BaseWithoutFeature `toml:"feature"`
-	Profile  map[engine.Profile]Base       `toml:"profile"`
+	Platform TargetPlatforms                  `toml:"platform"`
+	Feature  map[string]TargetWithoutFeature  `toml:"feature"`
+	Profile  map[engine.Profile]common.Target `toml:"profile"`
 }
 
-/* ----------------------- Struct: BaseWithoutFeature ----------------------- */
+/* ----------------------- Struct: TargetWithoutFeature ----------------------- */
 
-type BaseWithoutFeature struct {
-	*Base
+type TargetWithoutFeature struct {
+	Target *common.Target
 
-	Profile map[engine.Profile]Base `toml:"profile"`
+	Profile map[engine.Profile]common.Target `toml:"profile"`
 }
 
 /* ---------------------------- Struct: Platforms --------------------------- */
 
-type Platforms struct {
-	Linux   LinuxWithFeaturesAndProfile   `toml:"linux"`
-	MacOS   MacOSWithFeaturesAndProfile   `toml:"macos"`
-	Windows WindowsWithFeaturesAndProfile `toml:"windows"`
+type TargetPlatforms struct {
+	Linux   LinuxTargetWithFeaturesAndProfile   `toml:"linux"`
+	MacOS   MacOSTargetWithFeaturesAndProfile   `toml:"macos"`
+	Windows WindowsTargetWithFeaturesAndProfile `toml:"windows"`
 }
 
 /* ------------------------------ Method: Build ----------------------------- */
 
 func (t *Targets) Build(rc *run.Context) (Exporter, error) { //nolint:cyclop,ireturn
 	// Target params (root)
-	var out Exporter = new(Base)
+	var out Exporter = new(common.Target)
 
 	// Target params (root)
-	if err := t.Base.MergeInto(out); err != nil {
+	if err := t.Target.MergeInto(out); err != nil {
 		return nil, err
 	}
 
 	// Target params (feature-constrained)
 	for _, f := range rc.Features {
-		bwof := t.Feature[f].Base
+		bwof := t.Feature[f].Target
 		if err := bwof.MergeInto(out); err != nil {
 			return nil, err
 		}
@@ -102,19 +100,19 @@ func (t *Targets) Build(rc *run.Context) (Exporter, error) { //nolint:cyclop,ire
 
 	switch p := rc.Platform; p {
 	case platform.OSLinux:
-		out = &Linux{Base: out.(*Base)} //nolint:forcetypeassert
+		out = &linux.Target{Target: out.(*common.Target)} //nolint:forcetypeassert
 
 		if err := t.Platform.Linux.build(rc, out); err != nil {
 			return nil, err
 		}
 	case platform.OSMacOS:
-		out = &MacOS{Base: out.(*Base)} //nolint:forcetypeassert
+		out = &macos.Target{Target: out.(*common.Target)} //nolint:forcetypeassert
 
 		if err := t.Platform.MacOS.build(rc, out); err != nil {
 			return nil, err
 		}
 	case platform.OSWindows:
-		out = &Windows{Base: out.(*Base)} //nolint:forcetypeassert
+		out = &windows.Target{Target: out.(*common.Target)} //nolint:forcetypeassert
 
 		if err := t.Platform.Windows.build(rc, out); err != nil {
 			return nil, err
@@ -126,9 +124,9 @@ func (t *Targets) Build(rc *run.Context) (Exporter, error) { //nolint:cyclop,ire
 	return out, nil
 }
 
-/* ----------------------- Interface: templateBuilder ----------------------- */
+/* ------------------------ Interface: exportBuilder ------------------------ */
 
-type templateBuilder interface {
+type exportBuilder interface {
 	build(rc *run.Context, dst Exporter) error
 }
 
@@ -136,37 +134,37 @@ type templateBuilder interface {
 /*                               Platform: Linux                              */
 /* -------------------------------------------------------------------------- */
 
-/* ------------------ Struct: LinuxWithFeaturesAndProfile ----------------- */
+/* ---------------- Struct: LinuxTargetWithFeaturesAndProfile --------------- */
 
-type LinuxWithFeaturesAndProfile struct {
-	*Linux
+type LinuxTargetWithFeaturesAndProfile struct {
+	Target *linux.Target
 
-	Feature map[string]LinuxWithProfile `toml:"feature"`
-	Profile map[engine.Profile]Linux    `toml:"profile"`
+	Feature map[string]LinuxTargetWithProfile `toml:"feature"`
+	Profile map[engine.Profile]linux.Target   `toml:"profile"`
 }
 
-/* ----------------------- Struct: LinuxWithProfile ----------------------- */
+/* --------------------- Struct: LinuxTargetWithProfile --------------------- */
 
-type LinuxWithProfile struct {
-	*Linux
+type LinuxTargetWithProfile struct {
+	Target *linux.Target
 
-	Profile map[engine.Profile]Linux `toml:"profile"`
+	Profile map[engine.Profile]linux.Target `toml:"profile"`
 }
 
-/* -------------------------- Impl: templateBuilder ------------------------- */
+/* --------------------------- Impl: exportBuilder -------------------------- */
 
 // Compile-time check that 'Builder' is implemented.
-var _ templateBuilder = (*LinuxWithFeaturesAndProfile)(nil)
+var _ exportBuilder = (*LinuxTargetWithFeaturesAndProfile)(nil)
 
-func (t *LinuxWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error {
+func (t *LinuxTargetWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error {
 	// Root-level params
-	if err := t.Linux.MergeInto(dst); err != nil {
+	if err := t.Target.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-constrained params
 	for _, f := range rc.Features {
-		if err := t.Feature[f].Linux.MergeInto(dst); err != nil {
+		if err := t.Feature[f].Target.MergeInto(dst); err != nil {
 			return err
 		}
 	}
@@ -192,37 +190,37 @@ func (t *LinuxWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error
 /*                               Platform: MacOS                              */
 /* -------------------------------------------------------------------------- */
 
-/* ------------------ Struct: MacOSWithFeaturesAndProfile ----------------- */
+/* ---------------- Struct: MacOSTargetWithFeaturesAndProfile --------------- */
 
-type MacOSWithFeaturesAndProfile struct {
-	*MacOS
+type MacOSTargetWithFeaturesAndProfile struct {
+	Target *macos.Target
 
-	Feature map[string]MacOSWithProfile `toml:"feature"`
-	Profile map[engine.Profile]MacOS    `toml:"profile"`
+	Feature map[string]MacOSTargetWithProfile `toml:"feature"`
+	Profile map[engine.Profile]macos.Target   `toml:"profile"`
 }
 
-/* ----------------------- Struct: MacOSWithProfile ----------------------- */
+/* --------------------- Struct: MacOSTargetWithProfile --------------------- */
 
-type MacOSWithProfile struct {
-	*MacOS
+type MacOSTargetWithProfile struct {
+	Target *macos.Target
 
-	Profile map[engine.Profile]MacOS `toml:"profile"`
+	Profile map[engine.Profile]macos.Target `toml:"profile"`
 }
 
-/* -------------------------- Impl: templateBuilder ------------------------- */
+/* --------------------------- Impl: exportBuilder -------------------------- */
 
 // Compile-time check that 'Builder' is implemented.
-var _ templateBuilder = (*MacOSWithFeaturesAndProfile)(nil)
+var _ exportBuilder = (*MacOSTargetWithFeaturesAndProfile)(nil)
 
-func (t *MacOSWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error {
+func (t *MacOSTargetWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error {
 	// Root-level params
-	if err := t.MacOS.MergeInto(dst); err != nil {
+	if err := t.Target.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-constrained params
 	for _, f := range rc.Features {
-		if err := t.Feature[f].MacOS.MergeInto(dst); err != nil {
+		if err := t.Feature[f].Target.MergeInto(dst); err != nil {
 			return err
 		}
 	}
@@ -248,37 +246,37 @@ func (t *MacOSWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error
 /*                              Platform: Windows                             */
 /* -------------------------------------------------------------------------- */
 
-/* ------------------ Struct: WindowsWithFeaturesAndProfile ----------------- */
+/* ---------------- Struct: WindowsTargetWithFeaturesAndProfile --------------- */
 
-type WindowsWithFeaturesAndProfile struct {
-	*Windows
+type WindowsTargetWithFeaturesAndProfile struct {
+	Target *windows.Target
 
-	Feature map[string]WindowsWithProfile `toml:"feature"`
-	Profile map[engine.Profile]Windows    `toml:"profile"`
+	Feature map[string]WindowsTargetWithProfile `toml:"feature"`
+	Profile map[engine.Profile]windows.Target   `toml:"profile"`
 }
 
-/* ----------------------- Struct: WindowsWithProfile ----------------------- */
+/* --------------------- Struct: WindowsTargetWithProfile --------------------- */
 
-type WindowsWithProfile struct {
-	*Windows
+type WindowsTargetWithProfile struct {
+	Target *windows.Target
 
-	Profile map[engine.Profile]Windows `toml:"profile"`
+	Profile map[engine.Profile]windows.Target `toml:"profile"`
 }
 
-/* -------------------------- Impl: templateBuilder ------------------------- */
+/* --------------------------- Impl: exportBuilder -------------------------- */
 
 // Compile-time check that 'Builder' is implemented.
-var _ templateBuilder = (*WindowsWithFeaturesAndProfile)(nil)
+var _ exportBuilder = (*WindowsTargetWithFeaturesAndProfile)(nil)
 
-func (t *WindowsWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error {
+func (t *WindowsTargetWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error {
 	// Root-level params
-	if err := t.Windows.MergeInto(dst); err != nil {
+	if err := t.Target.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-constrained params
 	for _, f := range rc.Features {
-		if err := t.Feature[f].Windows.MergeInto(dst); err != nil {
+		if err := t.Feature[f].Target.MergeInto(dst); err != nil {
 			return err
 		}
 	}

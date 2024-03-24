@@ -12,8 +12,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/config/target"
-	"github.com/coffeebeats/gdbuild/pkg/config/template"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform"
 )
 
 var (
@@ -32,9 +31,9 @@ type Manifest struct {
 	// Godot contains settings on which Godot version/source code to use.
 	Godot Godot `toml:"godot"`
 	// Target includes settings for exporting Godot game executables and packs.
-	Target map[string]target.Targets `toml:"target"`
+	Target map[string]Targets `toml:"target"`
 	// Template includes settings for building custom export templates.
-	Template template.Templates `toml:"template"`
+	Template platform.Templates `toml:"template"`
 }
 
 /* ----------------------------- Function: Init ----------------------------- */

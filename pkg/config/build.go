@@ -4,21 +4,21 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	configtemplate "github.com/coffeebeats/gdbuild/pkg/config/template"
+	"github.com/coffeebeats/gdbuild/pkg/config/platform"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
-/*                           Function: BuildTemplate                          */
+/*                             Function: Template                             */
 /* -------------------------------------------------------------------------- */
 
-// BuildTemplate creates a `Template` instance which contains an action for
+// Template creates a `Template` instance which contains an action for
 // compiling Godot based on the specified configuration.
-func BuildTemplate(m *Manifest, rc *run.Context) (*template.Template, error) { //nolint:cyclop,funlen
+func Template(m *Manifest, rc *run.Context) (*template.Template, error) { //nolint:cyclop,funlen
 	var merged struct {
 		godot    Godot
-		template configtemplate.Template
+		template platform.Templater
 	}
 
 	toBuild := []configuration{{context: rc, manifest: m}}
@@ -72,7 +72,7 @@ func BuildTemplate(m *Manifest, rc *run.Context) (*template.Template, error) { /
 		}
 
 		// Build 'Template' properties.
-		t, err := cfg.manifest.Template.Build(&rc)
+		t, err := cfg.manifest.Template.Combine(&rc)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +107,7 @@ func BuildTemplate(m *Manifest, rc *run.Context) (*template.Template, error) { /
 		return nil, err
 	}
 
-	return merged.template.Template(*merged.godot.Source, rc), nil
+	return merged.template.Collect(*merged.godot.Source, rc), nil
 }
 
 /* -------------------------- Struct: configuration ------------------------- */

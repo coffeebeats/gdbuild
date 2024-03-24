@@ -182,7 +182,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				Verbose:      log.GetLevel() == log.DebugLevel,
 			}
 
-			t, err := config.BuildTemplate(m, &rc)
+			t, err := config.Template(m, &rc)
 			if err != nil {
 				return err
 			}
