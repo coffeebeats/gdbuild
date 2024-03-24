@@ -1,11 +1,14 @@
-package build
+package run
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/exec"
 )
+
+var ErrInvalidInput = errors.New("invalid input")
 
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Hook                                */
@@ -15,10 +18,10 @@ import (
 //
 // TODO: Allow per-hook shell settings.
 type Hook struct {
-	// Pre contains a command to run *before* a build step.
-	Pre []action.Command `toml:"prebuild"`
-	// Post contains a command to run *after* a build step.
-	Post []action.Command `toml:"postbuild"`
+	// Pre contains a command to run *before* an export step.
+	Pre []action.Command `toml:"run_before"`
+	// Post contains a command to run *after* an export step.
+	Post []action.Command `toml:"run_after"`
 	// Shell defines which shell process to run these commands in.
 	Shell exec.Shell `toml:"shell"`
 }
@@ -27,14 +30,14 @@ type Hook struct {
 
 // PreActions is a utility function to convert pre-build commands into a slice
 // of 'Action' types.
-func (h Hook) PreActions(bc *Context) action.Action { //nolint:ireturn
+func (h Hook) PreActions(rc *Context) action.Action { //nolint:ireturn
 	actions := make([]action.Action, 0, len(h.Pre))
 
 	for _, a := range h.Pre {
 		p := a.Process()
-		p.Directory = bc.PathBuild.String()
+		p.Directory = rc.PathBuild.String()
 		p.Shell = h.Shell
-		p.Verbose = bc.Verbose
+		p.Verbose = rc.Verbose
 
 		actions = append(actions, action.Action(p))
 	}
@@ -46,14 +49,14 @@ func (h Hook) PreActions(bc *Context) action.Action { //nolint:ireturn
 
 // PostActions is a utility function to convert post-build commands into a slice
 // of 'Action' types.
-func (h Hook) PostActions(bc *Context) action.Action { //nolint:ireturn
+func (h Hook) PostActions(rc *Context) action.Action { //nolint:ireturn
 	actions := make([]action.Action, 0, len(h.Post))
 
 	for _, a := range h.Post {
 		p := a.Process()
-		p.Directory = bc.PathBuild.String()
+		p.Directory = rc.PathBuild.String()
 		p.Shell = h.Shell
-		p.Verbose = bc.Verbose
+		p.Verbose = rc.Verbose
 
 		actions = append(actions, action.Action(p))
 	}

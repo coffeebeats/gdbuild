@@ -8,6 +8,8 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/godot/profile"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 var (
@@ -20,9 +22,9 @@ var (
 /* -------------------------------------------------------------------------- */
 
 type Exporter interface {
-	config.Configurable[*build.Context]
+	config.Configurable[*run.Context]
 
-	Export(src build.Source, bc *build.Context) *export.Export
+	Export(src build.Source, rc *run.Context) *export.Export
 }
 
 /* -------------------------------------------------------------------------- */
@@ -47,7 +49,7 @@ type Targets struct {
 
 	Platform Platforms                     `toml:"platform"`
 	Feature  map[string]BaseWithoutFeature `toml:"feature"`
-	Profile  map[build.Profile]Base        `toml:"profile"`
+	Profile  map[profile.Profile]Base      `toml:"profile"`
 }
 
 /* ----------------------- Struct: BaseWithoutFeature ----------------------- */
@@ -55,7 +57,7 @@ type Targets struct {
 type BaseWithoutFeature struct {
 	*Base
 
-	Profile map[build.Profile]Base `toml:"profile"`
+	Profile map[profile.Profile]Base `toml:"profile"`
 }
 
 /* ---------------------------- Struct: Platforms --------------------------- */
@@ -68,7 +70,7 @@ type Platforms struct {
 
 /* ------------------------------ Method: Build ----------------------------- */
 
-func (t *Targets) Build(bc *build.Context) (Exporter, error) { //nolint:cyclop,ireturn
+func (t *Targets) Build(rc *run.Context) (Exporter, error) { //nolint:cyclop,ireturn
 	// Target params (root)
 	var out Exporter = new(Base)
 
@@ -78,7 +80,7 @@ func (t *Targets) Build(bc *build.Context) (Exporter, error) { //nolint:cyclop,i
 	}
 
 	// Target params (feature-constrained)
-	for _, f := range bc.Features {
+	for _, f := range rc.Features {
 		bwof := t.Feature[f].Base
 		if err := bwof.MergeInto(out); err != nil {
 			return nil, err
@@ -86,36 +88,36 @@ func (t *Targets) Build(bc *build.Context) (Exporter, error) { //nolint:cyclop,i
 	}
 
 	// Target params (profile-constrained)
-	b := t.Profile[bc.Profile]
+	b := t.Profile[rc.Profile]
 	if err := b.MergeInto(out); err != nil {
 		return nil, err
 	}
 
 	// Feature-and-profile-constrained params
-	for _, f := range bc.Features {
-		bwof := t.Feature[f].Profile[bc.Profile]
+	for _, f := range rc.Features {
+		bwof := t.Feature[f].Profile[rc.Profile]
 		if err := bwof.MergeInto(out); err != nil {
 			return nil, err
 		}
 	}
 
-	switch p := bc.Platform; p {
+	switch p := rc.Platform; p {
 	case platform.OSLinux:
 		out = &Linux{Base: out.(*Base)} //nolint:forcetypeassert
 
-		if err := t.Platform.Linux.build(bc, out); err != nil {
+		if err := t.Platform.Linux.build(rc, out); err != nil {
 			return nil, err
 		}
 	case platform.OSMacOS:
 		out = &MacOS{Base: out.(*Base)} //nolint:forcetypeassert
 
-		if err := t.Platform.MacOS.build(bc, out); err != nil {
+		if err := t.Platform.MacOS.build(rc, out); err != nil {
 			return nil, err
 		}
 	case platform.OSWindows:
 		out = &Windows{Base: out.(*Base)} //nolint:forcetypeassert
 
-		if err := t.Platform.Windows.build(bc, out); err != nil {
+		if err := t.Platform.Windows.build(rc, out); err != nil {
 			return nil, err
 		}
 	default:
@@ -128,7 +130,7 @@ func (t *Targets) Build(bc *build.Context) (Exporter, error) { //nolint:cyclop,i
 /* ----------------------- Interface: templateBuilder ----------------------- */
 
 type templateBuilder interface {
-	build(bc *build.Context, dst Exporter) error
+	build(rc *run.Context, dst Exporter) error
 }
 
 /* -------------------------------------------------------------------------- */
@@ -141,7 +143,7 @@ type LinuxWithFeaturesAndProfile struct {
 	*Linux
 
 	Feature map[string]LinuxWithProfile `toml:"feature"`
-	Profile map[build.Profile]Linux     `toml:"profile"`
+	Profile map[profile.Profile]Linux   `toml:"profile"`
 }
 
 /* ----------------------- Struct: LinuxWithProfile ----------------------- */
@@ -149,7 +151,7 @@ type LinuxWithFeaturesAndProfile struct {
 type LinuxWithProfile struct {
 	*Linux
 
-	Profile map[build.Profile]Linux `toml:"profile"`
+	Profile map[profile.Profile]Linux `toml:"profile"`
 }
 
 /* -------------------------- Impl: templateBuilder ------------------------- */
@@ -157,28 +159,28 @@ type LinuxWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*LinuxWithFeaturesAndProfile)(nil)
 
-func (t *LinuxWithFeaturesAndProfile) build(bc *build.Context, dst Exporter) error {
+func (t *LinuxWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error {
 	// Root-level params
 	if err := t.Linux.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-constrained params
-	for _, f := range bc.Features {
+	for _, f := range rc.Features {
 		if err := t.Feature[f].Linux.MergeInto(dst); err != nil {
 			return err
 		}
 	}
 
 	// Profile-constrained params
-	l := t.Profile[bc.Profile]
+	l := t.Profile[rc.Profile]
 	if err := l.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-and-profile-constrained params
-	for _, f := range bc.Features {
-		l := t.Feature[f].Profile[bc.Profile]
+	for _, f := range rc.Features {
+		l := t.Feature[f].Profile[rc.Profile]
 		if err := l.MergeInto(dst); err != nil {
 			return err
 		}
@@ -197,7 +199,7 @@ type MacOSWithFeaturesAndProfile struct {
 	*MacOS
 
 	Feature map[string]MacOSWithProfile `toml:"feature"`
-	Profile map[build.Profile]MacOS     `toml:"profile"`
+	Profile map[profile.Profile]MacOS   `toml:"profile"`
 }
 
 /* ----------------------- Struct: MacOSWithProfile ----------------------- */
@@ -205,7 +207,7 @@ type MacOSWithFeaturesAndProfile struct {
 type MacOSWithProfile struct {
 	*MacOS
 
-	Profile map[build.Profile]MacOS `toml:"profile"`
+	Profile map[profile.Profile]MacOS `toml:"profile"`
 }
 
 /* -------------------------- Impl: templateBuilder ------------------------- */
@@ -213,28 +215,28 @@ type MacOSWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*MacOSWithFeaturesAndProfile)(nil)
 
-func (t *MacOSWithFeaturesAndProfile) build(bc *build.Context, dst Exporter) error {
+func (t *MacOSWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error {
 	// Root-level params
 	if err := t.MacOS.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-constrained params
-	for _, f := range bc.Features {
+	for _, f := range rc.Features {
 		if err := t.Feature[f].MacOS.MergeInto(dst); err != nil {
 			return err
 		}
 	}
 
 	// Profile-constrained params
-	l := t.Profile[bc.Profile]
+	l := t.Profile[rc.Profile]
 	if err := l.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-and-profile-constrained params
-	for _, f := range bc.Features {
-		l := t.Feature[f].Profile[bc.Profile]
+	for _, f := range rc.Features {
+		l := t.Feature[f].Profile[rc.Profile]
 		if err := l.MergeInto(dst); err != nil {
 			return err
 		}
@@ -253,7 +255,7 @@ type WindowsWithFeaturesAndProfile struct {
 	*Windows
 
 	Feature map[string]WindowsWithProfile `toml:"feature"`
-	Profile map[build.Profile]Windows     `toml:"profile"`
+	Profile map[profile.Profile]Windows   `toml:"profile"`
 }
 
 /* ----------------------- Struct: WindowsWithProfile ----------------------- */
@@ -261,7 +263,7 @@ type WindowsWithFeaturesAndProfile struct {
 type WindowsWithProfile struct {
 	*Windows
 
-	Profile map[build.Profile]Windows `toml:"profile"`
+	Profile map[profile.Profile]Windows `toml:"profile"`
 }
 
 /* -------------------------- Impl: templateBuilder ------------------------- */
@@ -269,28 +271,28 @@ type WindowsWithProfile struct {
 // Compile-time check that 'Builder' is implemented.
 var _ templateBuilder = (*WindowsWithFeaturesAndProfile)(nil)
 
-func (t *WindowsWithFeaturesAndProfile) build(bc *build.Context, dst Exporter) error {
+func (t *WindowsWithFeaturesAndProfile) build(rc *run.Context, dst Exporter) error {
 	// Root-level params
 	if err := t.Windows.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-constrained params
-	for _, f := range bc.Features {
+	for _, f := range rc.Features {
 		if err := t.Feature[f].Windows.MergeInto(dst); err != nil {
 			return err
 		}
 	}
 
 	// Profile-constrained params
-	l := t.Profile[bc.Profile]
+	l := t.Profile[rc.Profile]
 	if err := l.MergeInto(dst); err != nil {
 		return err
 	}
 
 	// Feature-and-profile-constrained params
-	for _, f := range bc.Features {
-		l := t.Feature[f].Profile[bc.Profile]
+	for _, f := range rc.Features {
+		l := t.Feature[f].Profile[rc.Profile]
 		if err := l.MergeInto(dst); err != nil {
 			return err
 		}

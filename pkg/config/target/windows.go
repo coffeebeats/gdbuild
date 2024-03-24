@@ -6,6 +6,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -18,19 +19,19 @@ type Windows struct {
 
 /* ----------------------------- Impl: Exporter ----------------------------- */
 
-func (b *Windows) Export(_ build.Source, _ *build.Context) *export.Export {
+func (b *Windows) Export(_ build.Source, _ *run.Context) *export.Export {
 	return nil
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (b *Windows) Configure(_ *build.Context) error {
+func (b *Windows) Configure(_ *run.Context) error {
 	return nil
 }
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (b *Windows) Validate(_ *build.Context) error {
+func (b *Windows) Validate(_ *run.Context) error {
 	return nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -25,7 +26,7 @@ type Base struct {
 	EncryptionKey string `toml:"encryption_key"`
 	// Hook defines commands to be run before or after the target artifact is
 	// generated.
-	Hook export.Hook `toml:"hook"`
+	Hook run.Hook `toml:"hook"`
 	// Options are 'export_presets.cfg' overrides, specifically the preset
 	// 'options' table, for the exported artifact.
 	Options map[string]any `toml:"options"`
@@ -41,19 +42,19 @@ type Base struct {
 
 /* ----------------------------- Impl: Exporter ----------------------------- */
 
-func (b *Base) Export(_ build.Source, _ *build.Context) *export.Export {
+func (b *Base) Export(_ build.Source, _ *run.Context) *export.Export {
 	return nil
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (b *Base) Configure(_ *build.Context) error {
+func (b *Base) Configure(_ *run.Context) error {
 	return nil
 }
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (b *Base) Validate(_ *build.Context) error {
+func (b *Base) Validate(_ *run.Context) error {
 	return nil
 }
 

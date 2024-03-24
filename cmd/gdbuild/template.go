@@ -13,7 +13,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
 	"github.com/coffeebeats/gdbuild/pkg/template"
 )
@@ -172,7 +172,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			log.Infof("platform: %s", pl)
 
-			bc := build.Context{
+			rc := run.Context{
 				Features:     features,
 				PathBuild:    osutil.Path(pathBuild),
 				PathManifest: osutil.Path(pathManifest),
@@ -182,7 +182,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				Verbose:      log.GetLevel() == log.DebugLevel,
 			}
 
-			t, err := template.Build(m, &bc)
+			t, err := template.Build(m, &rc)
 			if err != nil {
 				return err
 			}
@@ -220,7 +220,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			// Template was not cached; execute build action.
 
-			action, err := template.Action(t, &bc)
+			action, err := template.Action(t, &rc)
 			if err != nil {
 				return err
 			}

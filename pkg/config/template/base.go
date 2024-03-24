@@ -10,6 +10,8 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/godot/profile"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -31,9 +33,9 @@ type Base struct {
 	// Env is a map of environment variables to set during the build step.
 	Env map[string]string `toml:"env"`
 	// Hook defines commands to be run before or after a build step.
-	Hook build.Hook `toml:"hook"`
+	Hook run.Hook `toml:"hook"`
 	// Optimize is the specific optimization level for the template.
-	Optimize build.Optimize `toml:"optimize"`
+	Optimize profile.Optimize `toml:"optimize"`
 	// PathCustomPy is a path to a 'custom.py' file which defines export
 	// template build options.
 	PathCustomPy osutil.Path `toml:"custom_py_path"`
@@ -46,7 +48,7 @@ var _ Template = (*Base)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Base) Template(src build.Source, bc *build.Context) *build.Template {
+func (c *Base) Template(src build.Source, rc *run.Context) *build.Template {
 	s := c.SCons
 
 	// Append environment-specified arguments.
@@ -87,34 +89,34 @@ func (c *Base) Template(src build.Source, bc *build.Context) *build.Template {
 				Env:             c.Env,
 				Source:          src,
 				Optimize:        c.Optimize,
-				Platform:        bc.Platform,
-				Profile:         bc.Profile,
+				Platform:        rc.Platform,
+				Profile:         rc.Profile,
 				SCons:           s,
 			},
 		},
 		ExtraArtifacts: nil,
 		Paths:          nil,
-		Prebuild:       c.Hook.PreActions(bc),
-		Postbuild:      c.Hook.PostActions(bc),
+		Prebuild:       c.Hook.PreActions(rc),
+		Postbuild:      c.Hook.PostActions(rc),
 	}
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Base) Configure(bc *build.Context) error {
-	if err := c.PathCustomPy.RelTo(bc.PathManifest); err != nil {
+func (c *Base) Configure(rc *run.Context) error {
+	if err := c.PathCustomPy.RelTo(rc.PathManifest); err != nil {
 		return err
 	}
 
 	for i, m := range c.CustomModules {
-		if err := m.RelTo(bc.PathManifest); err != nil {
+		if err := m.RelTo(rc.PathManifest); err != nil {
 			return err
 		}
 
 		c.CustomModules[i] = m
 	}
 
-	if err := c.SCons.Configure(bc); err != nil {
+	if err := c.SCons.Configure(rc); err != nil {
 		return err
 	}
 
@@ -123,7 +125,7 @@ func (c *Base) Configure(bc *build.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Base) Validate(bc *build.Context) error {
+func (c *Base) Validate(rc *run.Context) error {
 	for _, m := range c.CustomModules {
 		if err := m.CheckIsDirOrEmpty(); err != nil {
 			return err
@@ -134,11 +136,11 @@ func (c *Base) Validate(bc *build.Context) error {
 		return err
 	}
 
-	if err := c.Hook.Validate(bc); err != nil {
+	if err := c.Hook.Validate(rc); err != nil {
 		return err
 	}
 
-	if err := c.SCons.Validate(bc); err != nil {
+	if err := c.SCons.Validate(rc); err != nil {
 		return err
 	}
 

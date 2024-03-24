@@ -10,6 +10,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -32,10 +33,10 @@ var _ Template = (*MacOS)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *MacOS) Template(g build.Source, bc *build.Context) *build.Template { //nolint:funlen
+func (c *MacOS) Template(g build.Source, rc *run.Context) *build.Template { //nolint:funlen
 	switch a := c.Base.Arch; a {
 	case platform.ArchAmd64, platform.ArchArm64:
-		t := c.Base.Template(g, bc)
+		t := c.Base.Template(g, rc)
 
 		t.Builds[0].Platform = platform.OSMacOS
 
@@ -57,13 +58,13 @@ func (c *MacOS) Template(g build.Source, bc *build.Context) *build.Template { //
 		amd64 := *c
 		amd64.Base.Arch = platform.ArchAmd64
 
-		templateAmd64 := amd64.Template(g, bc)
+		templateAmd64 := amd64.Template(g, rc)
 
 		// Next, create the 'arm64' binary.
 		arm64 := *c
 		arm64.Base.Arch = platform.ArchArm64
 
-		templateArm64 := arm64.Template(g, bc)
+		templateArm64 := arm64.Template(g, rc)
 
 		// Finally, merge the two binaries together.
 
@@ -75,15 +76,15 @@ func (c *MacOS) Template(g build.Source, bc *build.Context) *build.Template { //
 		templateNameUniversal := build.TemplateName(
 			platform.OSMacOS,
 			platform.ArchUniversal,
-			bc.Profile,
+			rc.Profile,
 		)
 
 		cmdLipo := &action.Process{
-			Directory:   bc.BinPath().String(),
+			Directory:   rc.BinPath().String(),
 			Environment: nil,
 
 			Shell:   exec.DefaultShell(),
-			Verbose: bc.Verbose,
+			Verbose: rc.Verbose,
 
 			Args: append(
 				lipo,
@@ -98,7 +99,7 @@ func (c *MacOS) Template(g build.Source, bc *build.Context) *build.Template { //
 		// Construct the output 'Template'. This is because nothing else needs
 		// to be copied over from the arch-specific templates and this avoid the
 		// need to deduplicate properties.
-		t := c.Base.Template(g, bc)
+		t := c.Base.Template(g, rc)
 
 		// Register the additional artifact.
 		t.ExtraArtifacts = append(t.ExtraArtifacts, templateNameUniversal)
@@ -125,12 +126,12 @@ func (c *MacOS) Template(g build.Source, bc *build.Context) *build.Template { //
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *MacOS) Configure(bc *build.Context) error {
-	if err := c.Base.Configure(bc); err != nil {
+func (c *MacOS) Configure(rc *run.Context) error {
+	if err := c.Base.Configure(rc); err != nil {
 		return err
 	}
 
-	if err := c.Vulkan.Configure(bc); err != nil {
+	if err := c.Vulkan.Configure(rc); err != nil {
 		return err
 	}
 
@@ -139,8 +140,8 @@ func (c *MacOS) Configure(bc *build.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *MacOS) Validate(bc *build.Context) error {
-	if err := c.Base.Validate(bc); err != nil {
+func (c *MacOS) Validate(rc *run.Context) error {
+	if err := c.Base.Validate(rc); err != nil {
 		return err
 	}
 
@@ -155,7 +156,7 @@ func (c *MacOS) Validate(bc *build.Context) error {
 
 	// NOTE: Don't check for 'lipo', that should be a runtime check.
 
-	if err := c.Vulkan.Validate(bc); err != nil {
+	if err := c.Vulkan.Validate(rc); err != nil {
 		return err
 	}
 
@@ -198,8 +199,8 @@ type Vulkan struct {
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Vulkan) Configure(bc *build.Context) error {
-	if err := c.PathSDK.RelTo(bc.PathManifest); err != nil {
+func (c *Vulkan) Configure(rc *run.Context) error {
+	if err := c.PathSDK.RelTo(rc.PathManifest); err != nil {
 		return err
 	}
 
@@ -208,7 +209,7 @@ func (c *Vulkan) Configure(bc *build.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Vulkan) Validate(_ *build.Context) error {
+func (c *Vulkan) Validate(_ *run.Context) error {
 	if err := c.PathSDK.CheckIsDir(); err != nil {
 		return fmt.Errorf("%w: missing path to Vulkan SDK", err)
 	}

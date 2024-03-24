@@ -6,6 +6,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -18,19 +19,19 @@ type MacOS struct {
 
 /* ----------------------------- Impl: Exporter ----------------------------- */
 
-func (b *MacOS) Export(_ build.Source, _ *build.Context) *export.Export {
+func (b *MacOS) Export(_ build.Source, _ *run.Context) *export.Export {
 	return nil
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (b *MacOS) Configure(_ *build.Context) error {
+func (b *MacOS) Configure(_ *run.Context) error {
 	return nil
 }
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (b *MacOS) Validate(_ *build.Context) error {
+func (b *MacOS) Validate(_ *run.Context) error {
 	return nil
 }
 

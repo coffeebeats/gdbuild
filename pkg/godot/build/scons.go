@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 const (
@@ -92,12 +93,12 @@ func (c *SCons) PathCacheFromEnv() osutil.Path {
 
 /* ---------------------------- config.Configurer --------------------------- */
 
-func (c *SCons) Configure(bc *Context) error {
+func (c *SCons) Configure(rc *run.Context) error {
 	if p := os.Getenv(envSConsCache); p != "" {
 		c.PathCache = osutil.Path(p)
 	}
 
-	if err := c.PathCache.RelTo(bc.PathManifest); err != nil {
+	if err := c.PathCache.RelTo(rc.PathManifest); err != nil {
 		return err
 	}
 
@@ -106,7 +107,7 @@ func (c *SCons) Configure(bc *Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *SCons) Validate(_ *Context) error {
+func (c *SCons) Validate(_ *run.Context) error {
 	if err := c.PathCache.CheckIsDirOrEmpty(); err != nil {
 		// A missing SCons cache is not a problem.
 		if !errors.Is(err, os.ErrNotExist) {

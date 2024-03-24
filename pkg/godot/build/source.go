@@ -17,6 +17,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -116,12 +117,12 @@ func (c *Source) VendorTo(ctx context.Context, out string) error {
 
 /* ---------------------------- config.Configurer --------------------------- */
 
-func (c *Source) Configure(bc *Context) error {
-	if err := c.PathSource.RelTo(bc.PathManifest); err != nil {
+func (c *Source) Configure(rc *run.Context) error {
+	if err := c.PathSource.RelTo(rc.PathManifest); err != nil {
 		return err
 	}
 
-	if err := c.VersionFile.RelTo(bc.PathManifest); err != nil {
+	if err := c.VersionFile.RelTo(rc.PathManifest); err != nil {
 		return err
 	}
 
@@ -130,7 +131,7 @@ func (c *Source) Configure(bc *Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Source) Validate(_ *Context) error {
+func (c *Source) Validate(_ *run.Context) error {
 	if c.IsEmpty() {
 		return fmt.Errorf("%w: no Godot version specified in manifest", ErrMissingInput)
 	}
@@ -230,7 +231,7 @@ func (v *Version) UnmarshalText(text []byte) error {
 
 // NewVendorGodotAction creates an 'action.Action' which vendors Godot source
 // code into the build directory.
-func NewVendorGodotAction(src *Source, cc *Context) action.WithDescription[action.Function] {
+func NewVendorGodotAction(src *Source, rc *run.Context) action.WithDescription[action.Function] {
 	fn := func(ctx context.Context) error {
 		if src.IsEmpty() {
 			log.Debug("no Godot version set; skipping vendoring of source code")
@@ -243,7 +244,7 @@ func NewVendorGodotAction(src *Source, cc *Context) action.WithDescription[actio
 			return err
 		}
 
-		pathBuild, err := filepath.Abs(cc.PathBuild.String())
+		pathBuild, err := filepath.Abs(rc.PathBuild.String())
 		if err != nil {
 			return err
 		}
@@ -263,6 +264,6 @@ func NewVendorGodotAction(src *Source, cc *Context) action.WithDescription[actio
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "vendor godot source code: " + cc.PathBuild.String(),
+		Description: "vendor godot source code: " + rc.PathBuild.String(),
 	}
 }

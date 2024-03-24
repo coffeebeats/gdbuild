@@ -13,6 +13,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -34,8 +35,8 @@ var _ Template = (*Windows)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Windows) Template(g build.Source, bc *build.Context) *build.Template {
-	t := c.Base.Template(g, bc)
+func (c *Windows) Template(g build.Source, rc *run.Context) *build.Template {
+	t := c.Base.Template(g, rc)
 
 	t.Builds[0].Platform = platform.OSWindows
 
@@ -44,7 +45,7 @@ func (c *Windows) Template(g build.Source, bc *build.Context) *build.Template {
 	}
 
 	scons := &t.Builds[0].SCons
-	if bc.Profile.IsRelease() {
+	if rc.Profile.IsRelease() {
 		scons.ExtraArgs = append(scons.ExtraArgs, "lto=full")
 	}
 
@@ -56,7 +57,7 @@ func (c *Windows) Template(g build.Source, bc *build.Context) *build.Template {
 		t.RegisterDependencyPath(c.PathIcon)
 
 		// Copy the icon file to the correct location.
-		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, bc))
+		t.Prebuild = action.InOrder(t.Prebuild, NewCopyImageFileAction(c.PathIcon, rc))
 	}
 
 	// Register the additional console artifact.
@@ -70,12 +71,12 @@ func (c *Windows) Template(g build.Source, bc *build.Context) *build.Template {
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Windows) Configure(bc *build.Context) error {
-	if err := c.Base.Configure(bc); err != nil {
+func (c *Windows) Configure(rc *run.Context) error {
+	if err := c.Base.Configure(rc); err != nil {
 		return err
 	}
 
-	if err := c.PathIcon.RelTo(bc.PathManifest); err != nil {
+	if err := c.PathIcon.RelTo(rc.PathManifest); err != nil {
 		return err
 	}
 
@@ -84,8 +85,8 @@ func (c *Windows) Configure(bc *build.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Windows) Validate(bc *build.Context) error {
-	if err := c.Base.Validate(bc); err != nil {
+func (c *Windows) Validate(rc *run.Context) error {
+	if err := c.Base.Validate(rc); err != nil {
 		return err
 	}
 
@@ -128,9 +129,9 @@ func (c *Windows) MergeInto(other any) error {
 // icon image into the Godot source code.
 func NewCopyImageFileAction(
 	pathImage osutil.Path,
-	bc *build.Context,
+	rc *run.Context,
 ) action.WithDescription[action.Function] {
-	pathDst := filepath.Join(bc.PathBuild.String(), "platform/windows/godot.ico")
+	pathDst := filepath.Join(rc.PathBuild.String(), "platform/windows/godot.ico")
 
 	fn := func(_ context.Context) error {
 		dst, err := os.Create(pathDst)

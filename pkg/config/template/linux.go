@@ -6,6 +6,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -24,8 +25,8 @@ var _ Template = (*Linux)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Linux) Template(g build.Source, bc *build.Context) *build.Template {
-	t := c.Base.Template(g, bc)
+func (c *Linux) Template(g build.Source, rc *run.Context) *build.Template {
+	t := c.Base.Template(g, rc)
 
 	t.Builds[0].Platform = platform.OSLinux
 
@@ -36,7 +37,7 @@ func (c *Linux) Template(g build.Source, bc *build.Context) *build.Template {
 	scons := &t.Builds[0].SCons
 	if config.Dereference(c.UseLLVM) {
 		scons.ExtraArgs = append(scons.ExtraArgs, "use_llvm=yes")
-	} else if bc.Profile.IsRelease() { // Only valid with GCC.
+	} else if rc.Profile.IsRelease() { // Only valid with GCC.
 		scons.ExtraArgs = append(scons.ExtraArgs, "lto=full")
 	}
 
@@ -45,8 +46,8 @@ func (c *Linux) Template(g build.Source, bc *build.Context) *build.Template {
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *Linux) Configure(bc *build.Context) error {
-	if err := c.Base.Configure(bc); err != nil {
+func (c *Linux) Configure(rc *run.Context) error {
+	if err := c.Base.Configure(rc); err != nil {
 		return err
 	}
 
@@ -55,8 +56,8 @@ func (c *Linux) Configure(bc *build.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *Linux) Validate(bc *build.Context) error {
-	if err := c.Base.Validate(bc); err != nil {
+func (c *Linux) Validate(rc *run.Context) error {
+	if err := c.Base.Validate(rc); err != nil {
 		return err
 	}
 
