@@ -12,6 +12,8 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
+const envEncryptionKey = "SCRIPT_AES256_ENCRYPTION_KEY"
+
 /* -------------------------------------------------------------------------- */
 /*                                Struct: Build                               */
 /* -------------------------------------------------------------------------- */
@@ -31,6 +33,12 @@ type Build struct {
 
 	// DoublePrecision enables double floating-point precision.
 	DoublePrecision bool
+
+	// EncryptionKey is an encryption key to embed in the export template.
+	//
+	// NOTE: While this could just be set in 'Env', exposing it here simplifies
+	// setting it externally (i.e. via the 'target' command).
+	EncryptionKey string
 
 	// Env is a map of environment variables to set during the build step.
 	Env map[string]string
@@ -62,6 +70,13 @@ func TemplateName(pl platform.OS, arch platform.Arch, pr Profile) string {
 	}
 
 	return name
+}
+
+/* --------------------- Function: EncryptionKeyFromEnv --------------------- */
+
+// EncryptionKeyFromEnv returns the encryption key set via environment variable.
+func EncryptionKeyFromEnv() string {
+	return os.Getenv(envEncryptionKey)
 }
 
 /* ---------------------------- Method: Filename ---------------------------- */
@@ -101,6 +116,11 @@ func (b *Build) SConsCommand(c *Context) *action.Process { //nolint:cyclop,funle
 	// Now pass through all environment variables so that these override
 	// previously values.
 	cmd.Environment = append(cmd.Environment, os.Environ()...)
+
+	// Set the encryption key on the environment, if one is specified.
+	if b.EncryptionKey != "" {
+		cmd.Environment = append(cmd.Environment, envEncryptionKey+"="+b.EncryptionKey)
+	}
 
 	// Set the SCons cache size limit, if one was set.
 	if csl := scons.CacheSizeLimit; csl != nil {

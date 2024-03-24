@@ -2,6 +2,9 @@ package template
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
@@ -23,6 +26,8 @@ type Base struct {
 	CustomModules []osutil.Path `toml:"custom_modules"`
 	// DoublePrecision enables double floating-point precision.
 	DoublePrecision *bool `toml:"double_precision"`
+	// EncryptionKey is the encryption key to embed in the export template.
+	EncryptionKey string `toml:"encryption_key"`
 	// Env is a map of environment variables to set during the build step.
 	Env map[string]string `toml:"env"`
 	// Hook defines commands to be run before or after a build step.
@@ -57,6 +62,20 @@ func (c *Base) Template(src build.Source, bc *build.Context) *build.Template {
 		s.CacheSizeLimit = csl
 	}
 
+	// Set the encryption key environment variable; see
+	// https://docs.godotengine.org/en/stable/contributing/development/compiling/compiling_with_script_encryption_key.html.
+	var encryptionKey string
+	if ek := build.EncryptionKeyFromEnv(); ek != "" {
+		encryptionKey = ek
+	} else if c.EncryptionKey != "" {
+		ek := os.ExpandEnv(c.EncryptionKey)
+		if ek != "" {
+			encryptionKey = ek
+		} else {
+			log.Warnf("encryption key set in manifest, but value was empty: %s", c.EncryptionKey)
+		}
+	}
+
 	return &build.Template{
 		Builds: []build.Build{
 			{
@@ -64,6 +83,7 @@ func (c *Base) Template(src build.Source, bc *build.Context) *build.Template {
 				CustomModules:   c.CustomModules,
 				CustomPy:        c.PathCustomPy,
 				DoublePrecision: config.Dereference(c.DoublePrecision),
+				EncryptionKey:   encryptionKey,
 				Env:             c.Env,
 				Source:          src,
 				Optimize:        c.Optimize,
