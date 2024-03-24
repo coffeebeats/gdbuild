@@ -16,9 +16,6 @@ import (
 // Target specifies a single, platform-agnostic exportable artifact within the
 // Godot project.
 type Target struct {
-	// Name is the display name of the target. Not used by Godot.
-	Name string
-
 	// DefaultFeatures contains the slice of Godot project feature tags to build
 	// with.
 	DefaultFeatures []string `toml:"default_features"`

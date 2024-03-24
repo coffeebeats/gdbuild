@@ -40,7 +40,7 @@ func TestTemplateCombine(t *testing.T) {
 
 			rc: run.Context{Platform: host.OSWindows},
 
-			want: &windows.Template{Template: &common.Template{}},
+			want: &windows.Template{Template: new(common.Template)},
 		},
 		{
 			name: "base properties are correctly populated",
@@ -78,15 +78,15 @@ func TestTemplateCombine(t *testing.T) {
 			[template.feature.test]
 			env = { VAR = "123" }
 
-			# [template.feature.test.profile.release_debug]
-			optimize = "speed_trace"
+			[template.feature.test.profile.release_debug]
+			optimize = "size"
 			`,
 
 			want: &windows.Template{
 				Template: &common.Template{
 					Arch:     host.ArchArm64,
 					Env:      map[string]string{"VAR": "123"},
-					Optimize: engine.OptimizeSpeedTrace,
+					Optimize: engine.OptimizeSize,
 				},
 			},
 		},
@@ -105,15 +105,15 @@ func TestTemplateCombine(t *testing.T) {
 			[template.platform.windows.feature.test]
 			env = { VAR = "123" }
 
-			# [template.platform.windows.feature.test.profile.release_debug]
-			optimize = "speed_trace"
+			[template.platform.windows.feature.test.profile.release_debug]
+			optimize = "size"
 			`,
 
 			want: &windows.Template{
 				Template: &common.Template{
 					Arch:     host.ArchArm64,
 					Env:      map[string]string{"VAR": "123"},
-					Optimize: engine.OptimizeSpeedTrace,
+					Optimize: engine.OptimizeSize,
 				},
 			},
 		},
@@ -125,7 +125,7 @@ func TestTemplateCombine(t *testing.T) {
 
 			want: &windows.Template{
 				UseMinGW: pointer(true),
-				Template: &common.Template{},
+				Template: new(common.Template),
 			},
 		},
 		{
@@ -140,7 +140,7 @@ func TestTemplateCombine(t *testing.T) {
 
 			want: &linux.Template{
 				UseLLVM:  pointer(true),
-				Template: &common.Template{},
+				Template: new(common.Template),
 			},
 		},
 		{
@@ -185,7 +185,7 @@ func TestTemplateCombine(t *testing.T) {
 			want: &windows.Template{
 				UseMinGW: pointer(true),
 				PathIcon: osutil.Path("a/b/icon.ico"),
-				Template: &common.Template{},
+				Template: new(common.Template),
 			},
 		},
 	}

@@ -1,4 +1,4 @@
-package platform //nolint:dupl
+package platform
 
 import (
 	"fmt"
@@ -77,7 +77,7 @@ var _ TargetBuilder[*windows.Target] = (*windows.TargetWithFeaturesAndProfile)(n
 
 /* ----------------------------- Method: Combine ---------------------------- */
 
-func (t *Targets) Combine(rc *run.Context) (Exporter, error) { //nolint:ireturn
+func (t Targets) Combine(rc *run.Context) (Exporter, error) { //nolint:dupl,ireturn
 	// Root params.
 	base := new(common.Target)
 
