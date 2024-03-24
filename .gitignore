@@ -24,5 +24,6 @@ go.work
 dist
 
 # gdbuild-related ignores
+.gdbuild
 gdbuild*.toml
 .godot-version
