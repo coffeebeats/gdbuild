@@ -31,7 +31,7 @@ type Manifest struct {
 	// Godot contains settings on which Godot version/source code to use.
 	Godot Godot `toml:"godot"`
 	// Target includes settings for exporting Godot game executables and packs.
-	Target map[string]Targets `toml:"target"`
+	Target map[string]platform.Targets `toml:"target"`
 	// Template includes settings for building custom export templates.
 	Template platform.Templates `toml:"template"`
 }
