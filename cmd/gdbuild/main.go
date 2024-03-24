@@ -58,6 +58,10 @@ func main() { //nolint:funlen
 		},
 
 		Commands: []*cli.Command{
+			/* ---------------------------- Configuration ---------------------------- */
+
+			NewInit(),
+
 			/* ----------------------------- Build/Export ---------------------------- */
 
 			NewTarget(),

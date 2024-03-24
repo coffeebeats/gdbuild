@@ -10,6 +10,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/cmd/gdbuild",
+      "cwd": "${workspaceFolder}",
       "args": [],
       "env": {
         "GDBUILD_HOME": "${workspaceFolder}/.gdbuild"

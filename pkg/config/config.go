@@ -1,6 +1,15 @@
 package config
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config/template"
@@ -24,6 +33,96 @@ type Manifest struct {
 	Godot build.Source `toml:"godot"`
 	// Template includes settings for building custom export templates.
 	Template template.Templates `toml:"template"`
+}
+
+/* ----------------------------- Function: Init ----------------------------- */
+
+// Init initializes a GDBuild manifest at the specified path. Note that 'path'
+// can be a directory or a '.toml' file.
+func Init(path string) error { //nolint:cyclop
+	if path == "" {
+		return fmt.Errorf("%w: 'path'", ErrMissingInput)
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+
+		// Assume the path is a directory if it doesn't end with '.toml'.
+		if !strings.HasSuffix(path, ".toml") {
+			if strings.Contains(filepath.Base(path), ".") {
+				return fmt.Errorf(
+					"%w: path must be a directory or a '.toml' file: %s",
+					ErrInvalidInput,
+					path,
+				)
+			}
+
+			path = filepath.Join(path, DefaultFilename())
+		}
+	}
+
+	if info != nil {
+		if !info.IsDir() {
+			return fmt.Errorf("%w: %s", fs.ErrExist, path)
+		}
+
+		path = filepath.Join(path, DefaultFilename())
+	}
+
+	// Check again if the file exists.
+	info, err = os.Stat(path)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+	}
+
+	if info != nil {
+		return fmt.Errorf("%w: %s", fs.ErrExist, path)
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	if _, err := io.Copy(f, bytes.NewReader([]byte(defaultContents()))); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* ------------------------ Function: defaultContents ----------------------- */
+
+// defaultContents contains the default GDBuild manifest contents.
+func defaultContents() string {
+	return `[config]
+  # Inherit from the specified manifest file, merging the configuration in
+  # this file on top of the settings in the specified file. 
+  extends = ""
+
+[godot]
+  # The version of Godot to use for compiling and exporting.
+  version = "4.2.1-stable"
+
+[template]
+  # A path to a 'custom.py' file which defines export template build options.
+  custom_py_path = "$PWD/custom.py"
+
+[template.scons]
+  cache_path = "$PWD/.scons"
+  command    = ["python3", "-m", "SCons"]
+
+[template.profile.release]
+  # EncryptionKey is the encryption key to embed in the export template.
+  encryption_key = "$SCRIPT_AES256_ENCRYPTION_KEY"
+`
 }
 
 /* -------------------------------------------------------------------------- */
