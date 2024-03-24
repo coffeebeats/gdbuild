@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
@@ -19,7 +19,7 @@ type MacOS struct {
 
 /* ----------------------------- Impl: Exporter ----------------------------- */
 
-func (b *MacOS) Export(_ build.Source, _ *run.Context) *export.Export {
+func (b *MacOS) Export(_ engine.Source, _ *run.Context) *export.Export {
 	return nil
 }
 

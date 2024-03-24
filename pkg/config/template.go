@@ -1,31 +1,24 @@
-package template
+package config
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/config"
-	"github.com/coffeebeats/gdbuild/pkg/config/template"
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	configtemplate "github.com/coffeebeats/gdbuild/pkg/config/template"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
-var (
-	ErrInvalidInput = errors.New("invalid input")
-	ErrMissingInput = errors.New("missing input")
-)
-
 /* -------------------------------------------------------------------------- */
-/*                               Function: Build                              */
+/*                           Function: BuildTemplate                          */
 /* -------------------------------------------------------------------------- */
 
-// Build creates a `Template` instance which contains an action for compiling
-// Godot based on the specified configuration.
-func Build(m *config.Manifest, rc *run.Context) (*build.Template, error) { //nolint:cyclop,funlen
+// BuildTemplate creates a `Template` instance which contains an action for
+// compiling Godot based on the specified configuration.
+func BuildTemplate(m *Manifest, rc *run.Context) (*template.Template, error) { //nolint:cyclop,funlen
 	var merged struct {
-		source   build.Source
-		template template.Template
+		godot    Godot
+		template configtemplate.Template
 	}
 
 	toBuild := []configuration{{context: rc, manifest: m}}
@@ -53,7 +46,7 @@ func Build(m *config.Manifest, rc *run.Context) (*build.Template, error) { //nol
 
 		// Skip block below if this manifest has already been "visited".
 		if _, ok := visited[extends]; !ok && extends != "" {
-			baseManifest, err := config.ParseFile(extends.String())
+			baseManifest, err := ParseFile(extends.String())
 			if err != nil {
 				return nil, fmt.Errorf("cannot parse inherited manifest: %w", err)
 			}
@@ -74,7 +67,7 @@ func Build(m *config.Manifest, rc *run.Context) (*build.Template, error) { //nol
 		}
 
 		// Merge 'Godot' properties.
-		if err := cfg.manifest.Godot.MergeInto(&merged.source); err != nil {
+		if err := cfg.manifest.Godot.MergeInto(&merged.godot); err != nil {
 			return nil, err
 		}
 
@@ -106,7 +99,7 @@ func Build(m *config.Manifest, rc *run.Context) (*build.Template, error) { //nol
 	}
 
 	// Validate 'Template' properties.
-	if err := merged.source.Validate(rc); err != nil {
+	if err := merged.godot.Validate(rc); err != nil {
 		return nil, err
 	}
 
@@ -114,12 +107,12 @@ func Build(m *config.Manifest, rc *run.Context) (*build.Template, error) { //nol
 		return nil, err
 	}
 
-	return merged.template.Template(merged.source, rc), nil
+	return merged.template.Template(*merged.godot.Source, rc), nil
 }
 
 /* -------------------------- Struct: configuration ------------------------- */
 
 type configuration struct {
-	manifest *config.Manifest
+	manifest *Manifest
 	context  *run.Context
 }

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/profile"
 )
 
 var ErrMissingInput = errors.New("missing input")
@@ -28,7 +28,7 @@ type Context struct {
 	// Platform is the target platform to build for.
 	Platform platform.OS
 	// Profile is the GDBuild optimization level to build with.
-	Profile profile.Profile
+	Profile engine.Profile
 
 	// PathBuild is the directory in which to build the template in. All input
 	// artifacts will be copied here and the SCons build command will be
@@ -55,7 +55,7 @@ func (c *Context) Validate() error {
 		return err
 	}
 
-	if _, err := profile.ParseProfile(c.Profile.String()); err != nil {
+	if _, err := engine.ParseProfile(c.Profile.String()); err != nil {
 		return err
 	}
 

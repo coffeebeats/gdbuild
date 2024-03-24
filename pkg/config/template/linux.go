@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -25,7 +26,7 @@ var _ Template = (*Linux)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Linux) Template(g build.Source, rc *run.Context) *build.Template {
+func (c *Linux) Template(g engine.Source, rc *run.Context) *template.Template {
 	t := c.Base.Template(g, rc)
 
 	t.Builds[0].Platform = platform.OSLinux

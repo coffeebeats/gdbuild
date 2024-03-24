@@ -9,8 +9,8 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/config/template"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/profile"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -54,7 +54,7 @@ func TestTemplateBuild(t *testing.T) {
 				Base: &template.Base{
 					Arch:         platform.ArchArm64,
 					Env:          map[string]string{"VAR": "123"},
-					Optimize:     profile.OptimizeSpeedTrace,
+					Optimize:     engine.OptimizeSpeedTrace,
 					PathCustomPy: osutil.Path("a/b/custom.py"),
 				},
 			},
@@ -65,7 +65,7 @@ func TestTemplateBuild(t *testing.T) {
 			rc: run.Context{
 				Features: []string{"test"},
 				Platform: platform.OSWindows,
-				Profile:  profile.ProfileReleaseDebug,
+				Profile:  engine.ProfileReleaseDebug,
 			},
 			doc: `
 			[template.profile.release_debug]
@@ -82,7 +82,7 @@ func TestTemplateBuild(t *testing.T) {
 				Base: &template.Base{
 					Arch:     platform.ArchArm64,
 					Env:      map[string]string{"VAR": "123"},
-					Optimize: profile.OptimizeSpeedTrace,
+					Optimize: engine.OptimizeSpeedTrace,
 				},
 			},
 		},
@@ -92,7 +92,7 @@ func TestTemplateBuild(t *testing.T) {
 			rc: run.Context{
 				Features: []string{"test"},
 				Platform: platform.OSWindows,
-				Profile:  profile.ProfileReleaseDebug,
+				Profile:  engine.ProfileReleaseDebug,
 			},
 			doc: `
 			[template.platform.windows.profile.release_debug]
@@ -109,7 +109,7 @@ func TestTemplateBuild(t *testing.T) {
 				Base: &template.Base{
 					Arch:     platform.ArchArm64,
 					Env:      map[string]string{"VAR": "123"},
-					Optimize: profile.OptimizeSpeedTrace,
+					Optimize: engine.OptimizeSpeedTrace,
 				},
 			},
 		},
@@ -129,7 +129,7 @@ func TestTemplateBuild(t *testing.T) {
 
 			rc: run.Context{
 				Platform: platform.OSLinux,
-				Profile:  profile.ProfileRelease,
+				Profile:  engine.ProfileRelease,
 			},
 			doc: `[template.platform.linux.profile.release]
 			use_llvm = true`,
@@ -145,7 +145,7 @@ func TestTemplateBuild(t *testing.T) {
 			rc: run.Context{
 				Features: []string{"test"},
 				Platform: platform.OSMacOS,
-				Profile:  profile.ProfileRelease,
+				Profile:  engine.ProfileRelease,
 			},
 			doc: `
 			[template.platform.macos.feature.test]
@@ -170,7 +170,7 @@ func TestTemplateBuild(t *testing.T) {
 			rc: run.Context{
 				Features: []string{"test"},
 				Platform: platform.OSWindows,
-				Profile:  profile.ProfileRelease,
+				Profile:  engine.ProfileRelease,
 			},
 			doc: `[template.platform.windows.profile.release]
 			use_mingw = true

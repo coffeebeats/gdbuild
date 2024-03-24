@@ -9,8 +9,9 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/profile"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -35,7 +36,7 @@ type Base struct {
 	// Hook defines commands to be run before or after a build step.
 	Hook run.Hook `toml:"hook"`
 	// Optimize is the specific optimization level for the template.
-	Optimize profile.Optimize `toml:"optimize"`
+	Optimize engine.Optimize `toml:"optimize"`
 	// PathCustomPy is a path to a 'custom.py' file which defines export
 	// template build options.
 	PathCustomPy osutil.Path `toml:"custom_py_path"`
@@ -48,7 +49,7 @@ var _ Template = (*Base)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *Base) Template(src build.Source, rc *run.Context) *build.Template {
+func (c *Base) Template(src engine.Source, rc *run.Context) *template.Template {
 	s := c.SCons
 
 	// Append environment-specified arguments.
@@ -78,7 +79,7 @@ func (c *Base) Template(src build.Source, rc *run.Context) *build.Template {
 		}
 	}
 
-	return &build.Template{
+	return &template.Template{
 		Builds: []build.Build{
 			{
 				Arch:            c.Arch,

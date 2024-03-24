@@ -9,7 +9,9 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/exec"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -33,7 +35,7 @@ var _ Template = (*MacOS)(nil)
 
 /* ----------------------------- Impl: Template ----------------------------- */
 
-func (c *MacOS) Template(g build.Source, rc *run.Context) *build.Template { //nolint:funlen
+func (c *MacOS) Template(g engine.Source, rc *run.Context) *template.Template { //nolint:funlen
 	switch a := c.Base.Arch; a {
 	case platform.ArchAmd64, platform.ArchArm64:
 		t := c.Base.Template(g, rc)

@@ -5,10 +5,9 @@ import (
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/profile"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -24,7 +23,7 @@ var (
 type Exporter interface {
 	config.Configurable[*run.Context]
 
-	Export(src build.Source, rc *run.Context) *export.Export
+	Export(src engine.Source, rc *run.Context) *export.Export
 }
 
 /* -------------------------------------------------------------------------- */
@@ -49,7 +48,7 @@ type Targets struct {
 
 	Platform Platforms                     `toml:"platform"`
 	Feature  map[string]BaseWithoutFeature `toml:"feature"`
-	Profile  map[profile.Profile]Base      `toml:"profile"`
+	Profile  map[engine.Profile]Base       `toml:"profile"`
 }
 
 /* ----------------------- Struct: BaseWithoutFeature ----------------------- */
@@ -57,7 +56,7 @@ type Targets struct {
 type BaseWithoutFeature struct {
 	*Base
 
-	Profile map[profile.Profile]Base `toml:"profile"`
+	Profile map[engine.Profile]Base `toml:"profile"`
 }
 
 /* ---------------------------- Struct: Platforms --------------------------- */
@@ -143,7 +142,7 @@ type LinuxWithFeaturesAndProfile struct {
 	*Linux
 
 	Feature map[string]LinuxWithProfile `toml:"feature"`
-	Profile map[profile.Profile]Linux   `toml:"profile"`
+	Profile map[engine.Profile]Linux    `toml:"profile"`
 }
 
 /* ----------------------- Struct: LinuxWithProfile ----------------------- */
@@ -151,7 +150,7 @@ type LinuxWithFeaturesAndProfile struct {
 type LinuxWithProfile struct {
 	*Linux
 
-	Profile map[profile.Profile]Linux `toml:"profile"`
+	Profile map[engine.Profile]Linux `toml:"profile"`
 }
 
 /* -------------------------- Impl: templateBuilder ------------------------- */
@@ -199,7 +198,7 @@ type MacOSWithFeaturesAndProfile struct {
 	*MacOS
 
 	Feature map[string]MacOSWithProfile `toml:"feature"`
-	Profile map[profile.Profile]MacOS   `toml:"profile"`
+	Profile map[engine.Profile]MacOS    `toml:"profile"`
 }
 
 /* ----------------------- Struct: MacOSWithProfile ----------------------- */
@@ -207,7 +206,7 @@ type MacOSWithFeaturesAndProfile struct {
 type MacOSWithProfile struct {
 	*MacOS
 
-	Profile map[profile.Profile]MacOS `toml:"profile"`
+	Profile map[engine.Profile]MacOS `toml:"profile"`
 }
 
 /* -------------------------- Impl: templateBuilder ------------------------- */
@@ -255,7 +254,7 @@ type WindowsWithFeaturesAndProfile struct {
 	*Windows
 
 	Feature map[string]WindowsWithProfile `toml:"feature"`
-	Profile map[profile.Profile]Windows   `toml:"profile"`
+	Profile map[engine.Profile]Windows    `toml:"profile"`
 }
 
 /* ----------------------- Struct: WindowsWithProfile ----------------------- */
@@ -263,7 +262,7 @@ type WindowsWithFeaturesAndProfile struct {
 type WindowsWithProfile struct {
 	*Windows
 
-	Profile map[profile.Profile]Windows `toml:"profile"`
+	Profile map[engine.Profile]Windows `toml:"profile"`
 }
 
 /* -------------------------- Impl: templateBuilder ------------------------- */

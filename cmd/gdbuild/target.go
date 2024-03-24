@@ -10,8 +10,8 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/coffeebeats/gdbuild/pkg/config"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/profile"
 )
 
 var ErrTargetUsageProfiles = errors.New("cannot specify both '--release' and '--release_debug'")
@@ -154,16 +154,16 @@ func parsePlatform(platformInput string) (platform.OS, error) {
 	return godotPlatform, nil
 }
 
-func parseProfile(releaseInput, releaseDebugInput bool) profile.Profile {
-	var pr profile.Profile
+func parseProfile(releaseInput, releaseDebugInput bool) engine.Profile {
+	var pr engine.Profile
 
 	switch {
 	case releaseInput:
-		pr = profile.ProfileRelease
+		pr = engine.ProfileRelease
 	case releaseDebugInput:
-		pr = profile.ProfileReleaseDebug
+		pr = engine.ProfileReleaseDebug
 	default:
-		pr = profile.ProfileDebug
+		pr = engine.ProfileDebug
 	}
 
 	return pr

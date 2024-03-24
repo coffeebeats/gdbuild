@@ -2,6 +2,7 @@ package template
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,10 +13,12 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/godot/build"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
 )
+
+var ErrMissingInput = errors.New("missing input")
 
 /* -------------------------------------------------------------------------- */
 /*                              Function: Action                              */
@@ -23,7 +26,7 @@ import (
 
 // Action creates a new 'action.Action' which executes the specified processes
 // for compiling the export template.
-func Action(t *build.Template, rc *run.Context) (action.Action, error) { //nolint:ireturn
+func Action(t *template.Template, rc *run.Context) (action.Action, error) { //nolint:ireturn
 	actions := make(
 		[]action.Action,
 		0,
@@ -33,7 +36,7 @@ func Action(t *build.Template, rc *run.Context) (action.Action, error) { //nolin
 	actions = append(
 		actions,
 		t.Prebuild,
-		build.NewVendorGodotAction(&t.Builds[0].Source, rc),
+		NewVendorGodotAction(&t.Builds[0].Source, rc),
 	)
 
 	for _, b := range t.Builds {
@@ -115,7 +118,7 @@ func NewVerifyArtifactsAction(
 // Godot artifacts in the 'gdbuild' store.
 func NewCacheArtifactsAction(
 	rc *run.Context,
-	t *build.Template,
+	t *template.Template,
 ) (action.WithDescription[action.Function], error) {
 	fn := func(_ context.Context) error {
 		pathBin := rc.BinPath()
