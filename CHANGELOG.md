@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0 (2024-03-24)
+
+## What's Changed
+* refactor(build): switch `Source.Version` to a `Version` type for improved clarity by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/60
+* feat(template): add support for encrypting export templates by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/62
+* chore(cmd)!: remove unused `info` command by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/63
+* feat(cmd): define an `init` command for creating `gdbuild` manifests by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/64
+* fix(cmd): correctly log extra arguments passed to `init` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/65
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.1.3...v0.2.0
+
 ## 0.1.3 (2024-03-23)
 
 ## What's Changed
