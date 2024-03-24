@@ -62,10 +62,6 @@ func main() { //nolint:funlen
 
 			NewTarget(),
 			NewTemplate(),
-
-			/* ------------------------------- Inspect ------------------------------- */
-
-			NewInfo(),
 		},
 	}
 
