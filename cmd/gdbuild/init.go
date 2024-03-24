@@ -34,7 +34,7 @@ func NewInit() *cli.Command {
 					ctx: c,
 					err: fmt.Errorf(
 						"%w: %s", ErrTooManyArguments,
-						strings.Join(c.Args().Slice()[1:], " "),
+						strings.Join(c.Args().Slice()[0:], " "),
 					),
 				}
 			}
