@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/charmbracelet/log"
@@ -83,14 +82,5 @@ func (p *Process) Sprint() string {
 /* --------------------------- Impl: fmt.Stringer --------------------------- */
 
 func (p *Process) String() string {
-	env := p.Environment
-	slices.Sort(env)
-
-	processStr := fmt.Sprintf(
-		"%s %s",
-		strings.Join(env, " "),
-		strings.Join(p.Args, " "),
-	)
-
-	return strings.TrimSpace(processStr)
+	return strings.TrimSpace(strings.Join(p.Args, " "))
 }
