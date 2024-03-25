@@ -1,4 +1,4 @@
-package template
+package export
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/godot/template"
+	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
 )
@@ -23,27 +23,27 @@ var ErrMissingInput = errors.New("missing input")
 
 // Action creates a new 'action.Action' which executes the specified processes
 // for compiling the export template.
-func Action(t *template.Template, rc *run.Context) (action.Action, error) { //nolint:ireturn
+func Action(rc *run.Context, x *export.Export) (action.Action, error) { //nolint:ireturn
 	actions := make([]action.Action, 0)
 
 	actions = append(
 		actions,
-		t.Prebuild,
-		NewVendorGodotAction(&t.Builds[0].Source, rc),
-		t.Action(rc),
+		x.RunBefore,
+		NewInstallGodotAction(rc, x.Version, rc.PathBuild),
+		x.Action(),
 	)
 
-	cacheArtifacts, err := NewCacheArtifactsAction(rc, t)
+	cacheArtifacts, err := NewCacheArtifactsAction(rc, x)
 	if err != nil {
 		return nil, err
 	}
 
 	actions = append(
 		actions,
-		t.Postbuild,
-		run.NewVerifyArtifactsAction(rc, t.Artifacts()),
+		x.RunAfter,
+		run.NewVerifyArtifactsAction(rc, x.Artifacts()),
 		cacheArtifacts,
-		NewCopyArtifactsAction(rc, t.Artifacts()),
+		NewCopyArtifactsAction(rc, x.Artifacts()),
 	)
 
 	return action.InOrder(actions...), nil
@@ -54,10 +54,10 @@ func Action(t *template.Template, rc *run.Context) (action.Action, error) { //no
 /* -------------------------------------------------------------------------- */
 
 // NewCacheArtifactsAction creates an 'action.Action' which caches the generated
-// Godot artifacts in the 'gdbuild' store.
+// project artifacts in the 'gdbuild' store.
 func NewCacheArtifactsAction(
 	rc *run.Context,
-	t *template.Template,
+	x *export.Export,
 ) (action.WithDescription[action.Function], error) {
 	fn := func(_ context.Context) error {
 		pathBin := rc.BinPath()
@@ -72,7 +72,7 @@ func NewCacheArtifactsAction(
 
 		var files []string
 
-		for _, a := range t.Artifacts() {
+		for _, a := range x.Artifacts() {
 			pathArtifact := filepath.Join(pathBin.String(), a)
 
 			log.Debugf("caching artifact in store: %s", a)
@@ -80,7 +80,7 @@ func NewCacheArtifactsAction(
 			files = append(files, pathArtifact)
 		}
 
-		pathArchive, err := store.TemplateArchive(pathStore, t)
+		pathArchive, err := store.TargetArchive(pathStore, rc, x)
 		if err != nil {
 			return err
 		}
@@ -105,14 +105,10 @@ func NewCacheArtifactsAction(
 
 // NewCopyArtifactsAction creates an 'action.Action' which moves the generated
 // Godot artifacts to the output directory.
-func NewCopyArtifactsAction( //nolint:ireturn
+func NewCopyArtifactsAction(
 	rc *run.Context,
 	artifacts []string,
-) action.Action {
-	if rc.PathOut == "" {
-		return action.NoOp{}
-	}
-
+) action.WithDescription[action.Function] {
 	fn := func(ctx context.Context) error {
 		if rc.PathOut == "" {
 			return nil

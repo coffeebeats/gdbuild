@@ -1,6 +1,15 @@
 package export
 
-import "github.com/coffeebeats/gdbuild/pkg/run"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+
+	"golang.org/x/exp/maps"
+
+	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/run"
+)
 
 /* -------------------------------------------------------------------------- */
 /*                              Struct: PackFile                              */
@@ -25,6 +34,44 @@ type PackFile struct {
 	// Zip defines whether to compress the matching game files. The pack files
 	// will use the '.zip' extension instead of '.pck'.
 	Zip *bool `toml:"zip"`
+}
+
+/* ------------------------------ Method: Files ----------------------------- */
+
+func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) {
+	pathRoot, err := filepath.Abs(path.String())
+	if err != nil {
+		return nil, err
+	}
+
+	files := make(map[osutil.Path]struct{})
+
+	for _, g := range c.Glob {
+		if !strings.HasPrefix(g, "/") &&
+			!strings.HasPrefix(g, string(os.PathSeparator)) {
+			g = filepath.Join(pathRoot, g)
+		}
+
+		matches, err := filepath.Glob(g)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, match := range matches {
+			baseGlob := filepath.Base(g)
+			baseMatch := filepath.Base(match)
+
+			// Ignore hidden files unless explicitly searched for.
+			if !strings.HasPrefix(baseGlob, ".") &&
+				strings.HasPrefix(baseMatch, ".") {
+				continue
+			}
+
+			files[osutil.Path(match)] = struct{}{}
+		}
+	}
+
+	return maps.Keys(files), nil
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */

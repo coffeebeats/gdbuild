@@ -261,6 +261,8 @@ func parseBuildDir(path string, dryRun bool) (string, error) {
 		defer os.RemoveAll(p)
 
 		pathBuild = p
+	} else if dryRun {
+		pathBuild = "<temporary directory>"
 	}
 
 	return pathBuild, nil

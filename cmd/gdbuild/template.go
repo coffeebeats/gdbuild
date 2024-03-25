@@ -179,13 +179,16 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				Verbose:      log.GetLevel() == log.DebugLevel,
 			}
 
+			if printHash {
+				return printTemplateHash(&rc, m)
+			}
+
 			action, err := exportTemplate(
 				c.Context,
 				storePath,
 				m,
 				&rc,
 				force,
-				printHash,
 			)
 			if err != nil {
 				return err
@@ -204,37 +207,19 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 /* ---------------------- Function: buildExportTemplate --------------------- */
 
-func exportTemplate( //nolint:ireturn,funlen
+func exportTemplate( //nolint:ireturn
 	_ context.Context,
 	storePath string,
 	m *config.Manifest,
 	rc *run.Context,
-	force, printHash bool,
+	force bool,
 ) (action.Action, error) {
 	t, err := config.Template(rc, m)
 	if err != nil {
 		return nil, err
 	}
 
-	if printHash {
-		fn := func(_ context.Context) error {
-			cs, err := t.Checksum()
-			if err != nil {
-				return err
-			}
-
-			log.Print(cs)
-
-			return nil
-		}
-
-		return action.WithDescription[action.Function]{
-			Action:      fn,
-			Description: "print template checksum",
-		}, nil
-	}
-
-	hasTemplate, err := store.Has(storePath, t)
+	hasTemplate, err := store.HasTemplate(storePath, t)
 	if err != nil {
 		return nil, err
 	}
@@ -270,4 +255,22 @@ func exportTemplate( //nolint:ireturn,funlen
 
 	// Template was not cached; create build action.
 	return template.Action(t, rc)
+}
+
+/* ----------------------- Function: printTemplateHash ---------------------- */
+
+func printTemplateHash(rc *run.Context, m *config.Manifest) error {
+	t, err := config.Template(rc, m)
+	if err != nil {
+		return err
+	}
+
+	cs, err := t.Checksum()
+	if err != nil {
+		return err
+	}
+
+	log.Print(cs)
+
+	return nil
 }

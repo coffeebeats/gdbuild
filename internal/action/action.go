@@ -88,7 +88,7 @@ func (n NoOp) AndThen(a Action) Action { //nolint:ireturn
 
 // Sprint displays the action without actually executing it.
 func (n NoOp) Sprint() string {
-	return "no op"
+	return ""
 }
 
 /* --------------------------- Impl: fmt.Stringer --------------------------- */

@@ -15,6 +15,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -46,6 +47,19 @@ type Template struct {
 	// Postbuild contains an ordered list of actions to execute after
 	// compilation of the export templates.
 	Postbuild action.Action `hash:"string"`
+}
+
+/* ----------------------------- Method: Actions ---------------------------- */
+
+// Action creates an 'action.Action' for running the build actions.
+func (t *Template) Action(rc *run.Context) action.Action { //nolint:ireturn
+	var out action.Action = action.NoOp{}
+
+	for _, b := range t.Builds {
+		out = out.AndThen(b.SConsCommand(rc))
+	}
+
+	return out
 }
 
 /* ---------------------------- Method: Artifacts --------------------------- */
