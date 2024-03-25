@@ -7,6 +7,7 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/config/platform/common"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -20,20 +21,20 @@ type Target struct {
 
 /* ----------------------------- Impl: Exporter ----------------------------- */
 
-func (t *Target) Collect(_ engine.Source, _ *run.Context) *export.Export {
-	return nil
+func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Version) *export.Export {
+	return t.Target.Collect(rc, tl, ev)
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (t *Target) Configure(_ *run.Context) error {
-	return nil
+func (t *Target) Configure(rc *run.Context) error {
+	return t.Target.Configure(rc)
 }
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (t *Target) Validate(_ *run.Context) error {
-	return nil
+func (t *Target) Validate(rc *run.Context) error {
+	return t.Target.Validate(rc)
 }
 
 /* --------------------------- Impl: config.Merger -------------------------- */

@@ -2,10 +2,15 @@ package common
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -39,19 +44,67 @@ type Target struct {
 
 /* ----------------------------- Impl: Exporter ----------------------------- */
 
-func (t *Target) Collect(_ engine.Source, _ *run.Context) *export.Export {
-	return nil
+func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Version) *export.Export {
+	// Set the encryption key environment variable; see
+	// https://docs.godotengine.org/en/stable/contributing/development/compiling/compiling_with_script_encryption_key.html.
+	var encryptionKey string
+	if ek := scons.EncryptionKeyFromEnv(); ek != "" {
+		encryptionKey = ek
+	} else if t.EncryptionKey != "" {
+		ek := os.ExpandEnv(t.EncryptionKey)
+		if ek != "" {
+			encryptionKey = ek
+		} else {
+			log.Warnf(
+				"encryption key set in manifest, but value was empty: %s",
+				t.EncryptionKey,
+			)
+		}
+	}
+
+	ff := make([]string, 0, len(t.DefaultFeatures)+len(rc.Features))
+	ff = append(ff, t.DefaultFeatures...)
+	ff = append(ff, rc.Features...)
+
+	return &export.Export{
+		EncryptionKey: encryptionKey,
+		Features:      ff,
+		Options:       t.Options,
+		PackFiles:     t.PackFiles,
+		RunBefore:     t.Hook.PreActions(rc),
+		RunAfter:      t.Hook.PostActions(rc),
+		Runnable:      config.Dereference(t.Runnable),
+		Server:        config.Dereference(t.Server),
+		Template:      tl,
+		Version:       ev,
+	}
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (t *Target) Configure(_ *run.Context) error {
+func (t *Target) Configure(rc *run.Context) error {
+	for _, pf := range t.PackFiles {
+		if err := pf.Configure(rc); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (t *Target) Validate(_ *run.Context) error {
+func (t *Target) Validate(rc *run.Context) error {
+	if err := t.Hook.Validate(rc); err != nil {
+		return err
+	}
+
+	for _, pf := range t.PackFiles {
+		if err := pf.Validate(rc); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
