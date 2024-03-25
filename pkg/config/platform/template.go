@@ -1,4 +1,4 @@
-package platform //nolint:dupl
+package platform
 
 import (
 	"fmt"
@@ -77,7 +77,7 @@ var _ TemplateBuilder[*windows.Template] = (*windows.TemplateWithFeaturesAndProf
 
 /* ----------------------------- Method: Combine ---------------------------- */
 
-func (t *Templates) Combine(rc *run.Context) (Templater, error) { //nolint:ireturn
+func (t *Templates) Combine(rc *run.Context) (Templater, error) { //nolint:dupl,ireturn
 	// Root params.
 	base := new(common.Template)
 

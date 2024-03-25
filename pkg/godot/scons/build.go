@@ -99,11 +99,11 @@ func (b *Build) Filename() string {
 /* -------------------------- Method: SConsCommand -------------------------- */
 
 // SConsCommand returns the 'SCons' command to build the export template.
-func (b *Build) SConsCommand(c *run.Context) *action.Process { //nolint:cyclop,funlen
+func (b *Build) SConsCommand(rc *run.Context) *action.Process { //nolint:cyclop,funlen
 	var cmd action.Process
 
-	cmd.Directory = c.PathBuild.String()
-	cmd.Verbose = c.Verbose
+	cmd.Directory = rc.PathBuild.String()
+	cmd.Verbose = rc.Verbose
 
 	scons := b.SCons
 
@@ -153,13 +153,13 @@ func (b *Build) SConsCommand(c *run.Context) *action.Process { //nolint:cyclop,f
 	args = append(args, "arch="+b.Arch.String())
 
 	// Specify which target to build.
-	args = append(args, "target="+c.Profile.TargetName())
+	args = append(args, "target="+rc.Profile.TargetName())
 
 	// Add stricter warning handling.
 	args = append(args, "warnings=extra", "werror=yes")
 
 	// Handle a verbose flag.
-	if c.Verbose {
+	if rc.Verbose {
 		args = append(args, "verbose=yes")
 	}
 
@@ -179,7 +179,7 @@ func (b *Build) SConsCommand(c *run.Context) *action.Process { //nolint:cyclop,f
 	}
 
 	// Append profile/optimization-related arguments.
-	switch c.Profile {
+	switch rc.Profile {
 	case engine.ProfileRelease:
 		optimize := engine.OptimizeSpeed
 		if b.Optimize != engine.OptimizeUnknown {

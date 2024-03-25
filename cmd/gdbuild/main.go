@@ -8,11 +8,15 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
 
+	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/store"
 )
 
@@ -209,8 +213,62 @@ func newVerboseFlag() *cli.BoolFlag {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                         Function: parseManifestPath                        */
+/*                           Functions: Parse inputs                          */
 /* -------------------------------------------------------------------------- */
+
+/* ------------------------- Function: parsePlatform ------------------------ */
+
+func parsePlatform(platformInput string) (platform.OS, error) {
+	if platformInput == "" {
+		platformInput = runtime.GOOS
+	}
+
+	godotPlatform, err := platform.ParseOS(platformInput)
+	if err != nil {
+		return platform.OS(0), err
+	}
+
+	return godotPlatform, nil
+}
+
+/* ------------------------- Function: parseProfile ------------------------- */
+
+func parseProfile(releaseInput, releaseDebugInput bool) engine.Profile {
+	var pr engine.Profile
+
+	switch {
+	case releaseInput:
+		pr = engine.ProfileRelease
+	case releaseDebugInput:
+		pr = engine.ProfileReleaseDebug
+	default:
+		pr = engine.ProfileDebug
+	}
+
+	return pr
+}
+
+/* ------------------------- Function: parseBuildDir ------------------------ */
+
+func parseBuildDir(path string, dryRun bool) (string, error) {
+	pathBuild := path
+	if pathBuild == "" && !dryRun {
+		p, err := os.MkdirTemp("", "gdbuild-*")
+		if err != nil {
+			return "", err
+		}
+
+		defer os.RemoveAll(p)
+
+		pathBuild = p
+	} else if dryRun {
+		pathBuild = "<temporary directory>"
+	}
+
+	return pathBuild, nil
+}
+
+/* ----------------------- Function: parseManifestPath ---------------------- */
 
 func parseManifestPath(path string) (string, error) {
 	path = filepath.Clean(path)
@@ -222,6 +280,34 @@ func parseManifestPath(path string) (string, error) {
 
 	if info.IsDir() {
 		return "", fmt.Errorf("%w: %s", ErrInvalidManifestPath, path)
+	}
+
+	return path, nil
+}
+
+/* ------------------------- Function: parseWorkDir ------------------------- */
+
+func parseWorkDir(path string, dryRun bool) (string, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+
+		if !dryRun {
+			if err := os.MkdirAll(path, osutil.ModeUserRWXGroupRX); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	if info != nil && !info.IsDir() {
+		path = filepath.Dir(path)
+	}
+
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return "", err
 	}
 
 	return path, nil

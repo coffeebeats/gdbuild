@@ -1,4 +1,4 @@
-package platform //nolint:dupl
+package platform
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -21,7 +22,7 @@ import (
 type Exporter interface {
 	config.Configurable[*run.Context]
 
-	Collect(src engine.Source, rc *run.Context) *export.Export
+	Collect(rc *run.Context, tl *template.Template, ev engine.Version) *export.Export
 }
 
 /* -------------------------------------------------------------------------- */
@@ -77,7 +78,7 @@ var _ TargetBuilder[*windows.Target] = (*windows.TargetWithFeaturesAndProfile)(n
 
 /* ----------------------------- Method: Combine ---------------------------- */
 
-func (t *Targets) Combine(rc *run.Context) (Exporter, error) { //nolint:ireturn
+func (t Targets) Combine(rc *run.Context) (Exporter, error) { //nolint:dupl,ireturn
 	// Root params.
 	base := new(common.Target)
 

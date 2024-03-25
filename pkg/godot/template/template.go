@@ -15,6 +15,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -48,6 +49,19 @@ type Template struct {
 	Postbuild action.Action `hash:"string"`
 }
 
+/* ----------------------------- Method: Actions ---------------------------- */
+
+// Action creates an 'action.Action' for running the build actions.
+func (t *Template) Action(rc *run.Context) action.Action { //nolint:ireturn
+	var out action.Action = action.NoOp{}
+
+	for _, b := range t.Builds {
+		out = out.AndThen(b.SConsCommand(rc))
+	}
+
+	return out
+}
+
 /* ---------------------------- Method: Artifacts --------------------------- */
 
 // Artifacts returns the set of export template artifacts required by the
@@ -75,6 +89,17 @@ func (t *Template) RegisterDependencyPath(path osutil.Path) {
 	if !slices.Contains(t.Paths, path) {
 		t.Paths = append(t.Paths, path)
 	}
+}
+
+/* --------------------------- Impl: fmt.Stringer --------------------------- */
+
+func (t *Template) String() string {
+	cs, err := t.Checksum()
+	if err != nil {
+		return ""
+	}
+
+	return cs
 }
 
 /* -------------------------------------------------------------------------- */

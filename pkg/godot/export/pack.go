@@ -1,5 +1,16 @@
 package export
 
+import (
+	"os"
+	"path/filepath"
+	"strings"
+
+	"golang.org/x/exp/maps"
+
+	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/run"
+)
+
 /* -------------------------------------------------------------------------- */
 /*                              Struct: PackFile                              */
 /* -------------------------------------------------------------------------- */
@@ -25,7 +36,59 @@ type PackFile struct {
 	Zip *bool `toml:"zip"`
 }
 
-/* ------------------------ Struct: PackFilePartition ----------------------- */
+/* ------------------------------ Method: Files ----------------------------- */
+
+func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) {
+	pathRoot, err := filepath.Abs(path.String())
+	if err != nil {
+		return nil, err
+	}
+
+	files := make(map[osutil.Path]struct{})
+
+	for _, g := range c.Glob {
+		if !strings.HasPrefix(g, "/") &&
+			!strings.HasPrefix(g, string(os.PathSeparator)) {
+			g = filepath.Join(pathRoot, g)
+		}
+
+		matches, err := filepath.Glob(g)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, match := range matches {
+			baseGlob := filepath.Base(g)
+			baseMatch := filepath.Base(match)
+
+			// Ignore hidden files unless explicitly searched for.
+			if !strings.HasPrefix(baseGlob, ".") &&
+				strings.HasPrefix(baseMatch, ".") {
+				continue
+			}
+
+			files[osutil.Path(match)] = struct{}{}
+		}
+	}
+
+	return maps.Keys(files), nil
+}
+
+/* ------------------------- Impl: config.Configurer ------------------------ */
+
+func (c *PackFile) Configure(_ *run.Context) error {
+	return nil
+}
+
+/* ------------------------- Impl: config.Validator ------------------------- */
+
+func (c *PackFile) Validate(_ *run.Context) error {
+	return nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Struct: PackFilePartition                         */
+/* -------------------------------------------------------------------------- */
 
 // PackFilePartition describes how to automatically partition a collection of
 // files into multiple '.pck' files.

@@ -276,7 +276,7 @@ func TestBuildTemplate(t *testing.T) {
 			require.NoError(t, err)
 
 			// When: The 'Template' is built.
-			got, err := Template(m, &tc.rc)
+			got, err := Template(&tc.rc, m)
 
 			// Then: Results match expectations.
 			require.NotNil(t, tc.assert)

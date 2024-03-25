@@ -120,15 +120,24 @@ func (s Sequence) Sprint() string {
 	cmds := make([]string, 0)
 
 	if p, ok := s.Pre.(Printer); ok {
-		cmds = append(cmds, p.Sprint())
+		text := p.Sprint()
+		if text != "" {
+			cmds = append(cmds, p.Sprint())
+		}
 	}
 
 	if p, ok := s.Action.(Printer); ok {
-		cmds = append(cmds, p.Sprint())
+		text := p.Sprint()
+		if text != "" {
+			cmds = append(cmds, p.Sprint())
+		}
 	}
 
 	if p, ok := s.Post.(Printer); ok {
-		cmds = append(cmds, p.Sprint())
+		text := p.Sprint()
+		if text != "" {
+			cmds = append(cmds, p.Sprint())
+		}
 	}
 
 	return strings.Join(cmds, "\n")

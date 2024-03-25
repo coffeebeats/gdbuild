@@ -26,7 +26,7 @@ func HashFiles(h hash.Hash, root string) error {
 	}
 
 	if !info.IsDir() {
-		return hashFile(h, root)
+		return HashFile(h, root)
 	}
 
 	if err := fs.WalkDir(os.DirFS(root), ".", func(path string, d fs.DirEntry, err error) error {
@@ -43,7 +43,7 @@ func HashFiles(h hash.Hash, root string) error {
 		path = filepath.Join(root, path)
 
 		// Hash the file.
-		return hashFile(h, path)
+		return HashFile(h, path)
 	}); err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func HashFiles(h hash.Hash, root string) error {
 
 /* --------------------------- Function: hashFile --------------------------- */
 
-func hashFile(h hash.Hash, path string) error {
+func HashFile(h hash.Hash, path string) error {
 	if !filepath.IsAbs(path) {
 		return fmt.Errorf("%w: expected an absolute path: %s", ErrInvalidInput, path)
 	}

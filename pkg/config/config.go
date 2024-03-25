@@ -13,6 +13,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config/platform"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 var (
@@ -134,6 +135,13 @@ func defaultContents() string {
   # EncryptionKey is the encryption key to embed in the export template.
   encryption_key = "$SCRIPT_AES256_ENCRYPTION_KEY"
 `
+}
+
+/* -------------------------- Struct: configuration ------------------------- */
+
+type configuration struct {
+	manifest *Manifest
+	context  *run.Context
 }
 
 /* -------------------------------------------------------------------------- */

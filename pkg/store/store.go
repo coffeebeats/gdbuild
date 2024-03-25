@@ -11,10 +11,13 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
+	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 const (
+	storeDirExport   = "exports"
 	storeDirTemplate = "templates"
 	storeFileLayout  = "layout.v0" // simplify migrating in the future
 )
@@ -34,6 +37,11 @@ func Clear(storePath string) error {
 		return ErrMissingStore
 	}
 
+	// Clear the entire exports cache directory.
+	if err := os.RemoveAll(filepath.Join(storePath, storeDirExport)); err != nil {
+		return err
+	}
+
 	// Clear the entire export template cache directory.
 	if err := os.RemoveAll(filepath.Join(storePath, storeDirTemplate)); err != nil {
 		return err
@@ -44,11 +52,38 @@ func Clear(storePath string) error {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                                Function: Has                               */
+/*                             Function: HasTarget                            */
 /* -------------------------------------------------------------------------- */
 
 // Return whether the store has the specified version cached.
-func Has(storePath string, t *template.Template) (bool, error) {
+func HasTarget(storePath string, rc *run.Context, x *export.Export) (bool, error) {
+	if storePath == "" {
+		return false, ErrMissingStore
+	}
+
+	path, err := TargetArchive(storePath, rc, x)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = os.Stat(path)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return false, err
+		}
+
+		return false, nil
+	}
+
+	return true, nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                            Function: HasTemplate                           */
+/* -------------------------------------------------------------------------- */
+
+// Return whether the store has the specified version cached.
+func HasTemplate(storePath string, t *template.Template) (bool, error) {
 	if storePath == "" {
 		return false, ErrMissingStore
 	}
@@ -109,8 +144,8 @@ func removeUnusedCacheDirectories(storePath, path string) error {
 	for {
 		path = filepath.Dir(path)
 
-		// Add a safeguard to not escape the store cache directories.
-		if !strings.HasPrefix(path, filepath.Join(storePath, storeDirTemplate)) {
+		// Add a safeguard to not escape the store directory.
+		if !strings.HasPrefix(path, storePath) {
 			return nil
 		}
 
@@ -146,7 +181,7 @@ func Touch(storePath string) error {
 	}
 
 	// Create the required subdirectories, if needed.
-	for _, d := range []string{storeDirTemplate} {
+	for _, d := range []string{storeDirExport, storeDirTemplate} {
 		path := filepath.Join(storePath, d)
 		if err := os.MkdirAll(path, osutil.ModeUserRWXGroupRX); err != nil {
 			return err

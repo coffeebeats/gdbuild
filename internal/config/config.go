@@ -102,7 +102,7 @@ func (ct configTransformer) Transformer(ty reflect.Type) func(dst, src reflect.V
 
 // Dereference safely dereferences a pointer into the underlying value or the
 // empty value for the type.
-func Dereference[T any](ptr *T) T { //nolint:ireturn
+func Dereference[T any](ptr *T) T { //nolint:ireturn,nolintlint
 	if ptr == nil {
 		return *new(T)
 	}

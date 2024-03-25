@@ -1,24 +1,30 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/template"
+	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 /* -------------------------------------------------------------------------- */
-/*                             Function: Template                             */
+/*                              Function: Export                              */
 /* -------------------------------------------------------------------------- */
 
-// Template creates a `Template` instance which contains an action for
-// compiling Godot based on the specified configuration.
-func Template(rc *run.Context, m *Manifest) (*template.Template, error) { //nolint:cyclop,funlen
+// Export creates an `Export` instance which contains an action for exporting
+// the specified target.
+func Export(rc *run.Context, m *Manifest, target string) (*export.Export, error) { //nolint:cyclop,funlen
 	var merged struct {
-		godot    Godot
-		template platform.Templater
+		godot  Godot
+		target platform.Exporter
+	}
+
+	tl, err := Template(rc, m)
+	if err != nil {
+		return nil, err
 	}
 
 	toBuild := []configuration{{context: rc, manifest: m}}
@@ -71,41 +77,50 @@ func Template(rc *run.Context, m *Manifest) (*template.Template, error) { //noli
 			return nil, err
 		}
 
-		// Build 'Template' properties.
-		t, err := cfg.manifest.Template.Combine(&rc)
+		// Build 'Target' properties.
+		t, err := cfg.manifest.Target[target].Combine(&rc)
 		if err != nil {
 			return nil, err
 		}
 
-		// Configure 'Template' properties.
+		// Configure 'Target' properties.
 		if err := t.Configure(&rc); err != nil {
 			return nil, err
 		}
 
-		if merged.template == nil {
-			merged.template = t
+		if merged.target == nil {
+			merged.target = t
 
 			continue
 		}
 
-		// Merge 'Template' properties.
-		if err := t.MergeInto(merged.template); err != nil {
+		// Merge 'Target' properties.
+		if err := t.MergeInto(merged.target); err != nil {
 			return nil, err
 		}
 	}
 
-	if merged.template == nil {
-		return nil, fmt.Errorf("%w: failed to build template", ErrMissingInput)
+	if merged.target == nil {
+		return nil, fmt.Errorf("%w: failed to build target", ErrMissingInput)
 	}
 
-	// Validate 'Template' properties.
+	// Validate 'Target' properties.
 	if err := merged.godot.Validate(rc); err != nil {
 		return nil, err
 	}
 
-	if err := merged.template.Validate(rc); err != nil {
+	if err := merged.target.Validate(rc); err != nil {
 		return nil, err
 	}
 
-	return merged.template.Collect(*merged.godot.Source, rc), nil
+	ev, err := merged.godot.ParseVersion()
+	if err != nil {
+		if errors.Is(err, ErrConflictingValue) {
+			return nil, fmt.Errorf("%w: 'src_path' is unsupported at this time", err)
+		}
+
+		return nil, err
+	}
+
+	return merged.target.Collect(rc, tl, ev), nil
 }

@@ -1,15 +1,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/log"
 	"github.com/urfave/cli/v2"
 
+	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
@@ -111,6 +111,10 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				log.SetLevel(log.ErrorLevel)
 			}
 
+			dryRun := c.Bool("dry-run")
+			force := c.Bool("force")
+			printHash := c.Bool("print-hash")
+
 			// Determine path to store.
 			storePath, err := touchStore()
 			if err != nil {
@@ -121,23 +125,16 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			// Determine paths for build context.
 
-			pathOut, err := parseWorkDir(c.Path("out"), c.Bool("dry-run"))
+			pathOut, err := parseWorkDir(c.Path("out"), dryRun)
 			if err != nil {
 				return err
 			}
 
 			log.Debugf("placing template artifacts at path: %s", pathOut)
 
-			pathBuild := c.Path("build-dir")
-			if pathBuild == "" {
-				p, err := os.MkdirTemp("", "gdbuild-*")
-				if err != nil {
-					return err
-				}
-
-				defer os.RemoveAll(p)
-
-				pathBuild = p
+			pathBuild, err := parseBuildDir(c.Path("build-dir"), dryRun)
+			if err != nil {
+				return err
 			}
 
 			log.Debugf("using build directory: %s", pathBuild)
@@ -182,50 +179,22 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				Verbose:      log.GetLevel() == log.DebugLevel,
 			}
 
-			t, err := config.Template(m, &rc)
+			if printHash {
+				return printTemplateHash(&rc, m)
+			}
+
+			action, err := exportTemplate(
+				c.Context,
+				storePath,
+				m,
+				&rc,
+				force,
+			)
 			if err != nil {
 				return err
 			}
 
-			if c.Bool("print-hash") {
-				cs, err := t.Checksum()
-				if err != nil {
-					return err
-				}
-
-				log.Print(cs)
-
-				return nil
-			}
-
-			// Try returning a cached template first.
-
-			hasTemplate, err := store.Has(storePath, t)
-			if err != nil {
-				return err
-			}
-
-			if hasTemplate && !c.Bool("force") {
-				log.Info("found template in cache; skipping build.")
-
-				pathArchive, err := store.TemplateArchive(storePath, t)
-				if err != nil {
-					return err
-				}
-
-				log.Debugf("extracting cached template: %s", pathArchive)
-
-				return archive.Extract(c.Context, pathArchive, pathOut)
-			}
-
-			// Template was not cached; execute build action.
-
-			action, err := template.Action(t, &rc)
-			if err != nil {
-				return err
-			}
-
-			if c.Bool("dry-run") {
+			if dryRun {
 				log.Print(action.Sprint())
 
 				return nil
@@ -236,30 +205,72 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 	}
 }
 
-/* ------------------------- Function: parseWorkDir ------------------------- */
+/* ---------------------- Function: buildExportTemplate --------------------- */
 
-func parseWorkDir(path string, dryRun bool) (string, error) {
-	info, err := os.Stat(path)
+func exportTemplate( //nolint:ireturn
+	_ context.Context,
+	storePath string,
+	m *config.Manifest,
+	rc *run.Context,
+	force bool,
+) (action.Action, error) {
+	t, err := config.Template(rc, m)
 	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return "", err
+		return nil, err
+	}
+
+	hasTemplate, err := store.HasTemplate(storePath, t)
+	if err != nil {
+		return nil, err
+	}
+
+	// Template is cached; create cache extraction action.
+	if hasTemplate && !force {
+		log.Info("found template in cache; skipping build.")
+
+		pathOut := rc.PathOut.String()
+
+		if rc.PathOut == "" {
+			log.Info("no output path set; exiting without changes")
+
+			return action.NoOp{}, nil
 		}
 
-		if !dryRun {
-			if err := os.MkdirAll(path, osutil.ModeUserRWXGroupRX); err != nil {
-				return "", err
-			}
+		pathArchive, err := store.TemplateArchive(storePath, t)
+		if err != nil {
+			return nil, err
 		}
+
+		fn := func(ctx context.Context) error {
+			log.Infof("extracting artifacts from cached archive: %s", pathArchive)
+
+			return archive.Extract(ctx, pathArchive, pathOut)
+		}
+
+		return action.WithDescription[action.Function]{
+			Action:      fn,
+			Description: "extract cached artifacts to path: " + pathOut,
+		}, nil
 	}
 
-	if info != nil && !info.IsDir() {
-		path = filepath.Dir(path)
-	}
+	// Template was not cached; create build action.
+	return template.Action(t, rc)
+}
 
-	path, err = filepath.Abs(path)
+/* ----------------------- Function: printTemplateHash ---------------------- */
+
+func printTemplateHash(rc *run.Context, m *config.Manifest) error {
+	t, err := config.Template(rc, m)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return path, nil
+	cs, err := t.Checksum()
+	if err != nil {
+		return err
+	}
+
+	log.Print(cs)
+
+	return nil
 }

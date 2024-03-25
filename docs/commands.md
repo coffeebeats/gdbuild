@@ -41,11 +41,14 @@ Compile any required export template(s) and then export the specified `TARGET`.
 
 - `--dry-run` — log the build command without running it
 - `--force` - export the target even if it was cached in the store (does not rebuild the export template)
+- `--print-hash` — log the unique hash of the game binary (skips exporting)
 
 - `-p`, `--path <PATH>` — use the Godot project found at `PATH`
   - Default value: `$PWD` (current working directory)
 - `-o`, `--out <PATH>` — write generated artifacts to `PATH`
   - Default value: `$PWD` (current working directory)
+- `--build-dir <PATH>` — build the template within `PATH`
+  - Default value: temporary directory
 
 - `-f`, `--feature <FEATURE>` — enable the provided feature tag `FEATURE` (can be specified more than once)
 - `-p`, `--platform <PLATFORM>` — build for the specified Godot platform `PLATFORM`
