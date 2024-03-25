@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.1 (2024-03-25)
+
+## What's Changed
+* feat(target): scaffold support for exporting game projects by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/66
+* refactor: move `build.Context` into own `run` package; reorganize `pkg/config` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/68
+* feat(cmd): implement export flow (except for actual exporting) by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/69
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.2.0...v0.2.1
+
 ## 0.2.0 (2024-03-24)
 
 ## What's Changed
