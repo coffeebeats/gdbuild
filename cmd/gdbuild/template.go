@@ -211,7 +211,7 @@ func exportTemplate( //nolint:ireturn,funlen
 	rc *run.Context,
 	force, printHash bool,
 ) (action.Action, error) {
-	t, err := config.Template(m, rc)
+	t, err := config.Template(rc, m)
 	if err != nil {
 		return nil, err
 	}

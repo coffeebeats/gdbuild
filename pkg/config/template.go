@@ -15,7 +15,7 @@ import (
 
 // Template creates a `Template` instance which contains an action for
 // compiling Godot based on the specified configuration.
-func Template(m *Manifest, rc *run.Context) (*template.Template, error) { //nolint:cyclop,funlen
+func Template(rc *run.Context, m *Manifest) (*template.Template, error) { //nolint:cyclop,funlen
 	var merged struct {
 		godot    Godot
 		template platform.Templater
@@ -108,11 +108,4 @@ func Template(m *Manifest, rc *run.Context) (*template.Template, error) { //noli
 	}
 
 	return merged.template.Collect(*merged.godot.Source, rc), nil
-}
-
-/* -------------------------- Struct: configuration ------------------------- */
-
-type configuration struct {
-	manifest *Manifest
-	context  *run.Context
 }
