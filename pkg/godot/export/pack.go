@@ -1,5 +1,7 @@
 package export
 
+import "github.com/coffeebeats/gdbuild/pkg/run"
+
 /* -------------------------------------------------------------------------- */
 /*                              Struct: PackFile                              */
 /* -------------------------------------------------------------------------- */
@@ -25,7 +27,21 @@ type PackFile struct {
 	Zip *bool `toml:"zip"`
 }
 
-/* ------------------------ Struct: PackFilePartition ----------------------- */
+/* ------------------------- Impl: config.Configurer ------------------------ */
+
+func (c *PackFile) Configure(_ *run.Context) error {
+	return nil
+}
+
+/* ------------------------- Impl: config.Validator ------------------------- */
+
+func (c *PackFile) Validate(_ *run.Context) error {
+	return nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Struct: PackFilePartition                         */
+/* -------------------------------------------------------------------------- */
 
 // PackFilePartition describes how to automatically partition a collection of
 // files into multiple '.pck' files.

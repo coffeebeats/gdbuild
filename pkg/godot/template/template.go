@@ -77,6 +77,17 @@ func (t *Template) RegisterDependencyPath(path osutil.Path) {
 	}
 }
 
+/* --------------------------- Impl: fmt.Stringer --------------------------- */
+
+func (t *Template) String() string {
+	cs, err := t.Checksum()
+	if err != nil {
+		return ""
+	}
+
+	return cs
+}
+
 /* -------------------------------------------------------------------------- */
 /*                             Function: Checksum                             */
 /* -------------------------------------------------------------------------- */
