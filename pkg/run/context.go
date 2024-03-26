@@ -30,22 +30,35 @@ type Context struct {
 	// Profile is the GDBuild optimization level to build with.
 	Profile engine.Profile
 
-	// PathBuild is the directory in which to build the template in. All input
-	// artifacts will be copied here and the SCons build command will be
-	// executed within this directory. Defaults to a temporary directory.
-	PathBuild osutil.Path
 	// PathManifest is the path to the GDBuild manifest. This is used to locate
 	// relative paths in various other properties.
 	PathManifest osutil.Path
 	// PathOut is the directory in which to move built artifacts to.
 	PathOut osutil.Path
+	// PathWorkspace is a working directory in which to run relevant commands.
+	// The use case for the directory is command-specific.
+	PathWorkspace osutil.Path
+}
+
+/* --------------------------- Method: ProjectPath -------------------------- */
+
+// ProjectPath returns the path to the Godot project.
+func (c *Context) ProjectPath() osutil.Path {
+	return osutil.Path(filepath.Dir(c.PathManifest.String()))
+}
+
+/* ------------------------- Method: ProjectManifest ------------------------ */
+
+// ProjectManifest returns the path to the Godot project configuration file.
+func (c *Context) ProjectManifest() osutil.Path {
+	return osutil.Path(filepath.Join(c.PathManifest.String(), "project.godot"))
 }
 
 /* ----------------------------- Method: BinPath ---------------------------- */
 
 // BinPath returns the path to the Godot template artifacts are compilation.
 func (c *Context) BinPath() osutil.Path {
-	return osutil.Path(filepath.Join(c.PathBuild.String(), "bin"))
+	return osutil.Path(filepath.Join(c.PathWorkspace.String(), "bin"))
 }
 
 /* ------------------------- Impl: config.Validator ------------------------- */
@@ -63,8 +76,16 @@ func (c *Context) Validate() error {
 		return err
 	}
 
-	// NOTE: PathBuild might be generated via hooks, so only verify it's set.
-	if c.PathBuild == "" {
+	if err := c.ProjectManifest().CheckIsFile(); err != nil {
+		return fmt.Errorf(
+			"%w: Godot project configuration: %s",
+			ErrMissingInput,
+			c.ProjectPath(),
+		)
+	}
+
+	// NOTE: PathWorkspace might be generated via hooks, so only verify it's set.
+	if c.PathWorkspace == "" {
 		return fmt.Errorf("%w: build path", ErrMissingInput)
 	}
 

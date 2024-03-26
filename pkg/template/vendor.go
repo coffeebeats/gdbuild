@@ -31,7 +31,7 @@ func NewVendorGodotAction(src *engine.Source, rc *run.Context) action.WithDescri
 			return err
 		}
 
-		pathBuild, err := filepath.Abs(rc.PathBuild.String())
+		pathBuild, err := filepath.Abs(rc.PathWorkspace.String())
 		if err != nil {
 			return err
 		}
@@ -51,6 +51,6 @@ func NewVendorGodotAction(src *engine.Source, rc *run.Context) action.WithDescri
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "vendor godot source code: " + rc.PathBuild.String(),
+		Description: "vendor godot source code: " + rc.PathWorkspace.String(),
 	}
 }

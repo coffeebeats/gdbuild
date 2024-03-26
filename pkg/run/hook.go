@@ -35,7 +35,7 @@ func (h Hook) PreActions(rc *Context) action.Action { //nolint:ireturn
 
 	for _, a := range h.Pre {
 		p := a.Process()
-		p.Directory = rc.PathBuild.String()
+		p.Directory = rc.PathWorkspace.String()
 		p.Shell = h.Shell
 		p.Verbose = rc.Verbose
 
@@ -54,7 +54,7 @@ func (h Hook) PostActions(rc *Context) action.Action { //nolint:ireturn
 
 	for _, a := range h.Post {
 		p := a.Process()
-		p.Directory = rc.PathBuild.String()
+		p.Directory = rc.PathWorkspace.String()
 		p.Shell = h.Shell
 		p.Verbose = rc.Verbose
 

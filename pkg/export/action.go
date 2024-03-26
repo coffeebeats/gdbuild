@@ -29,7 +29,7 @@ func Action(rc *run.Context, x *export.Export) (action.Action, error) { //nolint
 	actions = append(
 		actions,
 		x.RunBefore,
-		NewInstallGodotAction(rc, x.Version, rc.PathBuild),
+		NewInstallGodotAction(rc, x.Version, rc.PathWorkspace),
 		x.Action(),
 	)
 

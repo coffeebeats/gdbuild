@@ -21,7 +21,7 @@ func NewCopyImageFileAction(
 	pathImage osutil.Path,
 	rc *run.Context,
 ) action.WithDescription[action.Function] {
-	pathDst := filepath.Join(rc.PathBuild.String(), "platform/windows/godot.ico")
+	pathDst := filepath.Join(rc.PathWorkspace.String(), "platform/windows/godot.ico")
 
 	fn := func(_ context.Context) error {
 		dst, err := os.Create(pathDst)
