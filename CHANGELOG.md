@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.2 (2024-03-26)
+
+## What's Changed
+* chore(deps): bump github.com/coffeebeats/gdenv from 0.6.13 to 0.6.14 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/70
+* chore(template): migrate `build` package into `template` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/72
+* chore(deps): bump dependabot/fetch-metadata from 1 to 2 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/71
+* refactor(run): change `Context.PathBuild` to `Context.PathWorkspace` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/74
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.2.1...v0.2.2
+
 ## 0.2.1 (2024-03-25)
 
 ## What's Changed
