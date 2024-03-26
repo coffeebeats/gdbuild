@@ -14,7 +14,6 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -27,7 +26,7 @@ import (
 type Template struct {
 	// Builds is a list of export template compilation definitions that are
 	// required by the resulting export template artifact.
-	Builds []scons.Build `hash:"set"`
+	Builds []Build `hash:"set"`
 
 	// ExtraArtifacts are the base names of export template artifacts which are
 	// expected to be found in the 'bin' directory post-compilation. If these
