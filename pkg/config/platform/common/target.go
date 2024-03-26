@@ -9,7 +9,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
-	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
@@ -48,7 +47,7 @@ func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Versi
 	// Set the encryption key environment variable; see
 	// https://docs.godotengine.org/en/stable/contributing/development/compiling/compiling_with_script_encryption_key.html.
 	var encryptionKey string
-	if ek := scons.EncryptionKeyFromEnv(); ek != "" {
+	if ek := template.EncryptionKeyFromEnv(); ek != "" {
 		encryptionKey = ek
 	} else if t.EncryptionKey != "" {
 		ek := os.ExpandEnv(t.EncryptionKey)

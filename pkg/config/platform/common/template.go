@@ -10,7 +10,6 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
@@ -41,7 +40,7 @@ type Template struct {
 	// template build options.
 	PathCustomPy osutil.Path `toml:"custom_py_path"`
 	// SCons contains build command-related settings.
-	SCons scons.SCons `toml:"scons"`
+	SCons template.SCons `toml:"scons"`
 }
 
 /* ----------------------------- Impl: Template ----------------------------- */
@@ -65,7 +64,7 @@ func (t Template) Collect(src engine.Source, rc *run.Context) *template.Template
 	// Set the encryption key environment variable; see
 	// https://docs.godotengine.org/en/stable/contributing/development/compiling/compiling_with_script_encryption_key.html.
 	var encryptionKey string
-	if ek := scons.EncryptionKeyFromEnv(); ek != "" {
+	if ek := template.EncryptionKeyFromEnv(); ek != "" {
 		encryptionKey = ek
 	} else if t.EncryptionKey != "" {
 		ek := os.ExpandEnv(t.EncryptionKey)
@@ -80,7 +79,7 @@ func (t Template) Collect(src engine.Source, rc *run.Context) *template.Template
 	}
 
 	return &template.Template{
-		Builds: []scons.Build{
+		Builds: []template.Build{
 			{
 				Arch:            t.Arch,
 				CustomModules:   t.CustomModules,

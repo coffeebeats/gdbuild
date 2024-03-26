@@ -16,7 +16,6 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/config/platform/windows"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
-	"github.com/coffeebeats/gdbuild/pkg/godot/scons"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
@@ -68,7 +67,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					&template.Template{
-						Builds: []scons.Build{
+						Builds: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
 								Source:   engine.Source{Version: mustParseVersion(t, "4.0.0")},
@@ -112,13 +111,13 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					&template.Template{
-						Builds: []scons.Build{
+						Builds: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
 								Source:   engine.Source{Version: mustParseVersion(t, "4.0.0")},
 								Platform: platform.OSMacOS,
 								Profile:  engine.ProfileDebug,
-								SCons: scons.SCons{
+								SCons: template.SCons{
 									ExtraArgs: []string{
 										"use_volk=no",
 										"vulkan_sdk_path=" + filepath.Join(tmp, "vulkan"),
@@ -130,7 +129,7 @@ func TestBuildTemplate(t *testing.T) {
 								Source:   engine.Source{Version: mustParseVersion(t, "4.0.0")},
 								Platform: platform.OSMacOS,
 								Profile:  engine.ProfileDebug,
-								SCons: scons.SCons{
+								SCons: template.SCons{
 									ExtraArgs: []string{
 										"use_volk=no",
 										"vulkan_sdk_path=" + filepath.Join(tmp, "vulkan"),
@@ -180,7 +179,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					&template.Template{
-						Builds: []scons.Build{
+						Builds: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
 								Source:   engine.Source{Version: mustParseVersion(t, "4.0.0")},
@@ -239,13 +238,13 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					&template.Template{
-						Builds: []scons.Build{
+						Builds: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
 								Source:   engine.Source{Version: mustParseVersion(t, "4.2.1")},
 								Platform: platform.OSWindows,
 								Profile:  engine.ProfileDebug,
-								SCons:    scons.SCons{},
+								SCons:    template.SCons{},
 							},
 						},
 						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
