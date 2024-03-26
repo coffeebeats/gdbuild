@@ -25,7 +25,7 @@ func NewInstallGodotAction(
 	path osutil.Path,
 ) action.WithDescription[action.Function] {
 	fn := func(ctx context.Context) error {
-		pathBuild, err := filepath.Abs(rc.PathBuild.String())
+		pathBuild, err := filepath.Abs(rc.PathWorkspace.String())
 		if err != nil {
 			return err
 		}

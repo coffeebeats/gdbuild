@@ -49,11 +49,11 @@ func TestBuildTemplate(t *testing.T) {
 			name: "empty template is correctly converted into default for linux",
 
 			rc: run.Context{
-				PathBuild:    "$TEST_TMPDIR/build",
-				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
-				PathOut:      "$TEST_TMPDIR/dist",
-				Platform:     platform.OSLinux,
-				Profile:      engine.ProfileDebug,
+				PathWorkspace: "$TEST_TMPDIR/build",
+				PathManifest:  "$TEST_TMPDIR/gdbuild.toml",
+				PathOut:       "$TEST_TMPDIR/dist",
+				Platform:      platform.OSLinux,
+				Profile:       engine.ProfileDebug,
 			},
 			files: map[string]string{
 				"gdbuild.toml": `godot.version = "4.0.0"`,
@@ -87,11 +87,11 @@ func TestBuildTemplate(t *testing.T) {
 			name: "empty template is correctly converted into default for macos",
 
 			rc: run.Context{
-				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
-				PathOut:      "$TEST_TMPDIR/dist",
-				PathBuild:    "$TEST_TMPDIR/build",
-				Platform:     platform.OSMacOS,
-				Profile:      engine.ProfileDebug,
+				PathManifest:  "$TEST_TMPDIR/gdbuild.toml",
+				PathOut:       "$TEST_TMPDIR/dist",
+				PathWorkspace: "$TEST_TMPDIR/build",
+				Platform:      platform.OSMacOS,
+				Profile:       engine.ProfileDebug,
 			},
 			files: map[string]string{
 				"vulkan/": "", // Create an empty directory.
@@ -161,11 +161,11 @@ func TestBuildTemplate(t *testing.T) {
 			name: "empty template is correctly converted into default for windows",
 
 			rc: run.Context{
-				PathBuild:    "$TEST_TMPDIR/build",
-				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
-				PathOut:      "$TEST_TMPDIR/dist",
-				Platform:     platform.OSWindows,
-				Profile:      engine.ProfileDebug,
+				PathWorkspace: "$TEST_TMPDIR/build",
+				PathManifest:  "$TEST_TMPDIR/gdbuild.toml",
+				PathOut:       "$TEST_TMPDIR/dist",
+				Platform:      platform.OSWindows,
+				Profile:       engine.ProfileDebug,
 			},
 			files: map[string]string{
 				"gdbuild.toml": `godot.version = "4.0.0"`,
@@ -197,11 +197,11 @@ func TestBuildTemplate(t *testing.T) {
 			name: "inherited template is correctly populated",
 
 			rc: run.Context{
-				PathManifest: "$TEST_TMPDIR/gdbuild.toml",
-				PathOut:      "$TEST_TMPDIR/dist",
-				PathBuild:    "$TEST_TMPDIR/build",
-				Platform:     platform.OSWindows,
-				Profile:      engine.ProfileDebug,
+				PathManifest:  "$TEST_TMPDIR/gdbuild.toml",
+				PathOut:       "$TEST_TMPDIR/dist",
+				PathWorkspace: "$TEST_TMPDIR/build",
+				Platform:      platform.OSWindows,
+				Profile:       engine.ProfileDebug,
 			},
 			files: map[string]string{
 				"parent.toml": `

@@ -176,13 +176,13 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 			log.Infof("platform: %s", pl)
 
 			rc := run.Context{
-				Features:     features,
-				PathBuild:    osutil.Path(pathBuild),
-				PathManifest: osutil.Path(pathManifest),
-				PathOut:      "", // No need to copy export templates anywhere.
-				Platform:     pl,
-				Profile:      pr,
-				Verbose:      log.GetLevel() == log.DebugLevel,
+				Features:      features,
+				PathWorkspace: osutil.Path(pathBuild),
+				PathManifest:  osutil.Path(pathManifest),
+				PathOut:       "", // No need to copy export templates anywhere.
+				Platform:      pl,
+				Profile:       pr,
+				Verbose:       log.GetLevel() == log.DebugLevel,
 			}
 
 			if printHash {
@@ -202,8 +202,8 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			ec := rc
 
-			// Update the build path to the project directory.
-			ec.PathBuild = osutil.Path(filepath.Dir(ec.PathManifest.String()))
+			// Update the workspace path to the project directory.
+			ec.PathWorkspace = osutil.Path(filepath.Dir(ec.PathManifest.String()))
 
 			// Update output directory to option value.
 			ec.PathOut = osutil.Path(pathOut)
@@ -243,6 +243,10 @@ func exportProject( //nolint:ireturn
 	target string,
 	force bool,
 ) (action.Action, error) {
+	if err := rc.Validate(); err != nil {
+		return nil, err
+	}
+
 	x, err := config.Export(rc, m, target)
 	if err != nil {
 		return nil, err

@@ -102,7 +102,7 @@ func Name(pl platform.OS, arch platform.Arch, pr engine.Profile) string {
 func (b *Build) SConsCommand(rc *run.Context) *action.Process { //nolint:cyclop,funlen
 	var cmd action.Process
 
-	cmd.Directory = rc.PathBuild.String()
+	cmd.Directory = rc.PathWorkspace.String()
 	cmd.Verbose = rc.Verbose
 
 	scons := b.SCons

@@ -170,13 +170,13 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			log.Infof("platform: %s", pl)
 
 			rc := run.Context{
-				Features:     features,
-				PathBuild:    osutil.Path(pathBuild),
-				PathManifest: osutil.Path(pathManifest),
-				PathOut:      osutil.Path(pathOut),
-				Platform:     pl,
-				Profile:      pr,
-				Verbose:      log.GetLevel() == log.DebugLevel,
+				Features:      features,
+				PathManifest:  osutil.Path(pathManifest),
+				PathOut:       osutil.Path(pathOut),
+				PathWorkspace: osutil.Path(pathBuild),
+				Platform:      pl,
+				Profile:       pr,
+				Verbose:       log.GetLevel() == log.DebugLevel,
 			}
 
 			if printHash {
@@ -214,6 +214,10 @@ func exportTemplate( //nolint:ireturn
 	rc *run.Context,
 	force bool,
 ) (action.Action, error) {
+	if err := rc.Validate(); err != nil {
+		return nil, err
+	}
+
 	t, err := config.Template(rc, m)
 	if err != nil {
 		return nil, err
