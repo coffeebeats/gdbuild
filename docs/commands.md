@@ -37,7 +37,7 @@ Compile any required export template(s) and then export the specified `TARGET`.
 
 `gdbuild target [OPTIONS] <TARGET>`
 
-> [!WARNING]  
+> [!NOTE]  
 > This command has been disabled as the implementation is not complete.
 
 ### Options
