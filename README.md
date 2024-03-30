@@ -2,7 +2,8 @@
 
 A single-purpose, CI-friendly command-line interface for managing Godot editor versions. Inspired by [pyenv](https://github.com/pyenv/pyenv), [rbenv](https://github.com/rbenv/rbenv), and [volta](https://github.com/volta-cli/volta).
 
-> ⚠️ **WARNING:** This project is in a very early stage. API instability, missing features, and bugs are to be expected for now.
+> [!CAUTION]
+> This project is in a very early stage. API instability, missing features, and bugs are to be expected for now.
 
 ## **How it works**
 
