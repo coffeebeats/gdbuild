@@ -68,6 +68,7 @@ func main() { //nolint:funlen
 
 			/* ----------------------------- Build/Export ---------------------------- */
 
+			NewTarget(),
 			NewTemplate(),
 		},
 	}
