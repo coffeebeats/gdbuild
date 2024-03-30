@@ -37,6 +37,9 @@ Compile any required export template(s) and then export the specified `TARGET`.
 
 `gdbuild target [OPTIONS] <TARGET>`
 
+> [!WARNING]  
+> This command has been disabled as the implementation is not complete.
+
 ### Options
 
 - `--dry-run` — log the build command without running it

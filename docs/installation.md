@@ -6,7 +6,8 @@ Alternatively, you can install `gdbuild` from source using the latest supported 
 
 ## **Pre-built binaries (recommended)**
 
-> ⚠️ **WARNING:** It's good practice to inspect an installation script prior to execution. The scripts are included in this repository and can be reviewed prior to use.
+> [!WARNING]
+> It's good practice to inspect an installation script prior to execution. The scripts are included in this repository and can be reviewed prior to use.
 
 ### **Linux/MacOS**
 
