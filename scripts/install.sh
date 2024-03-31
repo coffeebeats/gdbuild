@@ -133,7 +133,7 @@ GDBUILD_CLI_ARCH="$(echo ${GDBUILD_CLI_ARCH=$(uname -m)} | tr '[:upper:]' '[:low
 case "$GDBUILD_CLI_ARCH" in
 aarch64 | arm64)
     GDBUILD_CLI_ARCH="arm64"
-    if [ "$GDBUILD_CLI_OS" != "macos" ]; then
+    if [ "$GDBUILD_CLI_OS" != "macos" && "$GDBUILD_CLI_OS" != "linux" ]; then
         fatal "no prebuilt '$GDBUILD_CLI_ARCH' binaries available for operating system: $GDBUILD_CLI_OS"
     fi
 
