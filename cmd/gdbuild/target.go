@@ -53,10 +53,6 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				Usage:   "use the 'gdbuild' configuration file found at 'PATH'",
 			},
 			&cli.PathFlag{
-				Name:  "build-dir",
-				Usage: "build the template within 'PATH' (defaults to a temporary directory)",
-			},
-			&cli.PathFlag{
 				Name:    "out",
 				Aliases: []string{"o"},
 				Value:   ".",
@@ -132,12 +128,10 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 			log.Debugf("using store at path: %s", storePath)
 
 			// Determine output path.
-			pathOut, err := parseWorkDir(c.Path("out"), dryRun)
+			pathOut, err := parseOutDir(c.Path("out"), dryRun)
 			if err != nil {
 				return err
 			}
-
-			log.Debugf("placing template artifacts at path: %s", pathOut)
 
 			// Parse manifest.
 			pathManifest, err := parseManifestPath(c.Path("config"))
@@ -149,8 +143,6 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 			if err != nil {
 				return err
 			}
-
-			log.Debugf("using manifest at path: %s", pathManifest)
 
 			// Evaluate build context.
 			rc, err := buildTemplateContext(c, pathManifest, "", c.String("platform"), dryRun)

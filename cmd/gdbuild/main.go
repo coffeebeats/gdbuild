@@ -248,26 +248,6 @@ func parseProfile(releaseInput, releaseDebugInput bool) engine.Profile {
 	return pr
 }
 
-/* ------------------------- Function: parseBuildDir ------------------------ */
-
-func parseBuildDir(path string, dryRun bool) (string, error) {
-	pathBuild := path
-	if pathBuild == "" && !dryRun {
-		p, err := os.MkdirTemp("", "gdbuild-*")
-		if err != nil {
-			return "", err
-		}
-
-		defer os.RemoveAll(p)
-
-		pathBuild = p
-	} else if dryRun {
-		pathBuild = "<temporary directory>"
-	}
-
-	return pathBuild, nil
-}
-
 /* ----------------------- Function: parseManifestPath ---------------------- */
 
 func parseManifestPath(path string) (string, error) {
@@ -282,12 +262,14 @@ func parseManifestPath(path string) (string, error) {
 		return "", fmt.Errorf("%w: %s", ErrInvalidManifestPath, path)
 	}
 
+	log.Debugf("using manifest at path: %s", path)
+
 	return path, nil
 }
 
-/* ------------------------- Function: parseWorkDir ------------------------- */
+/* -------------------------- Function: parseOutDir ------------------------- */
 
-func parseWorkDir(path string, dryRun bool) (string, error) {
+func parseOutDir(path string, dryRun bool) (string, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
@@ -309,6 +291,8 @@ func parseWorkDir(path string, dryRun bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	log.Debugf("placing template artifacts at path: %s", path)
 
 	return path, nil
 }

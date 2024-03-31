@@ -54,10 +54,6 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				Usage:   "use the 'gdbuild' configuration file found at 'PATH'",
 			},
 			&cli.PathFlag{
-				Name:  "build-dir",
-				Usage: "build the template within 'PATH' (defaults to a temporary directory)",
-			},
-			&cli.PathFlag{
 				Name:    "out",
 				Aliases: []string{"o"},
 				Value:   ".",
@@ -127,7 +123,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			log.Debugf("using store at path: %s", storePath)
 
 			// Determine output path.
-			pathOut, err := parseWorkDir(c.Path("out"), dryRun)
+			pathOut, err := parseOutDir(c.Path("out"), dryRun)
 			if err != nil {
 				return err
 			}
@@ -195,13 +191,6 @@ func buildTemplateContext(
 	platformInput string,
 	dryRun bool,
 ) (run.Context, error) {
-	pathBuild, err := parseBuildDir(c.Path("build-dir"), dryRun)
-	if err != nil {
-		return run.Context{}, err
-	}
-
-	log.Debugf("using build directory: %s", pathBuild)
-
 	features := c.StringSlice("feature")
 
 	log.Infof("features: %s", strings.Join(features, ","))
@@ -222,11 +211,21 @@ func buildTemplateContext(
 		Features:      features,
 		PathManifest:  osutil.Path(pathManifest),
 		PathOut:       osutil.Path(pathOut),
-		PathWorkspace: osutil.Path(pathBuild),
+		PathWorkspace: "", // Will be set later.
 		Platform:      pl,
 		Profile:       pr,
 		Verbose:       log.GetLevel() == log.DebugLevel,
 	}
+
+	pathTmp, err := rc.TempDir()
+	if err != nil {
+		return run.Context{}, err
+	}
+
+	// Use shared temporary directory as a build path.
+	rc.PathWorkspace = osutil.Path(pathTmp)
+
+	log.Debugf("using build directory: %s", rc.PathWorkspace)
 
 	if err := rc.Validate(); err != nil {
 		return run.Context{}, err
