@@ -7,6 +7,7 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -17,6 +18,11 @@ import (
 // Template defines a Godot export template compilation. Its scope is limited to
 // the compilation step.
 type Template struct {
+	// Arch is a record of the overall architecture that's being targeted. This
+	// exists for convenience when exporting, since some templates may be have
+	// multiple builds and the correct architecture label opaque as a result.
+	Arch platform.Arch `hash:"ignore"`
+
 	// Builds is a list of export template compilation definitions that are
 	// required by the resulting export template artifact.
 	Builds []Build `hash:"set"`

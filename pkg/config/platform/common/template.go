@@ -79,6 +79,7 @@ func (t Template) Collect(src engine.Source, rc *run.Context) *template.Template
 	}
 
 	return &template.Template{
+		Arch: t.Arch,
 		Builds: []template.Build{
 			{
 				Arch:            t.Arch,

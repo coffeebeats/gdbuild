@@ -30,6 +30,7 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 	out.Builds[0].Platform = platform.OSLinux
 
 	if t.Arch == platform.ArchUnknown {
+		out.Arch = platform.ArchAmd64
 		out.Builds[0].Arch = platform.ArchAmd64
 	}
 
