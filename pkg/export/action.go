@@ -80,7 +80,12 @@ func NewCacheArtifactsAction(
 			files = append(files, pathArtifact)
 		}
 
-		pathArchive, err := store.TargetArchive(pathStore, rc, x)
+		cs, err := x.Checksum(rc)
+		if err != nil {
+			return err
+		}
+
+		pathArchive, err := store.TargetArchive(pathStore, cs)
 		if err != nil {
 			return err
 		}

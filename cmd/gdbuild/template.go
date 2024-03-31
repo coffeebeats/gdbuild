@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/log"
@@ -13,6 +15,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
+	godottemplate "github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
 	"github.com/coffeebeats/gdbuild/pkg/template"
@@ -47,12 +50,8 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			&cli.PathFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
-				Value:   "gdbuild.toml",
+				Value:   config.DefaultFilename(),
 				Usage:   "use the 'gdbuild' configuration file found at 'PATH'",
-			},
-			&cli.PathFlag{
-				Name:  "build-dir",
-				Usage: "build the template within 'PATH' (defaults to a temporary directory)",
 			},
 			&cli.PathFlag{
 				Name:    "out",
@@ -123,21 +122,13 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			log.Debugf("using store at path: %s", storePath)
 
-			// Determine paths for build context.
-
-			pathOut, err := parseWorkDir(c.Path("out"), dryRun)
+			// Determine output path.
+			pathOut, err := parseOutDir(c.Path("out"), dryRun)
 			if err != nil {
 				return err
 			}
 
 			log.Debugf("placing template artifacts at path: %s", pathOut)
-
-			pathBuild, err := parseBuildDir(c.Path("build-dir"), dryRun)
-			if err != nil {
-				return err
-			}
-
-			log.Debugf("using build directory: %s", pathBuild)
 
 			// Parse manifest.
 			pathManifest, err := parseManifestPath(c.Path("config"))
@@ -145,49 +136,35 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
+			log.Debugf("using manifest at path: %s", pathManifest)
+
 			m, err := config.ParseFile(pathManifest)
 			if err != nil {
 				return err
 			}
 
-			log.Debugf("using manifest at path: %s", pathManifest)
-
 			// Evaluate build context.
-
-			features := c.StringSlice("feature")
-
-			log.Infof("features: %s", strings.Join(features, ","))
-
-			pr := parseProfile(c.Bool("release"), c.Bool("release_debug"))
-
-			log.Infof("profile: %s", pr)
-
-			pl, err := parsePlatform(platformInput)
+			rc, err := buildTemplateContext(c, pathManifest, pathOut, platformInput, dryRun)
 			if err != nil {
 				return err
 			}
 
-			log.Infof("platform: %s", pl)
+			defer cleanTemporaryDirectory(&rc)
 
-			rc := run.Context{
-				Features:      features,
-				PathManifest:  osutil.Path(pathManifest),
-				PathOut:       osutil.Path(pathOut),
-				PathWorkspace: osutil.Path(pathBuild),
-				Platform:      pl,
-				Profile:       pr,
-				Verbose:       log.GetLevel() == log.DebugLevel,
+			tl, err := config.Template(&rc, m)
+			if err != nil {
+				return err
 			}
 
 			if printHash {
-				return printTemplateHash(&rc, m)
+				return printTemplateHash(&rc, tl)
 			}
 
 			action, err := exportTemplate(
 				c.Context,
-				storePath,
-				m,
 				&rc,
+				storePath,
+				tl,
 				force,
 			)
 			if err != nil {
@@ -205,25 +182,73 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 	}
 }
 
+/* --------------------- Function: buildTemplateContext --------------------- */
+
+func buildTemplateContext(
+	c *cli.Context,
+	pathManifest,
+	pathOut,
+	platformInput string,
+	dryRun bool,
+) (run.Context, error) {
+	features := c.StringSlice("feature")
+
+	log.Infof("features: %s", strings.Join(features, ","))
+
+	pr := parseProfile(c.Bool("release"), c.Bool("release_debug"))
+
+	log.Infof("profile: %s", pr)
+
+	pl, err := parsePlatform(platformInput)
+	if err != nil {
+		return run.Context{}, err
+	}
+
+	log.Infof("platform: %s", pl)
+
+	rc := run.Context{
+		DryRun:        dryRun,
+		Features:      features,
+		PathManifest:  osutil.Path(pathManifest),
+		PathOut:       osutil.Path(pathOut),
+		PathWorkspace: "", // Will be set later.
+		Platform:      pl,
+		Profile:       pr,
+		Verbose:       log.GetLevel() == log.DebugLevel,
+	}
+
+	pathTmp, err := rc.TempDir()
+	if err != nil {
+		return run.Context{}, err
+	}
+
+	// Use shared temporary directory as a build path.
+	rc.PathWorkspace = osutil.Path(pathTmp)
+
+	log.Debugf("using build directory: %s", rc.PathWorkspace)
+
+	if err := rc.Validate(); err != nil {
+		return run.Context{}, err
+	}
+
+	return rc, nil
+}
+
 /* ---------------------- Function: buildExportTemplate --------------------- */
 
 func exportTemplate( //nolint:ireturn
 	_ context.Context,
-	storePath string,
-	m *config.Manifest,
 	rc *run.Context,
+	storePath string,
+	tl *godottemplate.Template,
 	force bool,
 ) (action.Action, error) {
-	if err := rc.Validate(); err != nil {
-		return nil, err
-	}
-
-	t, err := config.Template(rc, m)
+	cs, err := tl.Checksum()
 	if err != nil {
 		return nil, err
 	}
 
-	hasTemplate, err := store.HasTemplate(storePath, t)
+	hasTemplate, err := store.HasTemplate(storePath, cs)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +265,7 @@ func exportTemplate( //nolint:ireturn
 			return action.NoOp{}, nil
 		}
 
-		pathArchive, err := store.TemplateArchive(storePath, t)
+		pathArchive, err := store.TemplateArchive(storePath, cs)
 		if err != nil {
 			return nil, err
 		}
@@ -258,18 +283,13 @@ func exportTemplate( //nolint:ireturn
 	}
 
 	// Template was not cached; create build action.
-	return template.Action(t, rc)
+	return template.Action(tl, rc)
 }
 
 /* ----------------------- Function: printTemplateHash ---------------------- */
 
-func printTemplateHash(rc *run.Context, m *config.Manifest) error {
-	t, err := config.Template(rc, m)
-	if err != nil {
-		return err
-	}
-
-	cs, err := t.Checksum()
+func printTemplateHash(_ *run.Context, tl *godottemplate.Template) error {
+	cs, err := tl.Checksum()
 	if err != nil {
 		return err
 	}
@@ -277,4 +297,46 @@ func printTemplateHash(rc *run.Context, m *config.Manifest) error {
 	log.Print(cs)
 
 	return nil
+}
+
+/* -------------------- Function: cleanTemporaryDirectory ------------------- */
+
+func cleanTemporaryDirectory(rc *run.Context) {
+	if rc.DryRun || !rc.HasTempDir() {
+		return
+	}
+
+	path, err := rc.TempDir()
+	if err != nil {
+		log.Warn(
+			"Failed to determine temporary directory used.",
+			"path",
+			path,
+		)
+
+		return
+	}
+
+	_, err = os.Stat(path)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			log.Warn(
+				"Failed to remove temporary directory.",
+				"path",
+				path,
+			)
+
+			return
+		}
+
+		return // All done.
+	}
+
+	if err := os.RemoveAll(path); err != nil {
+		log.Warn(
+			"Failed to remove temporary directory.",
+			"path",
+			path,
+		)
+	}
 }

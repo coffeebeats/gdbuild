@@ -11,9 +11,6 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/godot/export"
-	"github.com/coffeebeats/gdbuild/pkg/godot/template"
-	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 const (
@@ -56,12 +53,12 @@ func Clear(storePath string) error {
 /* -------------------------------------------------------------------------- */
 
 // Return whether the store has the specified version cached.
-func HasTarget(storePath string, rc *run.Context, x *export.Export) (bool, error) {
+func HasTarget(storePath string, checksum string) (bool, error) {
 	if storePath == "" {
 		return false, ErrMissingStore
 	}
 
-	path, err := TargetArchive(storePath, rc, x)
+	path, err := TargetArchive(storePath, checksum)
 	if err != nil {
 		return false, err
 	}
@@ -83,12 +80,12 @@ func HasTarget(storePath string, rc *run.Context, x *export.Export) (bool, error
 /* -------------------------------------------------------------------------- */
 
 // Return whether the store has the specified version cached.
-func HasTemplate(storePath string, t *template.Template) (bool, error) {
+func HasTemplate(storePath string, checksum string) (bool, error) {
 	if storePath == "" {
 		return false, ErrMissingStore
 	}
 
-	path, err := TemplateArchive(storePath, t)
+	path, err := TemplateArchive(storePath, checksum)
 	if err != nil {
 		return false, err
 	}
@@ -110,12 +107,12 @@ func HasTemplate(storePath string, t *template.Template) (bool, error) {
 /* -------------------------------------------------------------------------- */
 
 // Removes the specified version from the store.
-func Remove(storePath string, t *template.Template) error {
+func Remove(storePath string, checksum string) error {
 	if storePath == "" {
 		return ErrMissingStore
 	}
 
-	path, err := TemplateArchive(storePath, t)
+	path, err := TemplateArchive(storePath, checksum)
 	if err != nil {
 		return err
 	}

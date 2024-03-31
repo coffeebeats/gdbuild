@@ -7,6 +7,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config/platform"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -16,16 +17,13 @@ import (
 
 // Export creates an `Export` instance which contains an action for exporting
 // the specified target.
-func Export(rc *run.Context, m *Manifest, target string) (*export.Export, error) { //nolint:cyclop,funlen
-	var merged struct {
-		godot  Godot
-		target platform.Exporter
-	}
-
-	tl, err := Template(rc, m)
-	if err != nil {
-		return nil, err
-	}
+func Export( //nolint:cyclop,funlen
+	rc *run.Context,
+	m *Manifest,
+	tl *template.Template,
+	target string,
+) (*export.Export, error) {
+	var mr merged
 
 	toBuild := []configuration{{context: rc, manifest: m}}
 	visited := map[osutil.Path]struct{}{}
@@ -73,7 +71,7 @@ func Export(rc *run.Context, m *Manifest, target string) (*export.Export, error)
 		}
 
 		// Merge 'Godot' properties.
-		if err := cfg.manifest.Godot.MergeInto(&merged.godot); err != nil {
+		if err := cfg.manifest.Godot.MergeInto(&mr.godot); err != nil {
 			return nil, err
 		}
 
@@ -88,32 +86,23 @@ func Export(rc *run.Context, m *Manifest, target string) (*export.Export, error)
 			return nil, err
 		}
 
-		if merged.target == nil {
-			merged.target = t
+		if mr.target == nil {
+			mr.target = t
 
 			continue
 		}
 
 		// Merge 'Target' properties.
-		if err := t.MergeInto(merged.target); err != nil {
+		if err := t.MergeInto(mr.target); err != nil {
 			return nil, err
 		}
 	}
 
-	if merged.target == nil {
-		return nil, fmt.Errorf("%w: failed to build target", ErrMissingInput)
-	}
-
-	// Validate 'Target' properties.
-	if err := merged.godot.Validate(rc); err != nil {
+	if err := mr.Validate(rc); err != nil {
 		return nil, err
 	}
 
-	if err := merged.target.Validate(rc); err != nil {
-		return nil, err
-	}
-
-	ev, err := merged.godot.ParseVersion()
+	ev, err := mr.godot.ParseVersion()
 	if err != nil {
 		if errors.Is(err, ErrConflictingValue) {
 			return nil, fmt.Errorf("%w: 'src_path' is unsupported at this time", err)
@@ -122,5 +111,31 @@ func Export(rc *run.Context, m *Manifest, target string) (*export.Export, error)
 		return nil, err
 	}
 
-	return merged.target.Collect(rc, tl, ev), nil
+	return mr.target.Collect(rc, tl, ev), nil
+}
+
+/* ----------------------------- Struct: merged ----------------------------- */
+
+type merged struct {
+	godot  Godot
+	target platform.Exporter
+}
+
+/* ------------------------- Impl: config.Validator ------------------------- */
+
+func (m *merged) Validate(rc *run.Context) error {
+	if m.target == nil {
+		return fmt.Errorf("%w: failed to build target", ErrMissingInput)
+	}
+
+	// Validate 'Target' properties.
+	if err := m.godot.Validate(rc); err != nil {
+		return err
+	}
+
+	if err := m.target.Validate(rc); err != nil {
+		return err
+	}
+
+	return nil
 }

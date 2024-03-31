@@ -19,6 +19,10 @@ type Godot struct {
 /* ---------------------------- config.Configurer --------------------------- */
 
 func (g *Godot) Configure(rc *run.Context) error {
+	if g.Source == nil {
+		return nil
+	}
+
 	if err := g.PathSource.RelTo(rc.PathManifest); err != nil {
 		return err
 	}
@@ -33,7 +37,7 @@ func (g *Godot) Configure(rc *run.Context) error {
 /* ------------------------- Impl: config.Validator ------------------------- */
 
 func (g *Godot) Validate(_ *run.Context) error {
-	if g.IsEmpty() {
+	if g.Source == nil || g.IsEmpty() {
 		return fmt.Errorf("%w: no Godot version specified in manifest", ErrMissingInput)
 	}
 

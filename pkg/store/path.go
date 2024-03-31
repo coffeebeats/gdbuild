@@ -7,14 +7,12 @@ import (
 	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/archive"
-	"github.com/coffeebeats/gdbuild/pkg/godot/export"
-	"github.com/coffeebeats/gdbuild/pkg/godot/template"
-	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
 const envStore = "GDBUILD_HOME"
 
 var (
+	ErrInvalidInput  = errors.New("invalid input")
 	ErrInvalidPath   = errors.New("invalid file path")
 	ErrMissingEnvVar = errors.New("missing environment variable")
 )
@@ -27,17 +25,16 @@ var (
 // export template artifact archive within the store.
 //
 // NOTE: This does *not* mean the template archive exists.
-func TemplateArchive(storePath string, t *template.Template) (string, error) {
+func TemplateArchive(storePath string, checksum string) (string, error) {
 	if storePath == "" {
 		return "", ErrMissingStore
 	}
 
-	cs, err := t.Checksum()
-	if err != nil {
-		return "", err
+	if checksum == "" {
+		return "", fmt.Errorf("%w: checksum: %s", ErrInvalidInput, checksum)
 	}
 
-	return filepath.Join(storePath, storeDirTemplate, cs+archive.FileExtension), nil
+	return filepath.Join(storePath, storeDirTemplate, checksum+archive.FileExtension), nil
 }
 
 /* -------------------------------------------------------------------------- */
@@ -48,17 +45,12 @@ func TemplateArchive(storePath string, t *template.Template) (string, error) {
 // exported project archive within the store.
 //
 // NOTE: This does *not* mean the export archive exists.
-func TargetArchive(storePath string, rc *run.Context, x *export.Export) (string, error) {
+func TargetArchive(storePath string, checksum string) (string, error) {
 	if storePath == "" {
 		return "", ErrMissingStore
 	}
 
-	cs, err := x.Checksum(rc)
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(storePath, storeDirTemplate, cs+archive.FileExtension), nil
+	return filepath.Join(storePath, storeDirTemplate, checksum+archive.FileExtension), nil
 }
 
 /* -------------------------------------------------------------------------- */
