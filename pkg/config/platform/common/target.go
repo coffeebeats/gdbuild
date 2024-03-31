@@ -1,7 +1,9 @@
 package common
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 
 	"github.com/charmbracelet/log"
@@ -11,6 +13,11 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
+)
+
+var (
+	ErrInvalidInput = errors.New("invalid input")
+	ErrMissingInput = errors.New("missing input")
 )
 
 /* -------------------------------------------------------------------------- */
@@ -70,6 +77,7 @@ func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Versi
 		Features:      ff,
 		Options:       t.Options,
 		PackFiles:     t.PackFiles,
+		PathTemplate:  "",
 		RunBefore:     t.Hook.PreActions(rc),
 		RunAfter:      t.Hook.PostActions(rc),
 		Runnable:      config.Dereference(t.Runnable),
@@ -93,15 +101,85 @@ func (t *Target) Configure(rc *run.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (t *Target) Validate(rc *run.Context) error {
+func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 	if err := t.Hook.Validate(rc); err != nil {
 		return err
 	}
 
-	for _, pf := range t.PackFiles {
+	packNames := make(map[string]struct{})
+
+	isRunnable := config.Dereference(t.Runnable)
+	isServer := config.Dereference(t.Server)
+	hasEmbed := false
+	hasVisualsStripped := false
+
+	if isServer && !isRunnable {
+		return fmt.Errorf(
+			"%w: cannot specify server optimizations for a non-runnable target",
+			ErrInvalidInput,
+		)
+	}
+
+	projectFiles := map[string]struct{}{}
+
+	for i, pf := range t.PackFiles {
 		if err := pf.Validate(rc); err != nil {
 			return err
 		}
+
+		name := pf.Filename(rc.Platform, rc.Target, i)
+		if _, ok := packNames[name]; ok {
+			return fmt.Errorf(
+				"%w: duplicate pack filename found: %s",
+				ErrInvalidInput,
+				name,
+			)
+		}
+
+		hasEmbed = hasEmbed || config.Dereference(pf.Embed)
+		hasVisualsStripped = hasVisualsStripped || pf.StripVisuals()
+
+		ff, err := pf.Files(rc.PathWorkspace)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+
+			return err
+		}
+
+		for _, f := range ff {
+			path := f.String()
+
+			if _, ok := projectFiles[path]; ok {
+				log.Warn("Same file found in multiple packs.", "file", path)
+
+				continue
+			}
+
+			projectFiles[path] = struct{}{}
+		}
+	}
+
+	if !isRunnable && hasEmbed {
+		return fmt.Errorf(
+			"%w: cannot embed a pack file into a non-runnable target",
+			ErrInvalidInput,
+		)
+	}
+
+	if isRunnable && !hasEmbed {
+		return fmt.Errorf(
+			"%w: missing embedded pack file for runnable target",
+			ErrMissingInput,
+		)
+	}
+
+	if !isServer && hasVisualsStripped {
+		return fmt.Errorf(
+			"%w: cannot strip visuals from a pack file for a non-server target",
+			ErrInvalidInput,
+		)
 	}
 
 	return nil
