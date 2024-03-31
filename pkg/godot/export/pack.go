@@ -59,13 +59,14 @@ func (c *PackFile) Preset(rc *run.Context, x *Export, index int) (Preset, error)
 	}
 
 	preset.SetArchitecture(x.Template.Arch)
+	preset.SetEmbedded(config.Dereference(c.Embed))
 	preset.SetTemplate(x.PathTemplate.String())
 	preset.Features = slices.Clone(rc.Features)
 
 	name := c.Filename(rc.Platform, rc.Target, index)
 
 	preset.Name = name
-	preset.PathExport = filepath.Join(rc.PathOut.String(), name)
+	preset.PathExport = rc.PathOut.String()
 
 	if config.Dereference(c.Encrypt) {
 		preset.Encrypt = true
@@ -189,20 +190,20 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyc
 			); err != nil {
 				return nil, err
 			}
+		}
 
-			baseGlob := filepath.Base(g)
+		baseGlob := filepath.Base(g)
 
-			for _, path := range mm {
-				baseMatch := filepath.Base(path)
+		for _, path := range mm {
+			baseMatch := filepath.Base(path)
 
-				// Ignore hidden files unless explicitly searched for.
-				if !strings.HasPrefix(baseGlob, ".") &&
-					strings.HasPrefix(baseMatch, ".") {
-					continue
-				}
-
-				files[osutil.Path(path)] = struct{}{}
+			// Ignore hidden files unless explicitly searched for.
+			if !strings.HasPrefix(baseGlob, ".") &&
+				strings.HasPrefix(baseMatch, ".") {
+				continue
 			}
+
+			files[osutil.Path(path)] = struct{}{}
 		}
 	}
 

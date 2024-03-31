@@ -63,7 +63,7 @@ type Export struct {
 /* ----------------------------- Method: Actions ---------------------------- */
 
 // Action creates an 'action.Action' for running the export action.
-func (x *Export) Action(rc *run.Context) (action.Action, error) { //nolint:ireturn
+func (x *Export) Action(rc *run.Context, pathGodot osutil.Path) (action.Action, error) { //nolint:ireturn
 	var out action.Action = action.NoOp{}
 
 	out = out.AndThen(NewWriteExportPresetsAction(rc, x))
@@ -74,7 +74,7 @@ func (x *Export) Action(rc *run.Context) (action.Action, error) { //nolint:iretu
 	}
 
 	for _, preset := range presets {
-		out = out.AndThen(NewExportAction(rc, preset))
+		out = out.AndThen(NewExportAction(rc, preset, pathGodot))
 	}
 
 	return out, nil
@@ -105,7 +105,8 @@ func (x *Export) Presets(rc *run.Context) ([]*Preset, error) {
 		}
 	}
 
-	return append([]*Preset{&embed}, presets...), nil
+	return []*Preset{&embed}, nil //nolint:funlen,remove-me!!!
+	// return append([]*Preset{&embed}, presets...), nil
 }
 
 /* ---------------------------- Method: Artifacts --------------------------- */
@@ -183,6 +184,7 @@ func NewWriteExportPresetsAction(
 func NewExportAction(
 	rc *run.Context,
 	preset *Preset,
+	pathGodot osutil.Path,
 ) *action.Process {
 	var cmd action.Process
 
@@ -193,7 +195,9 @@ func NewExportAction(
 
 	cmd.Args = append(
 		cmd.Args,
-		"godot",
+		pathGodot.String(),
+		"--path",
+		rc.PathWorkspace.String(),
 		"--headless",
 	)
 

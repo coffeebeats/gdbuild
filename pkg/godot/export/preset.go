@@ -30,7 +30,7 @@ type Preset struct {
 	Encrypted       []string          `ini:"encryption_include_filters"`
 	EncryptIndex    bool              `ini:"encrypt_directory"`
 	Exclude         string            `ini:"exclude_filter"`
-	ExportedFiles   []string          `ini:"export_files,omitempty"`
+	ExportedFiles   []string          `ini:"export_files"`
 	// ExportMode sets the type of export to use. Should be 'resources' for a
 	// standard pack file and 'customized' for dedicated server pack files.
 	ExportMode string   `ini:"export_filter"`
@@ -76,6 +76,16 @@ func (p *Preset) SetArchitecture(arch platform.Arch) {
 	}
 
 	p.Options["binary_format/architecture"] = arch.String()
+}
+
+/* --------------------------- Method: SetEmbedded -------------------------- */
+
+func (p *Preset) SetEmbedded(embed bool) {
+	if p.Options == nil {
+		p.Options = map[string]string{}
+	}
+
+	p.Options["binary_format/embed_pck"] = "true"
 }
 
 /* --------------------------- Method: SetPlatform -------------------------- */

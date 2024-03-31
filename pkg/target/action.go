@@ -28,7 +28,12 @@ var (
 // Action creates a new 'action.Action' which executes the specified processes
 // for compiling the export template.
 func Action(rc *run.Context, tl *template.Template, xp *export.Export) (action.Action, error) { //nolint:ireturn
-	exportAction, err := xp.Action(rc)
+	pathTmp, err := rc.TempDir()
+	if err != nil {
+		return nil, err
+	}
+
+	exportAction, err := xp.Action(rc, osutil.Path(filepath.Join(pathTmp, "godot")))
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +55,7 @@ func Action(rc *run.Context, tl *template.Template, xp *export.Export) (action.A
 
 	return action.InOrder(
 		xp.RunBefore,
-		NewInstallGodotAction(rc, xp.Version, rc.PathWorkspace),
+		NewInstallGodotAction(rc, xp.Version, osutil.Path(pathTmp)),
 		extractTemplateAction,
 		exportAction,
 		xp.RunAfter,
@@ -199,8 +204,10 @@ func NewExtractTemplateAction(
 		return archive.Extract(ctx, pathArchive, pathTmp)
 	}
 
+	pathTemplate := filepath.Join(pathTmp, template.Name(rc.Platform, tl.Arch, rc.Profile))
+
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "extract cached export template: " + template.Name(rc.Platform, tl.Arch, rc.Profile),
+		Description: "extract cached export template: " + pathTemplate,
 	}, nil
 }

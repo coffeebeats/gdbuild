@@ -3,6 +3,7 @@ package target
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -54,6 +55,6 @@ func NewInstallGodotAction(
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "install godot editor: " + pathGodot,
+		Description: fmt.Sprintf("install godot '%s' editor: %s", ev.String(), pathGodot),
 	}
 }

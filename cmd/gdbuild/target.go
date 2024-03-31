@@ -168,7 +168,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
-			ec, err := buildExportContext(rc, c.Path("project"), pathOut)
+			ec, err := buildExportContext(rc, targetName, c.Path("project"), pathOut)
 			if err != nil {
 				return err
 			}
@@ -222,7 +222,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 /* ---------------------- Function: buildExportContext ---------------------- */
 
-func buildExportContext(rc run.Context, pathProject, pathOut string) (run.Context, error) {
+func buildExportContext(rc run.Context, targetName, pathProject, pathOut string) (run.Context, error) {
 	pathWorkspace := osutil.Path(filepath.Dir(rc.PathManifest.String()))
 	if pathProject != "" {
 		pathWorkspace = osutil.Path(pathProject)
@@ -237,11 +237,24 @@ func buildExportContext(rc run.Context, pathProject, pathOut string) (run.Contex
 		}
 	}
 
+	wd, err := os.Getwd()
+	if err != nil {
+		return run.Context{}, err
+	}
+
 	// Update the workspace path to the project directory.
 	rc.PathWorkspace = pathWorkspace
+	if err := rc.PathWorkspace.RelTo(osutil.Path(wd)); err != nil {
+		return run.Context{}, err
+	}
 
 	// Update output directory to option value.
 	rc.PathOut = osutil.Path(pathOut)
+	if err := rc.PathWorkspace.RelTo(osutil.Path(pathOut)); err != nil {
+		return run.Context{}, err
+	}
+
+	rc.Target = targetName
 
 	if err := rc.Validate(); err != nil {
 		return run.Context{}, err
@@ -255,6 +268,8 @@ func buildExportContext(rc run.Context, pathProject, pathOut string) (run.Contex
 			pathGodotManifest.String(),
 		)
 	}
+
+	log.Debugf("using project directory: %s", pathWorkspace)
 
 	return rc, nil
 }
