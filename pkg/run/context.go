@@ -51,7 +51,7 @@ func (c *Context) ProjectPath() osutil.Path {
 
 // ProjectManifest returns the path to the Godot project configuration file.
 func (c *Context) ProjectManifest() osutil.Path {
-	return osutil.Path(filepath.Join(c.PathManifest.String(), "project.godot"))
+	return osutil.Path(filepath.Join(c.ProjectPath().String(), "project.godot"))
 }
 
 /* ----------------------------- Method: BinPath ---------------------------- */
@@ -76,21 +76,8 @@ func (c *Context) Validate() error {
 		return err
 	}
 
-	if err := c.ProjectManifest().CheckIsFile(); err != nil {
-		return fmt.Errorf(
-			"%w: Godot project configuration: %s",
-			ErrMissingInput,
-			c.ProjectPath(),
-		)
-	}
-
 	// NOTE: PathWorkspace might be generated via hooks, so only verify it's set.
 	if c.PathWorkspace == "" {
-		return fmt.Errorf("%w: build path", ErrMissingInput)
-	}
-
-	// NOTE: PathOut might be generated via hooks, so only verify it's set.
-	if c.PathOut == "" {
 		return fmt.Errorf("%w: build path", ErrMissingInput)
 	}
 
