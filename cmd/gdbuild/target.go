@@ -158,6 +158,8 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
+			defer cleanTemporaryDirectory(&rc)
+
 			tl, err := config.Template(&rc, m)
 			if err != nil {
 				return err
@@ -167,6 +169,8 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 			if err != nil {
 				return err
 			}
+
+			defer cleanTemporaryDirectory(&ec)
 
 			xp, err := config.Export(&ec, m, tl, target)
 			if err != nil {

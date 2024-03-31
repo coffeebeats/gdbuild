@@ -3,6 +3,7 @@ package run
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
@@ -20,6 +21,8 @@ var ErrMissingInput = errors.New("missing input")
 // need to be explicitly set per invocation as they can't be parsed from a
 // GDBuild manifest.
 type Context struct {
+	// DryRun determines whether the specified command will be executed.
+	DryRun bool
 	// Verbose determines whether to enable additional logging output.
 	Verbose bool
 
@@ -38,13 +41,23 @@ type Context struct {
 	// PathWorkspace is a working directory in which to run relevant commands.
 	// The use case for the directory is command-specific.
 	PathWorkspace osutil.Path
+
+	tmp string
 }
 
-/* --------------------------- Method: ProjectPath -------------------------- */
+/* ----------------------------- Method: BinPath ---------------------------- */
 
-// ProjectPath returns the path to the Godot project.
-func (c *Context) ProjectPath() osutil.Path {
-	return osutil.Path(filepath.Dir(c.PathManifest.String()))
+// BinPath returns the path to the Godot template artifacts are compilation.
+func (c *Context) BinPath() osutil.Path {
+	return osutil.Path(filepath.Join(c.PathWorkspace.String(), "bin"))
+}
+
+/* --------------------------- Method: HasTempDir --------------------------- */
+
+// HasTempDir returns whether a run-specific temporary directory has been
+// created.
+func (c *Context) HasTempDir() bool {
+	return c.tmp != ""
 }
 
 /* ------------------------- Method: ProjectManifest ------------------------ */
@@ -54,11 +67,34 @@ func (c *Context) ProjectManifest() osutil.Path {
 	return osutil.Path(filepath.Join(c.ProjectPath().String(), "project.godot"))
 }
 
-/* ----------------------------- Method: BinPath ---------------------------- */
+/* --------------------------- Method: ProjectPath -------------------------- */
 
-// BinPath returns the path to the Godot template artifacts are compilation.
-func (c *Context) BinPath() osutil.Path {
-	return osutil.Path(filepath.Join(c.PathWorkspace.String(), "bin"))
+// ProjectPath returns the path to the Godot project.
+func (c *Context) ProjectPath() osutil.Path {
+	return osutil.Path(filepath.Dir(c.PathManifest.String()))
+}
+
+/* ----------------------------- Method: TempDir ---------------------------- */
+
+// TempDir constructs a temporary directory for the duration of the context.
+// Only one directory will ever be created.
+func (c *Context) TempDir() (string, error) {
+	if c.DryRun {
+		return filepath.Join(os.TempDir(), "gdbuild-*"), nil
+	}
+
+	if c.tmp != "" {
+		return c.tmp, nil
+	}
+
+	tmp, err := os.MkdirTemp("", "gdbuild-*")
+	if err != nil {
+		return "", err
+	}
+
+	c.tmp = tmp
+
+	return tmp, nil
 }
 
 /* ------------------------- Impl: config.Validator ------------------------- */

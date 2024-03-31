@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/log"
@@ -151,6 +153,8 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
+			defer cleanTemporaryDirectory(&rc)
+
 			tl, err := config.Template(&rc, m)
 			if err != nil {
 				return err
@@ -214,6 +218,7 @@ func buildTemplateContext(
 	log.Infof("platform: %s", pl)
 
 	rc := run.Context{
+		DryRun:        dryRun,
 		Features:      features,
 		PathManifest:  osutil.Path(pathManifest),
 		PathOut:       osutil.Path(pathOut),
@@ -293,4 +298,46 @@ func printTemplateHash(_ *run.Context, tl *godottemplate.Template) error {
 	log.Print(cs)
 
 	return nil
+}
+
+/* -------------------- Function: cleanTemporaryDirectory ------------------- */
+
+func cleanTemporaryDirectory(rc *run.Context) {
+	if rc.DryRun || !rc.HasTempDir() {
+		return
+	}
+
+	path, err := rc.TempDir()
+	if err != nil {
+		log.Warn(
+			"Failed to determine temporary directory used.",
+			"path",
+			path,
+		)
+
+		return
+	}
+
+	_, err = os.Stat(path)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			log.Warn(
+				"Failed to remove temporary directory.",
+				"path",
+				path,
+			)
+
+			return
+		}
+
+		return // All done.
+	}
+
+	if err := os.RemoveAll(path); err != nil {
+		log.Warn(
+			"Failed to remove temporary directory.",
+			"path",
+			path,
+		)
+	}
 }
