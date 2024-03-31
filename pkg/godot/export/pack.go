@@ -212,7 +212,7 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyc
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
 func (c *PackFile) Configure(rc *run.Context) error {
-	if err := c.Name.RelTo(rc.ProjectPath()); err != nil {
+	if err := c.Name.RelTo(rc.PathWorkspace); err != nil {
 		return err
 	}
 

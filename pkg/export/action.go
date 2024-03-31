@@ -11,11 +11,15 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
 )
 
-var ErrMissingInput = errors.New("missing input")
+var (
+	ErrInvalidInput = errors.New("invalid input")
+	ErrMissingInput = errors.New("missing input")
+)
 
 /* -------------------------------------------------------------------------- */
 /*                              Function: Action                              */
@@ -23,30 +27,37 @@ var ErrMissingInput = errors.New("missing input")
 
 // Action creates a new 'action.Action' which executes the specified processes
 // for compiling the export template.
-func Action(rc *run.Context, x *export.Export) (action.Action, error) { //nolint:ireturn
-	actions := make([]action.Action, 0)
-
-	actions = append(
-		actions,
-		x.RunBefore,
-		NewInstallGodotAction(rc, x.Version, rc.PathWorkspace),
-		x.Action(),
-	)
-
-	cacheArtifacts, err := NewCacheArtifactsAction(rc, x)
+func Action(rc *run.Context, tl *template.Template, xp *export.Export) (action.Action, error) { //nolint:ireturn
+	exportAction, err := xp.Action(rc)
 	if err != nil {
 		return nil, err
 	}
 
-	actions = append(
-		actions,
-		x.RunAfter,
-		run.NewVerifyArtifactsAction(rc, x.Artifacts()),
-		cacheArtifacts,
-		NewCopyArtifactsAction(rc, x.Artifacts()),
-	)
+	extractTemplateAction, err := NewExtractTemplateAction(rc, tl)
+	if err != nil {
+		return nil, err
+	}
 
-	return action.InOrder(actions...), nil
+	artifacts, err := xp.Artifacts(rc)
+	if err != nil {
+		return nil, err
+	}
+
+	cacheArtifacts, err := NewCacheArtifactsAction(rc, xp, artifacts)
+	if err != nil {
+		return nil, err
+	}
+
+	return action.InOrder(
+		xp.RunBefore,
+		NewInstallGodotAction(rc, xp.Version, rc.PathWorkspace),
+		extractTemplateAction,
+		exportAction,
+		xp.RunAfter,
+		run.NewVerifyArtifactsAction(rc, artifacts),
+		cacheArtifacts,
+		NewCopyArtifactsAction(rc, artifacts),
+	), nil
 }
 
 /* -------------------------------------------------------------------------- */
@@ -57,7 +68,8 @@ func Action(rc *run.Context, x *export.Export) (action.Action, error) { //nolint
 // project artifacts in the 'gdbuild' store.
 func NewCacheArtifactsAction(
 	rc *run.Context,
-	x *export.Export,
+	xp *export.Export,
+	artifacts []string,
 ) (action.WithDescription[action.Function], error) {
 	fn := func(_ context.Context) error {
 		pathBin := rc.BinPath()
@@ -72,7 +84,7 @@ func NewCacheArtifactsAction(
 
 		var files []string
 
-		for _, a := range x.Artifacts() {
+		for _, a := range artifacts {
 			pathArtifact := filepath.Join(pathBin.String(), a)
 
 			log.Debugf("caching artifact in store: %s", a)
@@ -80,7 +92,7 @@ func NewCacheArtifactsAction(
 			files = append(files, pathArtifact)
 		}
 
-		cs, err := x.Checksum(rc)
+		cs, err := export.Checksum(rc, xp)
 		if err != nil {
 			return err
 		}
@@ -150,4 +162,45 @@ func NewCopyArtifactsAction(
 		Action:      fn,
 		Description: "move generated artifacts to output directory: " + rc.PathOut.String(),
 	}
+}
+
+/* -------------------------------------------------------------------------- */
+/*                     Function: NewExtractTemplateAction                     */
+/* -------------------------------------------------------------------------- */
+
+// NewExtractTemplateAction creates an 'action.Action' which extracts the cached
+// Godot export template into a temporary directory and populates the provided
+// string variable 'path' with a path to it.
+func NewExtractTemplateAction(
+	rc *run.Context,
+	tl *template.Template,
+) (action.WithDescription[action.Function], error) {
+	storePath, err := store.Path()
+	if err != nil {
+		return action.WithDescription[action.Function]{}, err
+	}
+
+	checksum, err := template.Checksum(tl)
+	if err != nil {
+		return action.WithDescription[action.Function]{}, err
+	}
+
+	pathTmp, err := rc.TempDir()
+	if err != nil {
+		return action.WithDescription[action.Function]{}, err
+	}
+
+	fn := func(ctx context.Context) error {
+		pathArchive, err := store.TemplateArchive(storePath, checksum)
+		if err != nil {
+			return err
+		}
+
+		return archive.Extract(ctx, pathArchive, pathTmp)
+	}
+
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "extract cached export template: " + template.Name(rc.Platform, tl.Arch, rc.Profile),
+	}, nil
 }

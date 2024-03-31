@@ -39,7 +39,7 @@ func TestTemplateArchive(t *testing.T) {
 			store: storeName,
 
 			want: func() string {
-				cs, err := (&template.Template{}).Checksum()
+				cs, err := template.Checksum(&template.Template{})
 				assert.NoError(t, err)
 
 				return filepath.Join(
@@ -54,7 +54,7 @@ func TestTemplateArchive(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given: A checksum for the template.
-			cs, err := tc.template.Checksum()
+			cs, err := template.Checksum(&tc.template)
 			require.NoError(t, err)
 
 			// When: The path to the cached executable is determined.

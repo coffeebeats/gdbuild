@@ -17,6 +17,7 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/config"
 	"github.com/coffeebeats/gdbuild/pkg/export"
 	godotexport "github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
 )
@@ -198,6 +199,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				c.Context,
 				&ec,
 				storePath,
+				tl,
 				xp,
 				force,
 			)
@@ -263,13 +265,26 @@ func exportProject( //nolint:ireturn
 	_ context.Context,
 	rc *run.Context,
 	storePath string,
+	tl *template.Template,
 	xp *godotexport.Export,
 	force bool,
 ) (action.Action, error) {
-	cs, err := xp.Checksum(rc)
+	cs, err := godotexport.Checksum(rc, xp)
 	if err != nil {
 		return nil, err
 	}
+
+	pathTmp, err := rc.TempDir()
+	if err != nil {
+		return nil, err
+	}
+
+	xp.PathTemplate = osutil.Path(
+		filepath.Join(
+			pathTmp,
+			template.Name(rc.Platform, tl.Arch, rc.Profile),
+		),
+	)
 
 	hasTarget, err := store.HasTarget(storePath, cs)
 	if err != nil {
@@ -306,13 +321,13 @@ func exportProject( //nolint:ireturn
 	}
 
 	// Target was not cached; create build action.
-	return export.Action(rc, xp)
+	return export.Action(rc, tl, xp)
 }
 
 /* ------------------------ Function: printTargetHash ----------------------- */
 
 func printTargetHash(rc *run.Context, xp *godotexport.Export) error {
-	cs, err := xp.Checksum(rc)
+	cs, err := godotexport.Checksum(rc, xp)
 	if err != nil {
 		return err
 	}

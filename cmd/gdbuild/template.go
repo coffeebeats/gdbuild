@@ -253,7 +253,7 @@ func exportTemplate( //nolint:ireturn
 	tl *godottemplate.Template,
 	force bool,
 ) (action.Action, error) {
-	cs, err := tl.Checksum()
+	cs, err := godottemplate.Checksum(tl)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +299,7 @@ func exportTemplate( //nolint:ireturn
 /* ----------------------- Function: printTemplateHash ---------------------- */
 
 func printTemplateHash(_ *run.Context, tl *godottemplate.Template) error {
-	cs, err := tl.Checksum()
+	cs, err := godottemplate.Checksum(tl)
 	if err != nil {
 		return err
 	}

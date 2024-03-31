@@ -23,6 +23,13 @@ var ErrMissingInput = errors.New("missing input")
 type Context struct {
 	// DryRun determines whether the specified command will be executed.
 	DryRun bool
+	// Target is the name of the target specified during an export command.
+	//
+	// HACK: Context should realistically be divided into per-command contexts
+	// so that properties can be specialized. For now, deal with this. It's only
+	// set for 'gdbuild target'.
+	Target string
+
 	// Verbose determines whether to enable additional logging output.
 	Verbose bool
 

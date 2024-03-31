@@ -50,8 +50,10 @@ func NewInstallGodotAction(
 		return engine.InstallEditor(ctx, ev, pathGodot)
 	}
 
+	pathGodot := filepath.Join(path.String(), engine.EditorName())
+
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "install godot editor: " + path.String(),
+		Description: "install godot editor: " + pathGodot,
 	}
 }

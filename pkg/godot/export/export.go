@@ -1,18 +1,17 @@
 package export
 
 import (
+	"context"
 	"errors"
-	"hash/crc64"
 	"io"
+	"os"
 	"path/filepath"
-	"slices"
-	"strconv"
 	"strings"
 
-	"github.com/mitchellh/hashstructure/v2"
 	"golang.org/x/exp/maps"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
+	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
@@ -41,6 +40,8 @@ type Export struct {
 	Options map[string]any
 	// PackFiles defines the game files exported as part of this artifact.
 	PackFiles []PackFile
+	// PathTemplate is a path to the export template to use during exporting.
+	PathTemplate osutil.Path `hash:"ignore"`
 	// Template specifies the export template to use.
 	Template *template.Template `hash:"string"`
 	// RunBefore contains an ordered list of actions to execute prior to
@@ -62,71 +63,156 @@ type Export struct {
 /* ----------------------------- Method: Actions ---------------------------- */
 
 // Action creates an 'action.Action' for running the export action.
-func (x *Export) Action() action.Action { //nolint:ireturn
-	return action.NoOp{}
+func (x *Export) Action(rc *run.Context) (action.Action, error) { //nolint:ireturn
+	var out action.Action = action.NoOp{}
+
+	out = out.AndThen(NewWriteExportPresetsAction(rc, x))
+
+	presets, err := x.Presets(rc)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, preset := range presets {
+		preset := preset
+		out = out.AndThen(NewExportAction(rc, &preset))
+	}
+
+	return out, nil
+}
+
+/* ----------------------------- Method: Presets ---------------------------- */
+
+// Presets constructs the list of 'Preset' types for the specified pack files.
+func (x *Export) Presets(rc *run.Context) ([]Preset, error) {
+	presets := make([]Preset, 0, len(x.PackFiles))
+
+	var embed Preset
+
+	for i, pf := range x.PackFiles {
+		preset, err := pf.Preset(rc, x, i)
+		if err != nil {
+			return nil, err
+		}
+
+		if !config.Dereference(pf.Embed) {
+			presets = append(presets, preset)
+
+			continue
+		}
+
+		if err := config.Merge(&embed, preset); err != nil {
+			return nil, err
+		}
+	}
+
+	return append([]Preset{embed}, presets...), nil
 }
 
 /* ---------------------------- Method: Artifacts --------------------------- */
 
 // Artifacts returns the set of exported project artifacts required by the
 // underlying target definition.
-func (x *Export) Artifacts() []string {
+func (x *Export) Artifacts(rc *run.Context) ([]string, error) {
 	artifacts := make(map[string]struct{})
 
-	// TODO: Implement this.
+	presets, err := x.Presets(rc)
+	if err != nil {
+		return nil, err
+	}
 
-	return maps.Keys(artifacts)
+	for _, preset := range presets {
+		artifacts[preset.Name] = struct{}{}
+	}
+
+	return maps.Keys(artifacts), nil
 }
 
 /* -------------------------------------------------------------------------- */
-/*                             Function: Checksum                             */
+/*                    Function: NewWriteExportPresetsAction                   */
 /* -------------------------------------------------------------------------- */
 
-// Checksum produces a checksum hash of the export specification. When the
-// checksums of two 'Export' definitions matches, the resulting exported
-// artifacts will be equivalent.
-func (x *Export) Checksum(rc *run.Context) (string, error) {
-	hash, err := hashstructure.Hash(
-		x,
-		hashstructure.FormatV2,
-		&hashstructure.HashOptions{ //nolint:exhaustruct
-			IgnoreZeroValue: true,
-			SlicesAsSets:    true,
-			ZeroNil:         true,
-		},
-	)
-	if err != nil {
-		return "", err
-	}
+// NewWriteExportPresetsAction creates a new 'action.Action' which constructs an
+// 'export_presets.cfg' file based on the target. It will be written to the
+// workspace directory and overwrite any existing files.
+func NewWriteExportPresetsAction(
+	rc *run.Context,
+	x *Export,
+) action.WithDescription[action.Function] {
+	path := filepath.Join(rc.PathWorkspace.String(), "export_presets.cfg")
 
-	cs := crc64.New(crc64.MakeTable(crc64.ECMA))
-
-	// Update the 'crc64' hash with the struct hash.
-	if _, err := io.Copy(cs, strings.NewReader(strconv.FormatUint(hash, 16))); err != nil {
-		return "", err
-	}
-
-	files := make([]osutil.Path, 0)
-	pathRoot := osutil.Path(filepath.Dir(rc.PathManifest.String()))
-
-	for _, pck := range x.PackFiles {
-		ff, err := pck.Files(pathRoot)
+	fn := func(_ context.Context) error {
+		presets, err := x.Presets(rc)
 		if err != nil {
-			return "", err
+			return err
 		}
 
-		files = append(files, ff...)
-	}
+		var cfg strings.Builder
 
-	// Make the path list unique and sorted.
-	slices.Sort(files)
-	files = slices.Compact(files)
-
-	for _, path := range files {
-		if err := osutil.HashFiles(cs, path.String()); err != nil {
-			return "", err
+		for i, preset := range presets {
+			if err := preset.Marshal(&cfg, i); err != nil {
+				return err
+			}
 		}
+
+		f, err := os.Create(filepath.Join(rc.PathWorkspace.String(), "export_presets.cfg"))
+		if err != nil {
+			return err
+		}
+
+		defer f.Close()
+
+		if _, err := io.Copy(f, strings.NewReader(cfg.String()+"\n")); err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	return strconv.FormatUint(cs.Sum64(), 16), nil
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "generate export presets file: " + path,
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Function: NewExportAction                         */
+/* -------------------------------------------------------------------------- */
+
+// NewExportAction creates a new 'action.Action' which exports the specified
+// pack file.
+func NewExportAction(
+	rc *run.Context,
+	preset *Preset,
+) *action.Process {
+	var cmd action.Process
+
+	cmd.Verbose = rc.Verbose
+
+	cmd.Directory = rc.PathWorkspace.String()
+	cmd.Environment = os.Environ()
+
+	cmd.Args = append(
+		cmd.Args,
+		"godot",
+		"--headless",
+	)
+
+	if rc.Verbose {
+		cmd.Args = append(cmd.Args, "--verbose")
+	}
+
+	profile := "release"
+	if rc.Profile == engine.ProfileDebug {
+		profile = "debug"
+	}
+
+	cmd.Args = append(
+		cmd.Args,
+		"--export-"+profile,
+		preset.Name,
+		filepath.Join(rc.PathOut.String(), preset.PathExport),
+	)
+
+	return &cmd
 }
