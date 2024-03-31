@@ -224,6 +224,7 @@ func buildTemplateContext(
 		PathWorkspace: "", // Will be set later.
 		Platform:      pl,
 		Profile:       pr,
+		Target:        "", // Unused in this command.
 		Verbose:       log.GetLevel() == log.DebugLevel,
 	}
 

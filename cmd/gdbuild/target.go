@@ -15,11 +15,11 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
-	"github.com/coffeebeats/gdbuild/pkg/export"
-	godotexport "github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
+	"github.com/coffeebeats/gdbuild/pkg/target"
 )
 
 var ErrTargetUsageProfiles = errors.New("cannot specify more than one of '--debug', '--release_debug', and '--release'")
@@ -95,8 +95,8 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 		Action: func(c *cli.Context) error {
 			// Validate arguments.
-			target := c.Args().First()
-			if target == "" {
+			targetName := c.Args().First()
+			if targetName == "" {
 				return UsageError{ctx: c, err: fmt.Errorf("%w: target", ErrMissingInput)}
 			}
 
@@ -175,7 +175,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			defer cleanTemporaryDirectory(&ec)
 
-			xp, err := config.Export(&ec, m, tl, target)
+			xp, err := config.Export(&ec, m, tl, targetName)
 			if err != nil {
 				return err
 			}
@@ -266,10 +266,10 @@ func exportProject( //nolint:ireturn
 	rc *run.Context,
 	storePath string,
 	tl *template.Template,
-	xp *godotexport.Export,
+	xp *export.Export,
 	force bool,
 ) (action.Action, error) {
-	cs, err := godotexport.Checksum(rc, xp)
+	cs, err := export.Checksum(rc, xp)
 	if err != nil {
 		return nil, err
 	}
@@ -321,13 +321,13 @@ func exportProject( //nolint:ireturn
 	}
 
 	// Target was not cached; create build action.
-	return export.Action(rc, tl, xp)
+	return target.Action(rc, tl, xp)
 }
 
 /* ------------------------ Function: printTargetHash ----------------------- */
 
-func printTargetHash(rc *run.Context, xp *godotexport.Export) error {
-	cs, err := godotexport.Checksum(rc, xp)
+func printTargetHash(rc *run.Context, xp *export.Export) error {
+	cs, err := export.Checksum(rc, xp)
 	if err != nil {
 		return err
 	}
