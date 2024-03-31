@@ -60,18 +60,11 @@ func (c *Context) HasTempDir() bool {
 	return c.tmp != ""
 }
 
-/* ------------------------- Method: ProjectManifest ------------------------ */
+/* -------------------- Method: GodotProjectManifestPath -------------------- */
 
-// ProjectManifest returns the path to the Godot project configuration file.
-func (c *Context) ProjectManifest() osutil.Path {
-	return osutil.Path(filepath.Join(c.ProjectPath().String(), "project.godot"))
-}
-
-/* --------------------------- Method: ProjectPath -------------------------- */
-
-// ProjectPath returns the path to the Godot project.
-func (c *Context) ProjectPath() osutil.Path {
-	return osutil.Path(filepath.Dir(c.PathManifest.String()))
+// GodotProjectManifestPath returns the path to the Godot project manifest file.
+func (c *Context) GodotProjectManifestPath() osutil.Path {
+	return osutil.Path(filepath.Join(c.PathWorkspace.String(), "project.godot"))
 }
 
 /* ----------------------------- Method: TempDir ---------------------------- */

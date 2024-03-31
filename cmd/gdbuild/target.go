@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -49,8 +50,12 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 			&cli.PathFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
-				Value:   "gdbuild.toml",
+				Value:   config.DefaultFilename(),
 				Usage:   "use the 'gdbuild' configuration file found at 'PATH'",
+			},
+			&cli.PathFlag{
+				Name:  "project",
+				Usage: "use the Godot project found at 'PATH'",
 			},
 			&cli.PathFlag{
 				Name:    "out",
@@ -157,7 +162,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
-			ec, err := buildExportContext(rc, pathOut)
+			ec, err := buildExportContext(rc, c.Path("project"), pathOut)
 			if err != nil {
 				return err
 			}
@@ -210,9 +215,23 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 /* ---------------------- Function: buildExportContext ---------------------- */
 
-func buildExportContext(rc run.Context, pathOut string) (run.Context, error) {
+func buildExportContext(rc run.Context, pathProject, pathOut string) (run.Context, error) {
+	pathWorkspace := osutil.Path(filepath.Dir(rc.PathManifest.String()))
+	if pathProject != "" {
+		pathWorkspace = osutil.Path(pathProject)
+
+		wd, err := os.Getwd()
+		if err != nil {
+			return run.Context{}, err
+		}
+
+		if err := pathWorkspace.RelTo(osutil.Path(wd)); err != nil {
+			return run.Context{}, err
+		}
+	}
+
 	// Update the workspace path to the project directory.
-	rc.PathWorkspace = osutil.Path(filepath.Dir(rc.PathManifest.String()))
+	rc.PathWorkspace = pathWorkspace
 
 	// Update output directory to option value.
 	rc.PathOut = osutil.Path(pathOut)
@@ -221,11 +240,12 @@ func buildExportContext(rc run.Context, pathOut string) (run.Context, error) {
 		return run.Context{}, err
 	}
 
-	if err := rc.ProjectManifest().CheckIsFile(); err != nil {
+	pathGodotManifest := rc.GodotProjectManifestPath()
+	if err := pathGodotManifest.CheckIsFile(); err != nil {
 		return run.Context{}, fmt.Errorf(
 			"%w: Godot project configuration: %s",
 			ErrMissingInput,
-			rc.ProjectPath(),
+			pathGodotManifest.String(),
 		)
 	}
 

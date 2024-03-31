@@ -50,7 +50,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			&cli.PathFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
-				Value:   "gdbuild.toml",
+				Value:   config.DefaultFilename(),
 				Usage:   "use the 'gdbuild' configuration file found at 'PATH'",
 			},
 			&cli.PathFlag{
