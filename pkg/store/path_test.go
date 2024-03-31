@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
@@ -52,8 +53,12 @@ func TestTemplateArchive(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			// Given: A checksum for the template.
+			cs, err := tc.template.Checksum()
+			require.NoError(t, err)
+
 			// When: The path to the cached executable is determined.
-			got, err := TemplateArchive(tc.store, &tc.template)
+			got, err := TemplateArchive(tc.store, cs)
 
 			// Then: The expected error value is returned.
 			assert.ErrorIs(t, err, tc.err)
