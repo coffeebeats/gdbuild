@@ -1,13 +1,19 @@
 package export
 
 import (
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 
 	"golang.org/x/exp/maps"
 
+	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -28,17 +34,112 @@ type PackFile struct {
 	// Glob is a slice of glob expressions to match game files against. These
 	// will be evaluated from the directory containing the GDBuild manifest.
 	Glob []string `toml:"glob"`
+	// Name is the name of the pack file. If omitted a name will be chosen based
+	// on the pack files index within the target configuration.
+	Name osutil.Path `toml:"name"`
 	// PackFilePartition is a ruleset for how to split the files matched by
 	// 'glob' into one or more '.pck' files.
 	Partition PackFilePartition `toml:"partition"`
+	// Visuals sets whether the resources in this pack file will have visuals
+	// stripped. Only usable when exporting as a server and defaults to 'true'.
+	Visuals *bool `toml:"visuals"`
 	// Zip defines whether to compress the matching game files. The pack files
 	// will use the '.zip' extension instead of '.pck'.
 	Zip *bool `toml:"zip"`
 }
 
+/* ----------------------------- Method: Preset ----------------------------- */
+
+// Preset constructs a 'Preset' for the pack file based on the current context.
+func (c *PackFile) Preset(rc *run.Context, x *Export, index int) (Preset, error) {
+	var preset Preset
+
+	if err := preset.SetPlatform(rc.Platform); err != nil {
+		return Preset{}, err
+	}
+
+	preset.SetArchitecture(x.Template.Arch)
+	preset.SetTemplate(x.PathTemplate.String())
+	preset.Features = slices.Clone(rc.Features)
+
+	name := c.Filename(rc.Platform, rc.Target, index)
+
+	preset.Name = name
+	preset.PathExport = filepath.Join(rc.PathOut.String(), name)
+
+	if config.Dereference(c.Encrypt) {
+		preset.Encrypt = true
+		preset.EncryptIndex = true
+		preset.Encrypted = slices.Clone(c.Glob)
+	}
+
+	if !x.Server || !c.StripVisuals() {
+		preset.ExportMode = "resources"
+		preset.Include = strings.Join(c.Glob, ",")
+	} else {
+		preset.ExportMode = "customized"
+
+		ff, err := c.Files(rc.PathWorkspace)
+		if err != nil {
+			return Preset{}, err
+		}
+
+		for _, f := range ff {
+			preset.ExportedFiles = append(preset.ExportedFiles, f.String())
+		}
+	}
+
+	return preset, nil
+}
+
+/* ---------------------------- Method: Filename ---------------------------- */
+
+func (c *PackFile) Filename(pl platform.OS, targetName string, index int) string {
+	if config.Dereference(c.Embed) {
+		return targetName + c.Extension(pl)
+	}
+
+	ext := c.Extension(pl)
+
+	if c.Name != "" {
+		return strings.TrimSuffix(c.Name.String(), ext) + ext
+	}
+
+	return targetName + "." + strconv.Itoa(index) + ext
+}
+
+/* ---------------------------- Method: Extension --------------------------- */
+
+func (c *PackFile) Extension(pl platform.OS) string {
+	if config.Dereference(c.Embed) {
+		switch pl {
+		case platform.OSMacOS:
+			return ".app"
+		case platform.OSWindows:
+			return ".exe"
+		default:
+			return ""
+		}
+	}
+
+	if config.Dereference(c.Zip) {
+		return ".zip"
+	}
+
+	return ".pck"
+}
+
+/* -------------------------- Method: ResourceMode -------------------------- */
+
+// StripVisuals determines whether the included resources should have visuals
+// stripped as part of a server-side optimization.
+func (c *PackFile) StripVisuals() bool {
+	return c.Visuals != nil && !*c.Visuals
+}
+
 /* ------------------------------ Method: Files ----------------------------- */
 
-func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) {
+func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyclop,funlen,gocognit
 	pathRoot, err := filepath.Abs(path.String())
 	if err != nil {
 		return nil, err
@@ -57,17 +158,51 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) {
 			return nil, err
 		}
 
-		for _, match := range matches {
-			baseGlob := filepath.Base(g)
-			baseMatch := filepath.Base(match)
+		var mm []string
 
-			// Ignore hidden files unless explicitly searched for.
-			if !strings.HasPrefix(baseGlob, ".") &&
-				strings.HasPrefix(baseMatch, ".") {
+		for _, pathMatch := range matches {
+			info, err := os.Stat(pathMatch)
+			if err != nil {
+				return nil, err
+			}
+
+			if !info.IsDir() {
+				mm = append(mm, pathMatch)
+
 				continue
 			}
 
-			files[osutil.Path(match)] = struct{}{}
+			if err := fs.WalkDir(
+				os.DirFS(pathMatch),
+				".",
+				func(path string, d fs.DirEntry, err error) error {
+					if err != nil {
+						return err
+					}
+
+					if !d.IsDir() {
+						mm = append(mm, filepath.Join(pathMatch, path))
+					}
+
+					return nil
+				},
+			); err != nil {
+				return nil, err
+			}
+
+			baseGlob := filepath.Base(g)
+
+			for _, path := range mm {
+				baseMatch := filepath.Base(path)
+
+				// Ignore hidden files unless explicitly searched for.
+				if !strings.HasPrefix(baseGlob, ".") &&
+					strings.HasPrefix(baseMatch, ".") {
+					continue
+				}
+
+				files[osutil.Path(path)] = struct{}{}
+			}
 		}
 	}
 
@@ -76,13 +211,63 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) {
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
-func (c *PackFile) Configure(_ *run.Context) error {
+func (c *PackFile) Configure(rc *run.Context) error {
+	if err := c.Name.RelTo(rc.ProjectPath()); err != nil {
+		return err
+	}
+
+	c.Name = osutil.Path(strings.TrimPrefix(
+		c.Name.String(),
+		rc.PathWorkspace.String()+string(os.PathSeparator)),
+	)
+
 	return nil
 }
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (c *PackFile) Validate(_ *run.Context) error {
+func (c *PackFile) Validate(rc *run.Context) error {
+	if config.Dereference(c.Embed) && c.Name != "" {
+		return fmt.Errorf(
+			"%w: cannot set the name of an embedded pack file: %s",
+			ErrInvalidInput,
+			c.Name,
+		)
+	}
+
+	if c.Name != "" {
+		got := c.Extension(rc.Platform)
+		if want := filepath.Ext(c.Name.String()); got != want {
+			return fmt.Errorf(
+				"%w: incorrect extension for pack file: %s: was %s but wanted %s",
+				ErrInvalidInput,
+				c.Name,
+				got,
+				want,
+			)
+		}
+	}
+
+	if len(c.Glob) == 0 {
+		return fmt.Errorf(
+			"%w: missing required 'glob' property for pack file",
+			ErrInvalidInput,
+		)
+	}
+
+	ff, err := c.Files(rc.PathWorkspace)
+	if err != nil {
+		return err
+	}
+
+	if len(ff) == 0 {
+		return fmt.Errorf(
+			"%w: no files match pack file: %s",
+			ErrInvalidInput,
+			strings.Join(c.Glob, ","),
+		)
+	}
+
 	return nil
 }
 
