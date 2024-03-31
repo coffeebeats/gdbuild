@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.3 (2024-03-31)
+
+## What's Changed
+* Revert "chore(cmd): disable `target` command (#75)" by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/77
+* refactor(cmd): improve code reuse; fix various bugs by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/78
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.2.2...v0.2.3
+
 ## 0.2.2 (2024-03-30)
 
 ## What's Changed
