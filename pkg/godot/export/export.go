@@ -74,8 +74,7 @@ func (x *Export) Action(rc *run.Context) (action.Action, error) { //nolint:iretu
 	}
 
 	for _, preset := range presets {
-		preset := preset
-		out = out.AndThen(NewExportAction(rc, &preset))
+		out = out.AndThen(NewExportAction(rc, preset))
 	}
 
 	return out, nil
@@ -84,8 +83,8 @@ func (x *Export) Action(rc *run.Context) (action.Action, error) { //nolint:iretu
 /* ----------------------------- Method: Presets ---------------------------- */
 
 // Presets constructs the list of 'Preset' types for the specified pack files.
-func (x *Export) Presets(rc *run.Context) ([]Preset, error) {
-	presets := make([]Preset, 0, len(x.PackFiles))
+func (x *Export) Presets(rc *run.Context) ([]*Preset, error) {
+	presets := make([]*Preset, 0, len(x.PackFiles))
 
 	var embed Preset
 
@@ -96,7 +95,7 @@ func (x *Export) Presets(rc *run.Context) ([]Preset, error) {
 		}
 
 		if !config.Dereference(pf.Embed) {
-			presets = append(presets, preset)
+			presets = append(presets, &preset)
 
 			continue
 		}
@@ -106,7 +105,7 @@ func (x *Export) Presets(rc *run.Context) ([]Preset, error) {
 		}
 	}
 
-	return append([]Preset{embed}, presets...), nil
+	return append([]*Preset{&embed}, presets...), nil
 }
 
 /* ---------------------------- Method: Artifacts --------------------------- */

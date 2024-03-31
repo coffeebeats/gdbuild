@@ -20,7 +20,7 @@ func TestPresetMarshal(t *testing.T) {
 		err  error
 	}{
 		{
-			name: "empty preset returns empty string",
+			name: "empty preset returns empty options",
 
 			index:  0,
 			preset: export.Preset{},
@@ -35,9 +35,22 @@ func TestPresetMarshal(t *testing.T) {
 				Runnable: true,
 			},
 
-			want: `name     = Export name
-		runnable = true
-		`,
+			want: `[preset.0]
+encrypt_pck                = false
+encryption_include_filters = ""
+encrypt_directory          = false
+exclude_filter             = ""
+export_filter              = ""
+custom_features            = ""
+include_filter             = ""
+name                       = "Export name"
+export_path                = ""
+platform                   = ""
+runnable                   = true
+dedicated_server           = false
+
+[preset.0.options]
+`,
 		},
 		{
 			name: "lists are encoded correctly",
@@ -52,17 +65,19 @@ func TestPresetMarshal(t *testing.T) {
 			},
 
 			want: `[preset.1]
-name                       = 
-platform                   = 
+encrypt_pck                = false
+encryption_include_filters = ""
+encrypt_directory          = false
+exclude_filter             = ""
+export_files               = PackedStringArray("res://A/B/C.gd","res://B/C/D.tscn")
+export_filter              = ""
+custom_features            = "feature1,feature2"
+include_filter             = ""
+name                       = ""
+export_path                = ""
+platform                   = ""
 runnable                   = false
 dedicated_server           = false
-custom_features            = feature1,feature2
-export_files               = PackedStringArray("res://A/B/C.gd","res://B/C/D.tscn")
-include_filter             = 
-export_path                = 
-encryption_include_filters = 
-encrypt_pck                = false
-encrypt_directory          = false
 
 [preset.1.options]
 `,

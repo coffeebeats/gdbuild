@@ -67,6 +67,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					&template.Template{
+						Arch: platform.ArchAmd64,
 						Builds: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -111,6 +112,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					&template.Template{
+						Arch: platform.ArchUniversal,
 						Builds: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -179,6 +181,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					&template.Template{
+						Arch: platform.ArchAmd64,
 						Builds: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,
@@ -238,6 +241,7 @@ func TestBuildTemplate(t *testing.T) {
 				assert.Equal(
 					t,
 					&template.Template{
+						Arch: platform.ArchAmd64,
 						Builds: []template.Build{
 							{
 								Arch:     platform.ArchAmd64,

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -108,6 +109,11 @@ func (p *Preset) SetTemplate(path string) {
 /* ----------------------------- Method: Marshal ---------------------------- */
 
 func (p *Preset) Marshal(w io.Writer, index int) error {
+	// Don't write anything for an empty 'Preset'.
+	if reflect.DeepEqual(p, new(Preset)) {
+		return nil
+	}
+
 	lo := ini.LoadOptions{PreserveSurroundedQuote: true} //nolint:exhaustruct
 
 	cfg := ini.Empty(lo)
@@ -160,7 +166,7 @@ func valueMapper(s string) string {
 			elements[i] = fmt.Sprintf(`"%s"`, path)
 		}
 
-		s = fmt.Sprintf("PackedStringArray(%s)", strings.Join(elements, ", "))
+		return fmt.Sprintf("PackedStringArray(%s)", strings.Join(elements, ", "))
 	}
 
 	return `"` + s + `"`
