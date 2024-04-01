@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.5 (2024-04-01)
+
+## What's Changed
+* chore: upgrade `gdenv` to `v0.6.16` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/85
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.2.4...v0.2.5
+
 ## 0.2.4 (2024-04-01)
 
 ## What's Changed
