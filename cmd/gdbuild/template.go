@@ -236,8 +236,6 @@ func buildTemplateContext(
 	// Use shared temporary directory as a build path.
 	rc.PathWorkspace = osutil.Path(pathTmp)
 
-	log.Debugf("using build directory: %s", rc.PathWorkspace)
-
 	if err := rc.Validate(); err != nil {
 		return run.Context{}, err
 	}
@@ -292,6 +290,8 @@ func exportTemplate( //nolint:ireturn
 			Description: "extract cached artifacts to path: " + pathOut,
 		}, nil
 	}
+
+	log.Debugf("using build directory: %s", rc.PathWorkspace)
 
 	// Template was not cached; create build action.
 	return template.Action(tl, rc)

@@ -11,7 +11,17 @@
       "mode": "auto",
       "program": "${workspaceFolder}/cmd/gdbuild",
       "cwd": "${workspaceFolder}",
-      "args": [],
+      "args": [
+        "target",
+        "-v",
+        "--project",
+        "example",
+        "-p",
+        "windows",
+        "--release",
+        "--dry-run",
+        "client"
+      ],
       "env": {
         "GDBUILD_HOME": "${workspaceFolder}/.gdbuild"
       }

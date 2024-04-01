@@ -27,3 +27,5 @@ dist
 .gdbuild
 gdbuild*.toml
 .godot-version
+
+example

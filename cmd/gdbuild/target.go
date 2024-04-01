@@ -51,7 +51,6 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 			&cli.PathFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
-				Value:   config.DefaultFilename(),
 				Usage:   "use the 'gdbuild' configuration file found at 'PATH'",
 			},
 			&cli.PathFlag{
@@ -144,8 +143,21 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
+			pathConfig := c.Path("config")
+			pathProject := c.Path("project")
+
+			switch {
+			case pathConfig == "" && pathProject != "":
+				pathConfig = filepath.Join(pathProject, config.DefaultFilename())
+			case pathProject == "" && pathConfig != "":
+				pathProject = filepath.Dir(pathConfig)
+			case pathProject == "" && pathConfig == "":
+				pathProject = "."
+				pathConfig = config.DefaultFilename()
+			}
+
 			// Parse manifest.
-			pathManifest, err := parseManifestPath(c.Path("config"))
+			pathManifest, err := parseManifestPath(pathConfig)
 			if err != nil {
 				return err
 			}
@@ -168,7 +180,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
-			ec, err := buildExportContext(rc, targetName, c.Path("project"), pathOut)
+			ec, err := buildExportContext(rc, targetName, pathProject, pathOut)
 			if err != nil {
 				return err
 			}
@@ -269,8 +281,6 @@ func buildExportContext(rc run.Context, targetName, pathProject, pathOut string)
 		)
 	}
 
-	log.Debugf("using project directory: %s", pathWorkspace)
-
 	return rc, nil
 }
 
@@ -294,12 +304,8 @@ func exportProject( //nolint:ireturn
 		return nil, err
 	}
 
-	xp.PathTemplate = osutil.Path(
-		filepath.Join(
-			pathTmp,
-			template.Name(rc.Platform, tl.Arch, rc.Profile),
-		),
-	)
+	templateName := template.Name(rc.Platform, tl.Arch, rc.Profile)
+	xp.PathTemplate = osutil.Path(filepath.Join(pathTmp, templateName))
 
 	hasTarget, err := store.HasTarget(storePath, cs)
 	if err != nil {
@@ -334,6 +340,8 @@ func exportProject( //nolint:ireturn
 			Description: "extract cached artifacts to path: " + pathOut,
 		}, nil
 	}
+
+	log.Debugf("using project directory: %s", rc.PathWorkspace)
 
 	// Target was not cached; create build action.
 	return target.Action(rc, tl, xp)

@@ -294,7 +294,7 @@ func parseOutDir(path string, dryRun bool) (string, error) {
 		return "", err
 	}
 
-	log.Debugf("placing template artifacts at path: %s", path)
+	log.Debugf("using output directory: %s", path)
 
 	return path, nil
 }
