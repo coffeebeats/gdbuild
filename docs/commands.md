@@ -19,8 +19,9 @@ Compile an export template for the specified Godot platform `PLATFORM`.
 - `-o`, `--out <PATH>` — write generated artifacts to `PATH`
   - Default value: `$PWD` (current working directory)
 
-- `--release` — use a release export template (cannot be used with '--release_debug')
-- `--release_debug` — use a release export template with debug symbols (cannot be used with '--release')
+- `--release` — use a release export template (cannot be used with `--release_debug` or `--debug`)
+- `--release_debug` — use a release export template with debug symbols (cannot be used with `--release` or `--debug`)
+- `--debug` — use a debug export template (cannot be used with `--release` or `--release_debug`)
 
 ### Arguments
 
@@ -51,8 +52,9 @@ Compile any required export template(s) and then export the specified `TARGET`.
 - `-f`, `--feature <FEATURE>` — enable the provided feature tag `FEATURE` (can be specified more than once)
 - `-p`, `--platform <PLATFORM>` — build for the specified Godot platform `PLATFORM`
   - Default value: `runtime.GOOS` (host platform)
-- `--release` — use a release export template (cannot be used with '--release_debug')
-- `--release_debug` — use a release export template with debug symbols (cannot be used with '--release')
+- `--release` — use a release export template (cannot be used with `--release_debug` or `--debug`)
+- `--release_debug` — use a release export template with debug symbols (cannot be used with `--release` or `--debug`)
+- `--debug` — use a debug export template (cannot be used with `--release` or `--release_debug`)
 
 ### Arguments
 

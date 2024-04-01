@@ -21,7 +21,7 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/store"
 )
 
-var ErrTargetUsageProfiles = errors.New("cannot specify both '--release' and '--release_debug'")
+var ErrTargetUsageProfiles = errors.New("cannot specify more than one of '--debug', '--release_debug', and '--release'")
 
 // A 'urfave/cli' command to compile and export a Godot project target.
 func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
@@ -78,12 +78,17 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 			&cli.BoolFlag{
 				Name:     "release",
 				Category: "Profile",
-				Usage:    "use a release export template (cannot be used with '--release_debug')",
+				Usage:    "use a release export template (cannot be used with '--release_debug' or '--debug')",
 			},
 			&cli.BoolFlag{
 				Name:     "release_debug",
 				Category: "Profile",
-				Usage:    "use a release export template with debug symbols (cannot be used with '--release')",
+				Usage:    "use a release export template with debug symbols (cannot be used with '--release' or '--debug')",
+			},
+			&cli.BoolFlag{
+				Name:     "debug",
+				Category: "Profile",
+				Usage:    "use a debug export template (cannot be used with '--release' or '--release_debug')",
 			},
 		},
 
