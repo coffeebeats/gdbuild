@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.4 (2024-04-01)
+
+## What's Changed
+* feat(ci): pre-build `arm64` on `linux` binaries by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/80
+* fix(scripts): unblock downloads of new `arm64` on `linux` target by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/82
+* fix(scripts): use correct compound condition syntax by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/83
+* feat(ci): add support for explicit `--debug` flag by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/84
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.2.3...v0.2.4
+
 ## 0.2.3 (2024-03-31)
 
 ## What's Changed
