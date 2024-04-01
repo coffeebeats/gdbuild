@@ -233,10 +233,12 @@ func parsePlatform(platformInput string) (platform.OS, error) {
 
 /* ------------------------- Function: parseProfile ------------------------- */
 
-func parseProfile(releaseInput, releaseDebugInput bool) engine.Profile {
+func parseProfile(debugInput, releaseInput, releaseDebugInput bool) engine.Profile {
 	var pr engine.Profile
 
 	switch {
+	case debugInput:
+		pr = engine.ProfileDebug
 	case releaseInput:
 		pr = engine.ProfileRelease
 	case releaseDebugInput:

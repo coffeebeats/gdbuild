@@ -68,12 +68,17 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			&cli.BoolFlag{
 				Name:     "release",
 				Category: "Profile",
-				Usage:    "use a release export template (cannot be used with '--release_debug')",
+				Usage:    "use a release export template (cannot be used with '--release_debug' or '--debug')",
 			},
 			&cli.BoolFlag{
 				Name:     "release_debug",
 				Category: "Profile",
-				Usage:    "use a release export template with debug symbols (cannot be used with '--release')",
+				Usage:    "use a release export template with debug symbols (cannot be used with '--release' or '--debug')",
+			},
+			&cli.BoolFlag{
+				Name:     "debug",
+				Category: "Profile",
+				Usage:    "use a debug export template (cannot be used with '--release' or '--release_debug')",
 			},
 		},
 
@@ -91,7 +96,12 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			}
 
 			// Validate flag options.
-			if c.IsSet("release") && c.IsSet("release_debug") {
+			switch {
+			case c.IsSet("release") && (c.IsSet("release_debug") || c.IsSet("debug")):
+				fallthrough
+			case c.IsSet("release_debug") && (c.IsSet("release") || c.IsSet("debug")):
+				fallthrough
+			case c.IsSet("debug") && (c.IsSet("release") || c.IsSet("release_debug")):
 				return UsageError{ctx: c, err: ErrTargetUsageProfiles}
 			}
 
@@ -195,7 +205,7 @@ func buildTemplateContext(
 
 	log.Infof("features: %s", strings.Join(features, ","))
 
-	pr := parseProfile(c.Bool("release"), c.Bool("release_debug"))
+	pr := parseProfile(c.Bool("debug"), c.Bool("release"), c.Bool("release_debug"))
 
 	log.Infof("profile: %s", pr)
 
