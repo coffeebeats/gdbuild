@@ -17,9 +17,8 @@
         "--project",
         "example",
         "-p",
-        "windows",
-        "--release",
-        "--dry-run",
+        "macos",
+        "--debug",
         "client"
       ],
       "env": {

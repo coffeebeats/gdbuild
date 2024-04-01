@@ -159,7 +159,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
-			defer cleanTemporaryDirectory(&rc)
+			// defer cleanTemporaryDirectory(&rc)
 
 			tl, err := config.Template(&rc, m)
 			if err != nil {

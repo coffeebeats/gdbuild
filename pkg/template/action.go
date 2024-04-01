@@ -3,6 +3,7 @@ package template
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 
 	"github.com/charmbracelet/log"
@@ -75,7 +76,12 @@ func NewCacheArtifactsAction(
 		for _, a := range t.Artifacts() {
 			pathArtifact := filepath.Join(pathBin.String(), a)
 
-			log.Debugf("caching artifact in store: %s", a)
+			info, err := os.Stat(pathArtifact)
+			if err != nil {
+				return err
+			}
+
+			log.Debug("caching artifact in store.", "artifact", a, "size", info.Size())
 
 			files = append(files, pathArtifact)
 		}

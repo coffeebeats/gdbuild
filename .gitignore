@@ -29,3 +29,4 @@ gdbuild*.toml
 .godot-version
 
 example
+.scons
