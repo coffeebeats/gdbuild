@@ -138,7 +138,7 @@ func (c *PackFile) StripVisuals() bool {
 
 /* ------------------------------ Method: Files ----------------------------- */
 
-func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyclop,funlen,gocognit
+func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyclop,funlen
 	pathRoot, err := filepath.Abs(path.String())
 	if err != nil {
 		return nil, err

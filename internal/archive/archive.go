@@ -28,9 +28,6 @@ var (
 
 // Create writes the provided files to a compressed archive at 'out'. The
 // implementation follows from https://www.arthurkoziel.com/writing-tar-gz-files-in-go/.
-//
-// NOTE: This implementation does *not* preserve directory structure. Files are
-// placed side-by-side within the archive.
 func Create(fsys fs.FS, files []string, out string) error {
 	if len(files) == 0 {
 		return fmt.Errorf("%w: 'files'", ErrMissingInput)
