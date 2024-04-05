@@ -22,7 +22,7 @@ func NewInit() *cli.Command {
 			newVerboseFlag(),
 
 			&cli.PathFlag{
-				Name:  "path",
+				Name:  "project",
 				Value: ".",
 				Usage: "use the Godot project found at 'PATH'",
 			},
@@ -39,11 +39,11 @@ func NewInit() *cli.Command {
 				}
 			}
 
-			path := c.Path("path")
+			path := c.Path("project")
 			if path == "" {
 				return UsageError{
 					ctx: c,
-					err: fmt.Errorf("%w: '--path'", ErrMissingInput),
+					err: fmt.Errorf("%w: '--project'", ErrMissingInput),
 				}
 			}
 
