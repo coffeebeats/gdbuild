@@ -73,5 +73,5 @@ Initialize a Godot project with a GDBuild manifest.
 
 ### Options
 
-- `-p`, `--path <PATH>` — use the Godot project found at `PATH`
+- `-p`, `--project <PATH>` — use the Godot project found at `PATH`
   - Default value: `$PWD` (current working directory)
