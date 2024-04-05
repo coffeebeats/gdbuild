@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 
 	"github.com/charmbracelet/log"
 
@@ -53,20 +52,7 @@ type Target struct {
 func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Version) *export.Export {
 	// Set the encryption key environment variable; see
 	// https://docs.godotengine.org/en/stable/contributing/development/compiling/compiling_with_script_encryption_key.html.
-	var encryptionKey string
-	if ek := template.EncryptionKeyFromEnv(); ek != "" {
-		encryptionKey = ek
-	} else if t.EncryptionKey != "" {
-		ek := os.ExpandEnv(t.EncryptionKey)
-		if ek != "" {
-			encryptionKey = ek
-		} else {
-			log.Warnf(
-				"encryption key set in manifest, but value was empty: %s",
-				t.EncryptionKey,
-			)
-		}
-	}
+	encryptionKey, _ := resolveEncryptionKey(t.EncryptionKey)
 
 	ff := make([]string, 0, len(t.DefaultFeatures)+len(rc.Features))
 	ff = append(ff, t.DefaultFeatures...)
@@ -106,11 +92,17 @@ func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 		return err
 	}
 
+	encryptionKey, err := resolveEncryptionKey(t.EncryptionKey)
+	if err != nil {
+		return err
+	}
+
 	packNames := make(map[string]struct{})
 
 	isRunnable := config.Dereference(t.Runnable)
 	isServer := config.Dereference(t.Server)
 	hasEmbed := false
+	hasEncrypt := false
 	hasVisualsStripped := false
 
 	if isServer && !isRunnable {
@@ -137,6 +129,7 @@ func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 		}
 
 		hasEmbed = hasEmbed || config.Dereference(pf.Embed)
+		hasEncrypt = hasEncrypt || config.Dereference(pf.Encrypt)
 		hasVisualsStripped = hasVisualsStripped || pf.StripVisuals()
 
 		ff, err := pf.Files(rc.PathWorkspace)
@@ -178,6 +171,13 @@ func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 	if !isServer && hasVisualsStripped {
 		return fmt.Errorf(
 			"%w: cannot strip visuals from a pack file for a non-server target",
+			ErrInvalidInput,
+		)
+	}
+
+	if encryptionKey == "" && hasEncrypt {
+		return fmt.Errorf(
+			"%w: pack file is encrypted but no encryption key set",
 			ErrInvalidInput,
 		)
 	}

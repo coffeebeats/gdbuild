@@ -2,9 +2,6 @@ package common
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
@@ -61,22 +58,7 @@ func (t Template) Collect(src engine.Source, rc *run.Context) *template.Template
 		s.CacheSizeLimit = csl
 	}
 
-	// Set the encryption key environment variable; see
-	// https://docs.godotengine.org/en/stable/contributing/development/compiling/compiling_with_script_encryption_key.html.
-	var encryptionKey string
-	if ek := template.EncryptionKeyFromEnv(); ek != "" {
-		encryptionKey = ek
-	} else if t.EncryptionKey != "" {
-		ek := os.ExpandEnv(t.EncryptionKey)
-		if ek != "" {
-			encryptionKey = ek
-		} else {
-			log.Warnf(
-				"encryption key set in manifest, but value was empty: %s",
-				t.EncryptionKey,
-			)
-		}
-	}
+	encryptionKey, _ := resolveEncryptionKey(t.EncryptionKey)
 
 	return &template.Template{
 		Arch: t.Arch,
@@ -131,6 +113,10 @@ func (t *Template) Validate(rc *run.Context) error {
 		if err := m.CheckIsDirOrEmpty(); err != nil {
 			return err
 		}
+	}
+
+	if _, err := resolveEncryptionKey(t.EncryptionKey); err != nil {
+		return err
 	}
 
 	if err := t.PathCustomPy.CheckIsFileOrEmpty(); err != nil {

@@ -294,7 +294,7 @@ func exportTemplate( //nolint:ireturn
 	log.Debugf("using build directory: %s", rc.PathWorkspace)
 
 	// Template was not cached; create build action.
-	return template.Action(tl, rc)
+	return template.Action(rc, tl)
 }
 
 /* ----------------------- Function: printTemplateHash ---------------------- */

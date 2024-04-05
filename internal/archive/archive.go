@@ -31,7 +31,7 @@ var (
 //
 // NOTE: This implementation does *not* preserve directory structure. Files are
 // placed side-by-side within the archive.
-func Create(files []string, out string) error {
+func Create(fsys fs.FS, files []string, out string) error {
 	if len(files) == 0 {
 		return fmt.Errorf("%w: 'files'", ErrMissingInput)
 	}
@@ -51,12 +51,12 @@ func Create(files []string, out string) error {
 
 	defer f.Close()
 
-	return addFilesToArchive(files, f)
+	return addFilesToArchive(fsys, files, f)
 }
 
 /* ----------------------- Function: addFilesToArchive ---------------------- */
 
-func addFilesToArchive(files []string, w io.Writer) error {
+func addFilesToArchive(fsys fs.FS, files []string, w io.Writer) error {
 	gw := gzip.NewWriter(w)
 	defer gw.Close()
 
@@ -64,8 +64,8 @@ func addFilesToArchive(files []string, w io.Writer) error {
 	defer tw.Close()
 
 	// Iterate over files and add them to the tar archive
-	for _, file := range files {
-		f, err := os.Create(file)
+	for _, filepath := range files {
+		f, err := fsys.Open(filepath)
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ func addFilesToArchive(files []string, w io.Writer) error {
 			return err
 		}
 
-		header, err := tar.FileInfoHeader(info, info.Name())
+		header, err := tar.FileInfoHeader(info, filepath)
 		if err != nil {
 			return err
 		}
