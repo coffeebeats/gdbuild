@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 (2024-04-05)
+
+## What's Changed
+* chore(deps): bump tj-actions/changed-files from 43 to 44 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/87
+* feat(target): implement `target` exporting by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/76
+* chore!: update `init` docs; bump minor version by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/89
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.2.5...v0.3.0
+
 ## 0.2.5 (2024-04-01)
 
 ## What's Changed
