@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	doublestar "github.com/bmatcuk/doublestar/v4"
 	"golang.org/x/exp/maps"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
@@ -51,30 +52,27 @@ type PackFile struct {
 /* ----------------------------- Method: Preset ----------------------------- */
 
 // Preset constructs a 'Preset' for the pack file based on the current context.
-func (c *PackFile) Preset(rc *run.Context, x *Export, index int) (Preset, error) {
+func (c *PackFile) Preset(rc *run.Context, xp *Export, index int) (Preset, error) {
 	var preset Preset
 
-	if err := preset.SetPlatform(rc.Platform); err != nil {
-		return Preset{}, err
-	}
-
-	preset.SetArchitecture(x.Template.Arch)
-	preset.SetEmbedded(config.Dereference(c.Embed))
-	preset.SetTemplate(x.PathTemplate.String())
+	preset.Platform = rc.Platform
+	preset.Arch = xp.Template.Arch
+	preset.Embed = config.Dereference(c.Embed)
+	preset.PathTemplate = xp.PathTemplate
 	preset.Features = slices.Clone(rc.Features)
 
 	name := c.Filename(rc.Platform, rc.Target, index)
 
 	preset.Name = name
-	preset.PathExport = rc.PathOut.String()
 
 	if config.Dereference(c.Encrypt) {
 		preset.Encrypt = true
 		preset.EncryptIndex = true
 		preset.Encrypted = slices.Clone(c.Glob)
+		preset.EncryptionKey = xp.EncryptionKey
 	}
 
-	if !x.Server || !c.StripVisuals() {
+	if !xp.Server || !c.StripVisuals() {
 		preset.ExportMode = "resources"
 		preset.Include = strings.Join(c.Glob, ",")
 	} else {
@@ -148,13 +146,18 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyc
 
 	files := make(map[osutil.Path]struct{})
 
-	for _, g := range c.Glob {
-		if !strings.HasPrefix(g, "/") &&
-			!strings.HasPrefix(g, string(os.PathSeparator)) {
-			g = filepath.Join(pathRoot, g)
-		}
+	for _, pattern := range c.Glob {
+		// NOTE: See https://github.com/bmatcuk/doublestar?tab=readme-ov-file#glob.
+		pattern = filepath.Clean(pattern)
+		pattern = filepath.ToSlash(pattern)
 
-		matches, err := filepath.Glob(g)
+		matches, err := doublestar.Glob(
+			os.DirFS(pathRoot),
+			pattern,
+			doublestar.WithNoFollow(),
+			doublestar.WithFailOnIOErrors(),
+			doublestar.WithFailOnPatternNotExist(),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -162,6 +165,8 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyc
 		var mm []string
 
 		for _, pathMatch := range matches {
+			pathMatch = filepath.Join(pathRoot, pathMatch)
+
 			info, err := os.Stat(pathMatch)
 			if err != nil {
 				return nil, err
@@ -192,7 +197,7 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyc
 			}
 		}
 
-		baseGlob := filepath.Base(g)
+		baseGlob := filepath.Base(pattern)
 
 		for _, path := range mm {
 			baseMatch := filepath.Base(path)

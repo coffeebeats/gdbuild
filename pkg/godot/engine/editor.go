@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"os"
 	"runtime"
 	"strings"
@@ -40,9 +41,9 @@ func EditorName() string {
 func InstallEditor(ctx context.Context, v Version, out string) error {
 	storePath, err := store.Path() // Use the 'gdenv' store.
 	if err != nil {
-		tmp, err := os.MkdirTemp("", "gdbuild-*")
-		if err != nil {
-			return err
+		tmp, e := os.MkdirTemp("", "gdbuild-*")
+		if e != nil {
+			return errors.Join(err, e)
 		}
 
 		log.Debugf("no 'gdenv' store found; using temporary directory: %s", tmp)

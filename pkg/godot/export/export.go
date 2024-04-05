@@ -3,10 +3,8 @@ package export
 import (
 	"context"
 	"errors"
-	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"golang.org/x/exp/maps"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
@@ -64,20 +63,21 @@ type Export struct {
 
 // Action creates an 'action.Action' for running the export action.
 func (x *Export) Action(rc *run.Context, pathGodot osutil.Path) (action.Action, error) { //nolint:ireturn
-	var out action.Action = action.NoOp{}
-
-	out = out.AndThen(NewWriteExportPresetsAction(rc, x))
-
 	presets, err := x.Presets(rc)
 	if err != nil {
 		return nil, err
 	}
 
+	exports := make([]action.Action, 0, 2+len(presets)) //nolint:gomnd
+
+	exports = append(exports, NewWriteExportPresetsAction(rc, x))
+	exports = append(exports, NewLoadProjectAction(rc, pathGodot))
+
 	for _, preset := range presets {
-		out = out.AndThen(NewExportAction(rc, preset, pathGodot))
+		exports = append(exports, NewExportAction(rc, preset, pathGodot))
 	}
 
-	return out, nil
+	return action.InOrder(exports...), nil
 }
 
 /* ----------------------------- Method: Presets ---------------------------- */
@@ -105,8 +105,11 @@ func (x *Export) Presets(rc *run.Context) ([]*Preset, error) {
 		}
 	}
 
-	return []*Preset{&embed}, nil //nolint:funlen,remove-me!!!
-	// return append([]*Preset{&embed}, presets...), nil
+	if embed.Platform == platform.OSUnknown {
+		return presets, nil
+	}
+
+	return append([]*Preset{&embed}, presets...), nil
 }
 
 /* ---------------------------- Method: Artifacts --------------------------- */
@@ -129,75 +132,24 @@ func (x *Export) Artifacts(rc *run.Context) ([]string, error) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                    Function: NewWriteExportPresetsAction                   */
-/* -------------------------------------------------------------------------- */
-
-// NewWriteExportPresetsAction creates a new 'action.Action' which constructs an
-// 'export_presets.cfg' file based on the target. It will be written to the
-// workspace directory and overwrite any existing files.
-func NewWriteExportPresetsAction(
-	rc *run.Context,
-	x *Export,
-) action.WithDescription[action.Function] {
-	path := filepath.Join(rc.PathWorkspace.String(), "export_presets.cfg")
-
-	fn := func(_ context.Context) error {
-		presets, err := x.Presets(rc)
-		if err != nil {
-			return err
-		}
-
-		var cfg strings.Builder
-
-		for i, preset := range presets {
-			if err := preset.Marshal(&cfg, i); err != nil {
-				return err
-			}
-		}
-
-		f, err := os.Create(filepath.Join(rc.PathWorkspace.String(), "export_presets.cfg"))
-		if err != nil {
-			return err
-		}
-
-		defer f.Close()
-
-		if _, err := io.Copy(f, strings.NewReader(cfg.String()+"\n")); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	return action.WithDescription[action.Function]{
-		Action:      fn,
-		Description: "generate export presets file: " + path,
-	}
-}
-
-/* -------------------------------------------------------------------------- */
 /*                          Function: NewExportAction                         */
 /* -------------------------------------------------------------------------- */
 
 // NewExportAction creates a new 'action.Action' which exports the specified
 // pack file.
-func NewExportAction(
+func NewExportAction( //nolint:ireturn
 	rc *run.Context,
 	preset *Preset,
 	pathGodot osutil.Path,
-) *action.Process {
+) action.Action {
 	var cmd action.Process
 
 	cmd.Verbose = rc.Verbose
-
 	cmd.Directory = rc.PathWorkspace.String()
-	cmd.Environment = os.Environ()
 
 	cmd.Args = append(
 		cmd.Args,
 		pathGodot.String(),
-		"--path",
-		rc.PathWorkspace.String(),
 		"--headless",
 	)
 
@@ -205,17 +157,43 @@ func NewExportAction(
 		cmd.Args = append(cmd.Args, "--verbose")
 	}
 
-	profile := "release"
-	if rc.Profile == engine.ProfileDebug {
-		profile = "debug"
+	var command string
+
+	switch {
+	case !preset.Embed:
+		command = "pack"
+	case preset.Embed && rc.Profile.IsRelease():
+		command = "release"
+	default:
+		command = "debug"
 	}
+
+	pathArtifact := filepath.Join(rc.PathOut.String(), preset.Name)
 
 	cmd.Args = append(
 		cmd.Args,
-		"--export-"+profile,
+		"--export-"+command,
 		preset.Name,
-		filepath.Join(rc.PathOut.String(), preset.PathExport),
+		pathArtifact,
 	)
 
-	return &cmd
+	return NewMkdirAllAction(filepath.Dir(pathArtifact), osutil.ModeUserRWX).
+		AndThen(&cmd)
+}
+
+/* -------------------------------------------------------------------------- */
+/*                         Function: NewMkdirAllAction                        */
+/* -------------------------------------------------------------------------- */
+
+// NewMkdirAllAction creates a new 'action.Action' which creates the specified
+// directory if missing.
+func NewMkdirAllAction(path string, perm os.FileMode) action.WithDescription[action.Function] {
+	fn := func(_ context.Context) error {
+		return os.MkdirAll(path, perm)
+	}
+
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "create directory if missing: " + path,
+	}
 }

@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
+	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -19,24 +21,31 @@ import (
 // NewVerifyArtifactsAction creates an 'action.Action' which verifies that all
 // required artifacts have been generated.
 func NewVerifyArtifactsAction(
-	rc *Context,
+	_ *Context,
+	root osutil.Path,
 	artifacts []string,
 ) action.WithDescription[action.Function] {
 	fn := func(_ context.Context) error {
-		pathBin := rc.BinPath()
-		if err := pathBin.CheckIsDir(); err != nil {
-			return err
-		}
-
-		ff, err := os.ReadDir(pathBin.String())
-		if err != nil {
+		if err := root.CheckIsDir(); err != nil {
 			return err
 		}
 
 		found := make(map[string]struct{})
 
-		for _, f := range ff {
-			found[f.Name()] = struct{}{}
+		if err := fs.WalkDir(os.DirFS(root.String()), ".", func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if d.IsDir() {
+				return nil
+			}
+
+			found[path] = struct{}{}
+
+			return nil
+		}); err != nil {
+			return err
 		}
 
 		for _, a := range artifacts {
@@ -50,7 +59,7 @@ func NewVerifyArtifactsAction(
 
 			log.Debugf(
 				"found required artifact: %s",
-				filepath.Join(pathBin.String(), a),
+				filepath.Join(root.String(), a),
 			)
 		}
 
@@ -60,5 +69,57 @@ func NewVerifyArtifactsAction(
 	return action.WithDescription[action.Function]{
 		Action:      fn,
 		Description: "validate generated artifacts: " + strings.Join(artifacts, ", "),
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+/*                      Function: NewCopyArtifactsAction                      */
+/* -------------------------------------------------------------------------- */
+
+// NewCopyArtifactsAction creates an 'action.Action' which moves the generated
+// Godot artifacts to the output directory.
+func NewCopyArtifactsAction( //nolint:ireturn
+	rc *Context,
+	root osutil.Path,
+	artifacts []string,
+) action.Action {
+	if rc.PathOut == "" {
+		return action.NoOp{}
+	}
+
+	fn := func(ctx context.Context) error {
+		if rc.PathOut == "" {
+			return nil
+		}
+
+		pathOut := rc.PathOut.String()
+		if err := osutil.EnsureDir(pathOut, osutil.ModeUserRWXGroupRX); err != nil {
+			return err
+		}
+
+		if err := root.CheckIsDir(); err != nil {
+			return err
+		}
+
+		for _, a := range artifacts {
+			pathArtifact := filepath.Join(root.String(), a)
+
+			log.Debugf("copying artifact %s to directory: %s", a, pathOut)
+
+			if err := osutil.CopyFile(
+				ctx,
+				pathArtifact,
+				filepath.Join(pathOut, a),
+			); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "move generated artifacts to output directory: " + rc.PathOut.String(),
 	}
 }

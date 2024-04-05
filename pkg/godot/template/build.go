@@ -117,14 +117,13 @@ func (b *Build) SConsCommand(rc *run.Context) *action.Process { //nolint:cyclop,
 		cmd.Environment = append(cmd.Environment, envSConsCache+"="+path.String())
 	}
 
+	// Set 'PATH' so that 'gdbuild.toml' can easily refer to installed commands.
+	cmd.Environment = append(cmd.Environment, "PATH="+os.Getenv("PATH"))
+
 	// Add specified environment variables.
 	for k, v := range b.Env {
 		cmd.Environment = append(cmd.Environment, k+"="+v)
 	}
-
-	// Now pass through all environment variables so that these override
-	// previously values.
-	cmd.Environment = append(cmd.Environment, os.Environ()...)
 
 	// Set the encryption key on the environment, if one is specified.
 	if b.EncryptionKey != "" {

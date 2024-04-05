@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 )
 
 func TestPresetMarshal(t *testing.T) {
@@ -32,20 +33,21 @@ func TestPresetMarshal(t *testing.T) {
 
 			preset: export.Preset{
 				Name:     "Export name",
+				Platform: platform.OSLinux,
 				Runnable: true,
 			},
 
 			want: `[preset.0]
+platform                   = "Linux/X11"
 encrypt_pck                = false
-encryption_include_filters = ""
 encrypt_directory          = false
+encryption_include_filters = ""
 exclude_filter             = ""
+export_files               = ""
 export_filter              = ""
 custom_features            = ""
 include_filter             = ""
 name                       = "Export name"
-export_path                = ""
-platform                   = ""
 runnable                   = true
 dedicated_server           = false
 
@@ -57,6 +59,7 @@ dedicated_server           = false
 
 			index: 1,
 			preset: export.Preset{
+				Platform: platform.OSLinux,
 				Features: []string{"feature1", "feature2"},
 				ExportedFiles: []string{
 					"res://A/B/C.gd",
@@ -65,17 +68,16 @@ dedicated_server           = false
 			},
 
 			want: `[preset.1]
+platform                   = "Linux/X11"
 encrypt_pck                = false
-encryption_include_filters = ""
 encrypt_directory          = false
+encryption_include_filters = ""
 exclude_filter             = ""
 export_files               = PackedStringArray("res://A/B/C.gd","res://B/C/D.tscn")
 export_filter              = ""
 custom_features            = "feature1,feature2"
 include_filter             = ""
 name                       = ""
-export_path                = ""
-platform                   = ""
 runnable                   = false
 dedicated_server           = false
 

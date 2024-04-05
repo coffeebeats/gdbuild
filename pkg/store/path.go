@@ -50,7 +50,7 @@ func TargetArchive(storePath string, checksum string) (string, error) {
 		return "", ErrMissingStore
 	}
 
-	return filepath.Join(storePath, storeDirTemplate, checksum+archive.FileExtension), nil
+	return filepath.Join(storePath, storeDirExport, checksum+archive.FileExtension), nil
 }
 
 /* -------------------------------------------------------------------------- */

@@ -1,8 +1,10 @@
 package export
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -10,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/run"
@@ -25,22 +28,25 @@ const resourcePathPrefix = "res://"
 
 // Preset defines the parameters used in a Godot export preset.
 type Preset struct {
+	Arch            platform.Arch     `ini:"-"`
 	CustomizedFiles map[string]string `ini:"customized_files,omitempty"`
+	Embed           bool              `ini:"-"`
 	Encrypt         bool              `ini:"encrypt_pck"`
-	Encrypted       []string          `ini:"encryption_include_filters"`
 	EncryptIndex    bool              `ini:"encrypt_directory"`
+	Encrypted       []string          `ini:"encryption_include_filters"`
+	EncryptionKey   string            `ini:"script_encryption_key,omitempty"`
 	Exclude         string            `ini:"exclude_filter"`
 	ExportedFiles   []string          `ini:"export_files"`
 	// ExportMode sets the type of export to use. Should be 'resources' for a
 	// standard pack file and 'customized' for dedicated server pack files.
-	ExportMode string   `ini:"export_filter"`
-	Features   []string `ini:"custom_features"`
-	Include    string   `ini:"include_filter"`
-	Name       string   `ini:"name"`
-	PathExport string   `ini:"export_path"`
-	Platform   string   `ini:"platform"`
-	Runnable   bool     `ini:"runnable"`
-	Server     bool     `ini:"dedicated_server"`
+	ExportMode   string      `ini:"export_filter"`
+	Features     []string    `ini:"custom_features"`
+	Include      string      `ini:"include_filter"`
+	Name         string      `ini:"name"`
+	PathTemplate osutil.Path `ini:"-"`
+	Platform     platform.OS `ini:"-"`
+	Runnable     bool        `ini:"runnable"`
+	Server       bool        `ini:"dedicated_server"`
 
 	Options map[string]string `ini:"-"`
 }
@@ -68,52 +74,19 @@ func (p *Preset) AddFile(rc *run.Context, path osutil.Path) error {
 	return nil
 }
 
-/* ------------------------- Method: SetArchitecture ------------------------ */
+/* ------------------------- Method: exportPlatform ------------------------- */
 
-func (p *Preset) SetArchitecture(arch platform.Arch) {
-	if p.Options == nil {
-		p.Options = map[string]string{}
-	}
-
-	p.Options["binary_format/architecture"] = arch.String()
-}
-
-/* --------------------------- Method: SetEmbedded -------------------------- */
-
-func (p *Preset) SetEmbedded(embed bool) {
-	if p.Options == nil {
-		p.Options = map[string]string{}
-	}
-
-	p.Options["binary_format/embed_pck"] = "true"
-}
-
-/* --------------------------- Method: SetPlatform -------------------------- */
-
-func (p *Preset) SetPlatform(pl platform.OS) error {
-	switch pl {
+func (p *Preset) exportPlatform() string {
+	switch pl := p.Platform; pl {
 	case platform.OSLinux:
-		p.Platform = "Linux/X11"
+		return "Linux/X11"
 	case platform.OSMacOS:
-		p.Platform = "macOS"
+		return "macOS"
 	case platform.OSWindows:
-		p.Platform = "Windows Desktop"
+		return "Windows Desktop"
 	default:
-		return fmt.Errorf("%w: unsupported platform: %s", ErrInvalidInput, pl)
+		return ""
 	}
-
-	return nil
-}
-
-/* --------------------------- Method: SetTemplate -------------------------- */
-
-func (p *Preset) SetTemplate(path string) {
-	if p.Options == nil {
-		p.Options = map[string]string{}
-	}
-
-	p.Options["custom_template/debug"] = path
-	p.Options["custom_template/release"] = path
 }
 
 /* ----------------------------- Method: Marshal ---------------------------- */
@@ -132,6 +105,8 @@ func (p *Preset) Marshal(w io.Writer, index int) error {
 	presetName := "preset." + strconv.Itoa(index)
 	section := cfg.Section(presetName)
 
+	section.Key("platform").SetValue(valueMapper(p.exportPlatform()))
+
 	// Initially hydrate the 'ini' file.
 	if err := section.ReflectFrom(p); err != nil {
 		return err
@@ -149,7 +124,26 @@ func (p *Preset) Marshal(w io.Writer, index int) error {
 
 	section = cfg.Section(presetName + ".options")
 
-	for key, value := range p.Options {
+	options := maps.Clone(p.Options)
+	if options == nil {
+		options = map[string]string{}
+	}
+
+	if p.Embed {
+		options["binary_format/embed_pck"] = strconv.FormatBool(p.Embed)
+	}
+
+	options["binary_format/architecture"] = p.Arch.String()
+	options["custom_template/debug"] = p.PathTemplate.String()
+	options["custom_template/release"] = p.PathTemplate.String()
+
+	for key, value := range options {
+		if value == "" {
+			delete(options, key)
+
+			continue
+		}
+
 		section.Key(key).SetValue(valueMapper(value))
 	}
 
@@ -180,4 +174,51 @@ func valueMapper(s string) string {
 	}
 
 	return `"` + s + `"`
+}
+
+/* -------------------------------------------------------------------------- */
+/*                    Function: NewWriteExportPresetsAction                   */
+/* -------------------------------------------------------------------------- */
+
+// NewWriteExportPresetsAction creates a new 'action.Action' which constructs an
+// 'export_presets.cfg' file based on the target. It will be written to the
+// workspace directory and overwrite any existing files.
+func NewWriteExportPresetsAction(
+	rc *run.Context,
+	x *Export,
+) action.WithDescription[action.Function] {
+	path := filepath.Join(rc.PathWorkspace.String(), "export_presets.cfg")
+
+	fn := func(_ context.Context) error {
+		presets, err := x.Presets(rc)
+		if err != nil {
+			return err
+		}
+
+		var cfg strings.Builder
+
+		for i, preset := range presets {
+			if err := preset.Marshal(&cfg, i); err != nil {
+				return err
+			}
+		}
+
+		f, err := os.Create(filepath.Join(rc.PathWorkspace.String(), "export_presets.cfg"))
+		if err != nil {
+			return err
+		}
+
+		defer f.Close()
+
+		if _, err := io.Copy(f, strings.NewReader(cfg.String()+"\n")); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "generate export presets file: " + path,
+	}
 }
