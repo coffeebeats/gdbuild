@@ -73,7 +73,7 @@ func (p *Process) Sprint() string {
 	}
 
 	return fmt.Sprintf(
-		"Exec process (%s):\n  %s",
+		"Exec process (path=%s):\n  %s",
 		p.Directory,
 		exec.Process(*p).String(),
 	)

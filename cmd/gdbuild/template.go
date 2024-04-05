@@ -224,6 +224,7 @@ func buildTemplateContext(
 		PathWorkspace: "", // Will be set later.
 		Platform:      pl,
 		Profile:       pr,
+		Target:        "", // Unused in this command.
 		Verbose:       log.GetLevel() == log.DebugLevel,
 	}
 
@@ -234,8 +235,6 @@ func buildTemplateContext(
 
 	// Use shared temporary directory as a build path.
 	rc.PathWorkspace = osutil.Path(pathTmp)
-
-	log.Debugf("using build directory: %s", rc.PathWorkspace)
 
 	if err := rc.Validate(); err != nil {
 		return run.Context{}, err
@@ -253,7 +252,7 @@ func exportTemplate( //nolint:ireturn
 	tl *godottemplate.Template,
 	force bool,
 ) (action.Action, error) {
-	cs, err := tl.Checksum()
+	cs, err := godottemplate.Checksum(tl)
 	if err != nil {
 		return nil, err
 	}
@@ -292,14 +291,16 @@ func exportTemplate( //nolint:ireturn
 		}, nil
 	}
 
+	log.Debugf("using build directory: %s", rc.PathWorkspace)
+
 	// Template was not cached; create build action.
-	return template.Action(tl, rc)
+	return template.Action(rc, tl)
 }
 
 /* ----------------------- Function: printTemplateHash ---------------------- */
 
 func printTemplateHash(_ *run.Context, tl *godottemplate.Template) error {
-	cs, err := tl.Checksum()
+	cs, err := godottemplate.Checksum(tl)
 	if err != nil {
 		return err
 	}

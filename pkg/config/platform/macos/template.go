@@ -40,6 +40,7 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 	case platform.ArchAmd64, platform.ArchArm64:
 		out := t.Template.Collect(g, rc)
 
+		out.Arch = t.Arch
 		out.Builds[0].Platform = platform.OSMacOS
 
 		scons := &out.Builds[0].SCons
@@ -102,6 +103,8 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 		// to be copied over from the arch-specific templates and this avoid the
 		// need to deduplicate properties.
 		out := t.Template.Collect(g, rc)
+
+		out.Arch = platform.ArchUniversal
 
 		// Register the additional artifact.
 		out.ExtraArtifacts = append(out.ExtraArtifacts, templateNameUniversal)

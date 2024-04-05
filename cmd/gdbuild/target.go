@@ -15,10 +15,11 @@ import (
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/config"
-	"github.com/coffeebeats/gdbuild/pkg/export"
-	godotexport "github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/export"
+	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
+	"github.com/coffeebeats/gdbuild/pkg/target"
 )
 
 var ErrTargetUsageProfiles = errors.New("cannot specify more than one of '--debug', '--release_debug', and '--release'")
@@ -50,7 +51,6 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 			&cli.PathFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
-				Value:   config.DefaultFilename(),
 				Usage:   "use the 'gdbuild' configuration file found at 'PATH'",
 			},
 			&cli.PathFlag{
@@ -94,8 +94,8 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 		Action: func(c *cli.Context) error {
 			// Validate arguments.
-			target := c.Args().First()
-			if target == "" {
+			targetName := c.Args().First()
+			if targetName == "" {
 				return UsageError{ctx: c, err: fmt.Errorf("%w: target", ErrMissingInput)}
 			}
 
@@ -143,8 +143,21 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
+			pathConfig := c.Path("config")
+			pathProject := c.Path("project")
+
+			switch {
+			case pathConfig == "" && pathProject != "":
+				pathConfig = filepath.Join(pathProject, config.DefaultFilename())
+			case pathProject == "" && pathConfig != "":
+				pathProject = filepath.Dir(pathConfig)
+			case pathProject == "" && pathConfig == "":
+				pathProject = "."
+				pathConfig = config.DefaultFilename()
+			}
+
 			// Parse manifest.
-			pathManifest, err := parseManifestPath(c.Path("config"))
+			pathManifest, err := parseManifestPath(pathConfig)
 			if err != nil {
 				return err
 			}
@@ -167,14 +180,14 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
-			ec, err := buildExportContext(rc, c.Path("project"), pathOut)
+			ec, err := buildExportContext(rc, targetName, pathProject, pathOut)
 			if err != nil {
 				return err
 			}
 
 			defer cleanTemporaryDirectory(&ec)
 
-			xp, err := config.Export(&ec, m, tl, target)
+			xp, err := config.Export(&ec, m, tl, targetName)
 			if err != nil {
 				return err
 			}
@@ -198,6 +211,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				c.Context,
 				&ec,
 				storePath,
+				tl,
 				xp,
 				force,
 			)
@@ -220,7 +234,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 /* ---------------------- Function: buildExportContext ---------------------- */
 
-func buildExportContext(rc run.Context, pathProject, pathOut string) (run.Context, error) {
+func buildExportContext(rc run.Context, targetName, pathProject, pathOut string) (run.Context, error) {
 	pathWorkspace := osutil.Path(filepath.Dir(rc.PathManifest.String()))
 	if pathProject != "" {
 		pathWorkspace = osutil.Path(pathProject)
@@ -235,11 +249,24 @@ func buildExportContext(rc run.Context, pathProject, pathOut string) (run.Contex
 		}
 	}
 
+	wd, err := os.Getwd()
+	if err != nil {
+		return run.Context{}, err
+	}
+
 	// Update the workspace path to the project directory.
 	rc.PathWorkspace = pathWorkspace
+	if err := rc.PathWorkspace.RelTo(osutil.Path(wd)); err != nil {
+		return run.Context{}, err
+	}
 
 	// Update output directory to option value.
 	rc.PathOut = osutil.Path(pathOut)
+	if err := rc.PathWorkspace.RelTo(osutil.Path(pathOut)); err != nil {
+		return run.Context{}, err
+	}
+
+	rc.Target = targetName
 
 	if err := rc.Validate(); err != nil {
 		return run.Context{}, err
@@ -263,13 +290,22 @@ func exportProject( //nolint:ireturn
 	_ context.Context,
 	rc *run.Context,
 	storePath string,
-	xp *godotexport.Export,
+	tl *template.Template,
+	xp *export.Export,
 	force bool,
 ) (action.Action, error) {
-	cs, err := xp.Checksum(rc)
+	cs, err := export.Checksum(rc, xp)
 	if err != nil {
 		return nil, err
 	}
+
+	pathTmp, err := rc.TempDir()
+	if err != nil {
+		return nil, err
+	}
+
+	templateName := template.Name(rc.Platform, tl.Arch, rc.Profile)
+	xp.PathTemplate = osutil.Path(filepath.Join(pathTmp, templateName))
 
 	hasTarget, err := store.HasTarget(storePath, cs)
 	if err != nil {
@@ -305,14 +341,16 @@ func exportProject( //nolint:ireturn
 		}, nil
 	}
 
+	log.Debugf("using project directory: %s", rc.PathWorkspace)
+
 	// Target was not cached; create build action.
-	return export.Action(rc, xp)
+	return target.Action(rc, tl, xp)
 }
 
 /* ------------------------ Function: printTargetHash ----------------------- */
 
-func printTargetHash(rc *run.Context, xp *godotexport.Export) error {
-	cs, err := xp.Checksum(rc)
+func printTargetHash(rc *run.Context, xp *export.Export) error {
+	cs, err := export.Checksum(rc, xp)
 	if err != nil {
 		return err
 	}

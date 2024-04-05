@@ -1,20 +1,18 @@
 package export
 
 import (
+	"context"
 	"errors"
-	"hash/crc64"
-	"io"
+	"os"
 	"path/filepath"
-	"slices"
-	"strconv"
-	"strings"
 
-	"github.com/mitchellh/hashstructure/v2"
 	"golang.org/x/exp/maps"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
+	"github.com/coffeebeats/gdbuild/internal/config"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
@@ -41,6 +39,8 @@ type Export struct {
 	Options map[string]any
 	// PackFiles defines the game files exported as part of this artifact.
 	PackFiles []PackFile
+	// PathTemplate is a path to the export template to use during exporting.
+	PathTemplate osutil.Path `hash:"ignore"`
 	// Template specifies the export template to use.
 	Template *template.Template `hash:"string"`
 	// RunBefore contains an ordered list of actions to execute prior to
@@ -62,71 +62,138 @@ type Export struct {
 /* ----------------------------- Method: Actions ---------------------------- */
 
 // Action creates an 'action.Action' for running the export action.
-func (x *Export) Action() action.Action { //nolint:ireturn
-	return action.NoOp{}
+func (x *Export) Action(rc *run.Context, pathGodot osutil.Path) (action.Action, error) { //nolint:ireturn
+	presets, err := x.Presets(rc)
+	if err != nil {
+		return nil, err
+	}
+
+	exports := make([]action.Action, 0, 2+len(presets)) //nolint:gomnd
+
+	exports = append(exports, NewWriteExportPresetsAction(rc, x))
+	exports = append(exports, NewLoadProjectAction(rc, pathGodot))
+
+	for _, preset := range presets {
+		exports = append(exports, NewExportAction(rc, preset, pathGodot))
+	}
+
+	return action.InOrder(exports...), nil
+}
+
+/* ----------------------------- Method: Presets ---------------------------- */
+
+// Presets constructs the list of 'Preset' types for the specified pack files.
+func (x *Export) Presets(rc *run.Context) ([]*Preset, error) {
+	presets := make([]*Preset, 0, len(x.PackFiles))
+
+	var embed Preset
+
+	for i, pf := range x.PackFiles {
+		preset, err := pf.Preset(rc, x, i)
+		if err != nil {
+			return nil, err
+		}
+
+		if !config.Dereference(pf.Embed) {
+			presets = append(presets, &preset)
+
+			continue
+		}
+
+		if err := config.Merge(&embed, preset); err != nil {
+			return nil, err
+		}
+	}
+
+	if embed.Platform == platform.OSUnknown {
+		return presets, nil
+	}
+
+	return append([]*Preset{&embed}, presets...), nil
 }
 
 /* ---------------------------- Method: Artifacts --------------------------- */
 
 // Artifacts returns the set of exported project artifacts required by the
 // underlying target definition.
-func (x *Export) Artifacts() []string {
+func (x *Export) Artifacts(rc *run.Context) ([]string, error) {
 	artifacts := make(map[string]struct{})
 
-	// TODO: Implement this.
+	presets, err := x.Presets(rc)
+	if err != nil {
+		return nil, err
+	}
 
-	return maps.Keys(artifacts)
+	for _, preset := range presets {
+		artifacts[preset.Name] = struct{}{}
+	}
+
+	return maps.Keys(artifacts), nil
 }
 
 /* -------------------------------------------------------------------------- */
-/*                             Function: Checksum                             */
+/*                          Function: NewExportAction                         */
 /* -------------------------------------------------------------------------- */
 
-// Checksum produces a checksum hash of the export specification. When the
-// checksums of two 'Export' definitions matches, the resulting exported
-// artifacts will be equivalent.
-func (x *Export) Checksum(rc *run.Context) (string, error) {
-	hash, err := hashstructure.Hash(
-		x,
-		hashstructure.FormatV2,
-		&hashstructure.HashOptions{ //nolint:exhaustruct
-			IgnoreZeroValue: true,
-			SlicesAsSets:    true,
-			ZeroNil:         true,
-		},
+// NewExportAction creates a new 'action.Action' which exports the specified
+// pack file.
+func NewExportAction( //nolint:ireturn
+	rc *run.Context,
+	preset *Preset,
+	pathGodot osutil.Path,
+) action.Action {
+	var cmd action.Process
+
+	cmd.Verbose = rc.Verbose
+	cmd.Directory = rc.PathWorkspace.String()
+
+	cmd.Args = append(
+		cmd.Args,
+		pathGodot.String(),
+		"--headless",
 	)
-	if err != nil {
-		return "", err
+
+	if rc.Verbose {
+		cmd.Args = append(cmd.Args, "--verbose")
 	}
 
-	cs := crc64.New(crc64.MakeTable(crc64.ECMA))
+	var command string
 
-	// Update the 'crc64' hash with the struct hash.
-	if _, err := io.Copy(cs, strings.NewReader(strconv.FormatUint(hash, 16))); err != nil {
-		return "", err
+	switch {
+	case !preset.Embed:
+		command = "pack"
+	case preset.Embed && rc.Profile.IsRelease():
+		command = "release"
+	default:
+		command = "debug"
 	}
 
-	files := make([]osutil.Path, 0)
-	pathRoot := osutil.Path(filepath.Dir(rc.PathManifest.String()))
+	pathArtifact := filepath.Join(rc.PathOut.String(), preset.Name)
 
-	for _, pck := range x.PackFiles {
-		ff, err := pck.Files(pathRoot)
-		if err != nil {
-			return "", err
-		}
+	cmd.Args = append(
+		cmd.Args,
+		"--export-"+command,
+		preset.Name,
+		pathArtifact,
+	)
 
-		files = append(files, ff...)
+	return NewMkdirAllAction(filepath.Dir(pathArtifact), osutil.ModeUserRWX).
+		AndThen(&cmd)
+}
+
+/* -------------------------------------------------------------------------- */
+/*                         Function: NewMkdirAllAction                        */
+/* -------------------------------------------------------------------------- */
+
+// NewMkdirAllAction creates a new 'action.Action' which creates the specified
+// directory if missing.
+func NewMkdirAllAction(path string, perm os.FileMode) action.WithDescription[action.Function] {
+	fn := func(_ context.Context) error {
+		return os.MkdirAll(path, perm)
 	}
 
-	// Make the path list unique and sorted.
-	slices.Sort(files)
-	files = slices.Compact(files)
-
-	for _, path := range files {
-		if err := osutil.HashFiles(cs, path.String()); err != nil {
-			return "", err
-		}
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "create directory if missing: " + path,
 	}
-
-	return strconv.FormatUint(cs.Sum64(), 16), nil
 }

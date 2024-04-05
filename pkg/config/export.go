@@ -111,7 +111,19 @@ func Export( //nolint:cyclop,funlen
 		return nil, err
 	}
 
-	return mr.target.Collect(rc, tl, ev), nil
+	tr := mr.target.Collect(rc, tl, ev)
+
+	// Set the encryption key on the template builds in the event that the key
+	// was just set on the target. This is the only property that needs to be
+	// synchronized between the target/template builds, so do it here.
+	for i, tb := range tl.Builds {
+		if tb.EncryptionKey != tr.EncryptionKey {
+			tb.EncryptionKey = tr.EncryptionKey
+			tl.Builds[i] = tb // Update the slice since 'tb' is a copy.
+		}
+	}
+
+	return tr, nil
 }
 
 /* ----------------------------- Struct: merged ----------------------------- */

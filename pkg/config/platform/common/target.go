@@ -1,8 +1,9 @@
 package common
 
 import (
+	"errors"
 	"fmt"
-	"os"
+	"io/fs"
 
 	"github.com/charmbracelet/log"
 
@@ -11,6 +12,11 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
+)
+
+var (
+	ErrInvalidInput = errors.New("invalid input")
+	ErrMissingInput = errors.New("missing input")
 )
 
 /* -------------------------------------------------------------------------- */
@@ -46,20 +52,7 @@ type Target struct {
 func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Version) *export.Export {
 	// Set the encryption key environment variable; see
 	// https://docs.godotengine.org/en/stable/contributing/development/compiling/compiling_with_script_encryption_key.html.
-	var encryptionKey string
-	if ek := template.EncryptionKeyFromEnv(); ek != "" {
-		encryptionKey = ek
-	} else if t.EncryptionKey != "" {
-		ek := os.ExpandEnv(t.EncryptionKey)
-		if ek != "" {
-			encryptionKey = ek
-		} else {
-			log.Warnf(
-				"encryption key set in manifest, but value was empty: %s",
-				t.EncryptionKey,
-			)
-		}
-	}
+	encryptionKey, _ := resolveEncryptionKey(t.EncryptionKey)
 
 	ff := make([]string, 0, len(t.DefaultFeatures)+len(rc.Features))
 	ff = append(ff, t.DefaultFeatures...)
@@ -70,6 +63,7 @@ func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Versi
 		Features:      ff,
 		Options:       t.Options,
 		PackFiles:     t.PackFiles,
+		PathTemplate:  "",
 		RunBefore:     t.Hook.PreActions(rc),
 		RunAfter:      t.Hook.PostActions(rc),
 		Runnable:      config.Dereference(t.Runnable),
@@ -93,15 +87,99 @@ func (t *Target) Configure(rc *run.Context) error {
 
 /* ------------------------- Impl: config.Validator ------------------------- */
 
-func (t *Target) Validate(rc *run.Context) error {
+func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 	if err := t.Hook.Validate(rc); err != nil {
 		return err
 	}
 
-	for _, pf := range t.PackFiles {
+	encryptionKey, err := resolveEncryptionKey(t.EncryptionKey)
+	if err != nil {
+		return err
+	}
+
+	packNames := make(map[string]struct{})
+
+	isRunnable := config.Dereference(t.Runnable)
+	isServer := config.Dereference(t.Server)
+	hasEmbed := false
+	hasEncrypt := false
+	hasVisualsStripped := false
+
+	if isServer && !isRunnable {
+		return fmt.Errorf(
+			"%w: cannot specify server optimizations for a non-runnable target",
+			ErrInvalidInput,
+		)
+	}
+
+	projectFiles := map[string]struct{}{}
+
+	for i, pf := range t.PackFiles {
 		if err := pf.Validate(rc); err != nil {
 			return err
 		}
+
+		name := pf.Filename(rc.Platform, rc.Target, i)
+		if _, ok := packNames[name]; ok {
+			return fmt.Errorf(
+				"%w: duplicate pack filename found: %s",
+				ErrInvalidInput,
+				name,
+			)
+		}
+
+		hasEmbed = hasEmbed || config.Dereference(pf.Embed)
+		hasEncrypt = hasEncrypt || config.Dereference(pf.Encrypt)
+		hasVisualsStripped = hasVisualsStripped || pf.StripVisuals()
+
+		ff, err := pf.Files(rc.PathWorkspace)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+
+			return err
+		}
+
+		for _, f := range ff {
+			path := f.String()
+
+			if _, ok := projectFiles[path]; ok {
+				log.Warn("Same file found in multiple packs.", "file", path)
+
+				continue
+			}
+
+			projectFiles[path] = struct{}{}
+		}
+	}
+
+	if !isRunnable && hasEmbed {
+		return fmt.Errorf(
+			"%w: cannot embed a pack file into a non-runnable target",
+			ErrInvalidInput,
+		)
+	}
+
+	if isRunnable && !hasEmbed {
+		return fmt.Errorf(
+			"%w: missing embedded pack file for runnable target",
+			ErrMissingInput,
+		)
+	}
+
+	if !isServer && hasVisualsStripped {
+		return fmt.Errorf(
+			"%w: cannot strip visuals from a pack file for a non-server target",
+			ErrInvalidInput,
+		)
+	}
+
+	if encryptionKey == "" && hasEncrypt {
+		return fmt.Errorf(
+			"%w: pack file is encrypted but no encryption key set",
+			ErrInvalidInput,
+		)
 	}
 
 	return nil
