@@ -114,26 +114,22 @@ func defaultContents() string {
   version = "4.2.1-stable"
 
 [target.client]
-  runnable = true
-  server   = false
+  runnable         = true
+  default_features = []
 
-  default_features = ["steam"]
+  pack_files = [{glob = ["*"], embed = true, encrypt = true}]
 
-  pack_files = [
-    {glob = ["*"], embed = true, encrypt = true},
-  ]
+[target.client.profile.release]
+  # EncryptionKey is the encryption key to embed in the export template.
+  encryption_key = "$SCRIPT_AES256_ENCRYPTION_KEY"
+  encrypt        = true
 
 [template]
   # A path to a 'custom.py' file which defines export template build options.
-  custom_py_path = "$PWD/custom.py"
+  custom_py_path = "custom.py"
 
 [template.scons]
-  cache_path = "$PWD/.scons"
-  command    = ["python3", "-m", "SCons"]
-
-[template.profile.release]
-  # EncryptionKey is the encryption key to embed in the export template.
-  encryption_key = "$SCRIPT_AES256_ENCRYPTION_KEY"
+  command = ["python3", "-m", "SCons"]
 `
 }
 
