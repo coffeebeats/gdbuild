@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.3 (2024-04-06)
+
+## What's Changed
+* feat(cmd): add `--project` flag to `template` to standardize commands by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/94
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.2...v0.3.3
+
 ## 0.3.2 (2024-04-06)
 
 ## What's Changed
