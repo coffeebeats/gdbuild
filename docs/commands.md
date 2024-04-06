@@ -15,7 +15,9 @@ Compile an export template for the specified Godot platform `PLATFORM`.
 - `--print-hash` — log the unique hash of the export template (skips compilation)
 
 - `-c`, `--config <PATH>` — use the `gdbuild` configuration file found at `PATH`
-  - Default value: `$PWD/gdbuild.toml` (`gdbuild.toml` in current working directory)
+  - Default value: `<PROJECT>/gdbuild.toml` (`gdbuild.toml` in project directory)
+- `-p`, `--project <PATH>` — use the Godot project found at `PATH`
+  - Default value: `$PWD` (current working directory)
 - `-o`, `--out <PATH>` — write generated artifacts to `PATH`
   - Default value: `$PWD` (current working directory)
 
@@ -43,9 +45,9 @@ Compile any required export template(s) and then export the specified `TARGET`.
 - `--print-hash` — log the unique hash of the game binary (skips exporting)
 
 - `-c`, `--config <PATH>` — use the `gdbuild` configuration file found at `PATH`
-  - Default value: `$PWD/gdbuild.toml` (`gdbuild.toml` in current working directory)
+  - Default value: `<PROJECT>/gdbuild.toml` (`gdbuild.toml` in project directory)
 - `-p`, `--project <PATH>` — use the Godot project found at `PATH`
-  - Default value: directory containing `gdbuild.toml` manifest file
+  - Default value: `$PWD` (current working directory)
 - `-o`, `--out <PATH>` — write generated artifacts to `PATH`
   - Default value: `$PWD` (current working directory)
 

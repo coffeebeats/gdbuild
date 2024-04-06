@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/log"
@@ -50,8 +51,11 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			&cli.PathFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
-				Value:   config.DefaultFilename(),
 				Usage:   "use the 'gdbuild' configuration file found at 'PATH'",
+			},
+			&cli.PathFlag{
+				Name:  "project",
+				Usage: "use the Godot project found at 'PATH'",
 			},
 			&cli.PathFlag{
 				Name:    "out",
@@ -140,8 +144,19 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 
 			log.Debugf("placing template artifacts at path: %s", pathOut)
 
+			pathConfig := c.Path("config")
+			pathProject := c.Path("project")
+
+			switch {
+			case pathConfig == "" && pathProject != "":
+				pathConfig = filepath.Join(pathProject, config.DefaultFilename())
+			case pathProject == "" && pathConfig != "":
+			case pathProject == "" && pathConfig == "":
+				pathConfig = config.DefaultFilename()
+			}
+
 			// Parse manifest.
-			pathManifest, err := parseManifestPath(c.Path("config"))
+			pathManifest, err := parseManifestPath(pathConfig)
 			if err != nil {
 				return err
 			}
