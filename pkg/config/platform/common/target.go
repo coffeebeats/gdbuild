@@ -29,6 +29,8 @@ type Target struct {
 	// DefaultFeatures contains the slice of Godot project feature tags to build
 	// with.
 	DefaultFeatures []string `toml:"default_features"`
+	// Encrypt sets whether the exported artifacts will be encrypted or not.
+	Encrypt *bool `toml:"encrypt"`
 	// EncryptionKey is the encryption key to encrypt game assets with.
 	EncryptionKey string `toml:"encryption_key"`
 	// Hook defines commands to be run before or after the target artifact is
@@ -76,10 +78,34 @@ func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Versi
 /* ------------------------- Impl: config.Configurer ------------------------ */
 
 func (t *Target) Configure(rc *run.Context) error {
+	hasEncrypt := false
+	isEncrypted := config.Dereference(t.Encrypt)
+
 	for _, pf := range t.PackFiles {
 		if err := pf.Configure(rc); err != nil {
 			return err
 		}
+
+		isPackFileEncrypted := config.Dereference(pf.Encrypt)
+		hasEncrypt = hasEncrypt || isPackFileEncrypted
+
+		// Disable pack file encryption if the top level encrypt flag is off.
+		encrypt := isEncrypted && isPackFileEncrypted
+		pf.Encrypt = &encrypt
+	}
+
+	if t.EncryptionKey != "" && !isEncrypted {
+		log.Warn("ignoring encryption key because encryption is disabled.")
+
+		t.EncryptionKey = ""
+	}
+
+	if isEncrypted && !hasEncrypt {
+		log.Warn("encryption was enabled but no encrypted pack files included.")
+
+		disable := false
+		t.Encrypt = &disable
+		t.EncryptionKey = ""
 	}
 
 	return nil
@@ -97,13 +123,12 @@ func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 		return err
 	}
 
+	hasEmbed := false
+	hasVisualsStripped := false
 	packNames := make(map[string]struct{})
 
 	isRunnable := config.Dereference(t.Runnable)
 	isServer := config.Dereference(t.Server)
-	hasEmbed := false
-	hasEncrypt := false
-	hasVisualsStripped := false
 
 	if isServer && !isRunnable {
 		return fmt.Errorf(
@@ -129,7 +154,6 @@ func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 		}
 
 		hasEmbed = hasEmbed || config.Dereference(pf.Embed)
-		hasEncrypt = hasEncrypt || config.Dereference(pf.Encrypt)
 		hasVisualsStripped = hasVisualsStripped || pf.StripVisuals()
 
 		ff, err := pf.Files(rc.PathWorkspace)
@@ -175,9 +199,9 @@ func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 		)
 	}
 
-	if encryptionKey == "" && hasEncrypt {
+	if config.Dereference(t.Encrypt) && encryptionKey == "" {
 		return fmt.Errorf(
-			"%w: pack file is encrypted but no encryption key set",
+			"%w: encryption is enabled but no encryption key is set",
 			ErrInvalidInput,
 		)
 	}
