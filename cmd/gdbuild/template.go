@@ -305,7 +305,7 @@ func printTemplateHash(_ *run.Context, tl *godottemplate.Template) error {
 		return err
 	}
 
-	log.Print(cs)
+	fmt.Println(cs) //nolint:forbidigo
 
 	return nil
 }

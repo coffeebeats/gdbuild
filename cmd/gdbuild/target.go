@@ -355,7 +355,7 @@ func printTargetHash(rc *run.Context, xp *export.Export) error {
 		return err
 	}
 
-	log.Print(cs)
+	fmt.Println(cs) //nolint:forbidigo
 
 	return nil
 }
