@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.4 (2024-04-06)
+
+## What's Changed
+* feat(cmd): allow passing in a template archive to `target` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/96
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.3...v0.3.4
+
 ## 0.3.3 (2024-04-06)
 
 ## What's Changed
