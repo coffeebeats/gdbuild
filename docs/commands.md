@@ -50,6 +50,7 @@ Compile any required export template(s) and then export the specified `TARGET`.
   - Default value: `$PWD` (current working directory)
 - `-o`, `--out <PATH>` — write generated artifacts to `PATH`
   - Default value: `$PWD` (current working directory)
+- `--template-archive <PATH>` - extract the template from the archive found at `PATH` (skips template build)
 
 - `-f`, `--feature <FEATURE>` — enable the provided feature tag `FEATURE` (can be specified more than once)
 - `-p`, `--platform <PLATFORM>` — build for the specified Godot platform `PLATFORM`
