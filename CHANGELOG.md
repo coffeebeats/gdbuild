@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.2 (2024-04-06)
+
+## What's Changed
+* fix(cmd): ensure hashes are sent to stdout by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/92
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.1...v0.3.2
+
 ## 0.3.1 (2024-04-06)
 
 ## What's Changed
