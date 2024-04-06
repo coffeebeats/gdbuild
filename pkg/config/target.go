@@ -17,7 +17,7 @@ import (
 
 // Export creates an `Export` instance which contains an action for exporting
 // the specified target.
-func Export( //nolint:cyclop,funlen
+func Export( //nolint:cyclop,funlen,gocognit
 	rc *run.Context,
 	m *Manifest,
 	tl *template.Template,
