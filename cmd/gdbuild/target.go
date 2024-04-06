@@ -25,7 +25,7 @@ import (
 var ErrTargetUsageProfiles = errors.New("cannot specify more than one of '--debug', '--release_debug', and '--release'")
 
 // A 'urfave/cli' command to compile and export a Godot project target.
-func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
+func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,maintidx
 	return &cli.Command{
 		Name:     "target",
 		Category: "Build",
@@ -62,6 +62,10 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				Aliases: []string{"o"},
 				Value:   ".",
 				Usage:   "write generated artifacts to 'PATH'",
+			},
+			&cli.PathFlag{
+				Name:  "template-archive",
+				Usage: "extract the template from the archive found at 'PATH' (skips template build)",
 			},
 			&cli.StringSliceFlag{
 				Name:     "feature",
@@ -219,7 +223,22 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit
 				return err
 			}
 
-			exportAction = templateAction.AndThen(exportAction)
+			pathTemplateArchive, err := templateArchivePath(c, storePath, tl)
+			if err != nil {
+				return err
+			}
+
+			extractTemplateAction, err := target.NewExtractTemplateAction(&ec, pathTemplateArchive)
+			if err != nil {
+				return err
+			}
+
+			exportAction = action.InOrder(
+				templateAction,
+				extractTemplateAction,
+				export.NewInstallEditorGodotAction(&ec, xp.Version, ec.GodotPath()),
+				exportAction,
+			)
 
 			if dryRun {
 				log.Print(exportAction.Sprint())
@@ -344,7 +363,33 @@ func exportProject( //nolint:ireturn
 	log.Debugf("using project directory: %s", rc.PathWorkspace)
 
 	// Target was not cached; create build action.
-	return target.Action(rc, tl, xp)
+	return target.Action(rc, xp)
+}
+
+/* ---------------------- Function: pathTemplateArchive --------------------- */
+
+func templateArchivePath(c *cli.Context, storePath string, tl *template.Template) (osutil.Path, error) {
+	if c.IsSet("template-archive") {
+		path := osutil.Path(c.Path("template-archive"))
+
+		if err := path.CheckIsFile(); err != nil {
+			return "", err
+		}
+
+		return path, nil
+	}
+
+	cs, err := template.Checksum(tl)
+	if err != nil {
+		return "", err
+	}
+
+	pathArchive, err := store.TemplateArchive(storePath, cs)
+	if err != nil {
+		return "", err
+	}
+
+	return osutil.Path(pathArchive), nil
 }
 
 /* ------------------------ Function: printTargetHash ----------------------- */

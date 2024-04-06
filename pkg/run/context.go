@@ -59,6 +59,18 @@ func (c *Context) BinPath() osutil.Path {
 	return osutil.Path(filepath.Join(c.PathWorkspace.String(), "bin"))
 }
 
+/* ---------------------------- Method: GodotPath --------------------------- */
+
+// GodotPath returns the path to the Godot editor executable.
+func (c *Context) GodotPath() osutil.Path {
+	pathTmp, err := c.TempDir()
+	if err != nil {
+		return ""
+	}
+
+	return osutil.Path(filepath.Join(pathTmp, "godot"))
+}
+
 /* --------------------------- Method: HasTempDir --------------------------- */
 
 // HasTempDir returns whether a run-specific temporary directory has been

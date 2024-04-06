@@ -3,13 +3,11 @@ package target
 import (
 	"context"
 	"errors"
-	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/archive"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
-	"github.com/coffeebeats/gdbuild/pkg/godot/template"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 	"github.com/coffeebeats/gdbuild/pkg/store"
 )
@@ -25,20 +23,8 @@ var (
 
 // Action creates a new 'action.Action' which executes the specified processes
 // for compiling the export template.
-func Action(rc *run.Context, tl *template.Template, xp *export.Export) (action.Action, error) { //nolint:ireturn
-	pathTmp, err := rc.TempDir()
-	if err != nil {
-		return nil, err
-	}
-
-	pathGodot := osutil.Path(filepath.Join(pathTmp, "godot"))
-
-	exportAction, err := xp.Action(rc, pathGodot)
-	if err != nil {
-		return nil, err
-	}
-
-	extractTemplateAction, err := NewExtractTemplateAction(rc, tl)
+func Action(rc *run.Context, xp *export.Export) (action.Action, error) { //nolint:ireturn
+	exportAction, err := xp.Action(rc, rc.GodotPath())
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +46,6 @@ func Action(rc *run.Context, tl *template.Template, xp *export.Export) (action.A
 
 	return action.InOrder(
 		xp.RunBefore,
-		export.NewInstallEditorGodotAction(rc, xp.Version, osutil.Path(pathTmp)),
-		extractTemplateAction,
 		exportAction,
 		xp.RunAfter,
 		run.NewVerifyArtifactsAction(rc, rc.PathOut, artifacts),
@@ -78,36 +62,19 @@ func Action(rc *run.Context, tl *template.Template, xp *export.Export) (action.A
 // string variable 'path' with a path to it.
 func NewExtractTemplateAction(
 	rc *run.Context,
-	tl *template.Template,
+	pathArchive osutil.Path,
 ) (action.WithDescription[action.Function], error) {
-	storePath, err := store.Path()
-	if err != nil {
-		return action.WithDescription[action.Function]{}, err
-	}
-
-	checksum, err := template.Checksum(tl)
-	if err != nil {
-		return action.WithDescription[action.Function]{}, err
-	}
-
 	pathTmp, err := rc.TempDir()
 	if err != nil {
 		return action.WithDescription[action.Function]{}, err
 	}
 
 	fn := func(ctx context.Context) error {
-		pathArchive, err := store.TemplateArchive(storePath, checksum)
-		if err != nil {
-			return err
-		}
-
-		return archive.Extract(ctx, pathArchive, pathTmp)
+		return archive.Extract(ctx, pathArchive.String(), pathTmp)
 	}
-
-	pathTemplate := filepath.Join(pathTmp, template.Name(rc.Platform, tl.Arch, rc.Profile))
 
 	return action.WithDescription[action.Function]{
 		Action:      fn,
-		Description: "extract cached export template: " + pathTemplate,
+		Description: "extract export template from archive: " + pathArchive.String(),
 	}, nil
 }
