@@ -17,7 +17,7 @@ var ErrMissingInput = errors.New("missing input")
 
 // Action creates a new 'action.Action' which executes the specified processes
 // for compiling the export template.
-func Action(rc *run.Context, tl *template.Template) (action.Action, error) { //nolint:ireturn
+func Action(rc *run.Context, tl *template.Template) (action.Action, error) { //nolint:ireturn,nolintlint
 	actions := make([]action.Action, 0)
 
 	actions = append(
