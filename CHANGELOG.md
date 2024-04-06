@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1 (2024-04-06)
+
+## What's Changed
+* feat(config): provide top-level target `encrypt` setting; improve encryption validation by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/90
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.0...v0.3.1
+
 ## 0.3.0 (2024-04-05)
 
 ## What's Changed
