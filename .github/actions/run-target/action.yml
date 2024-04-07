@@ -89,7 +89,14 @@ runs:
       id: print-hash
       if: inputs.skip-hash != 'true'
       shell: bash
-      run: echo value="$(echo "${{ steps.config.outputs.args }} --print-hash  ${{ inputs.target }}" | xargs gdbuild)" >> "$GITHUB_OUTPUT"
+      run: |
+        value="$(echo "${{ steps.config.outputs.args }} --print-hash  ${{ inputs.target }}" | xargs gdbuild)"
+        if [[ $? -ne 0 ]]; then
+          echo "Failed to compute target hash."
+          exit 1
+        fi
+
+        echo value="$value" >> "$GITHUB_OUTPUT"
 
     - name: Cache the 'gdbuild' store's export artifact directory
       id: cache-exports
