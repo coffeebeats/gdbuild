@@ -106,6 +106,19 @@ runs:
         path: ${{ env.GDBUILD_HOME }}/exports
         key: exports-${{ runner.os }}-${{ steps.print-hash.outputs.value }}
 
+    # NOTE: If no template archive is provided, then mount the correct template
+    # cache using the 'run-template' action.
+    - name: Determine template hash
+      if: inputs.template-archive-path == ''
+      uses: "./.github/actions/run-template"
+      with:
+        platform: ${{ inputs.platform }}
+        profile: ${{ inputs.profile }}
+        features: ${{ inputs.feature }}
+        project-dir: ${{ inputs.project-dir }}
+        manifest-path: ${{ inputs.manifest-path }}
+        execute: false
+
     - name: Execute the export command
       id: run
       shell: bash
