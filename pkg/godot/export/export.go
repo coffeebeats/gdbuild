@@ -74,10 +74,14 @@ func (x *Export) Action(rc *run.Context, pathGodot osutil.Path) (action.Action, 
 		return nil, err
 	}
 
-	exports := make([]action.Action, 0, 2+len(presets)) //nolint:gomnd
+	exports := make([]action.Action, 0, 3+len(presets)) //nolint:gomnd
 
-	exports = append(exports, NewWriteExportPresetsAction(rc, x))
-	exports = append(exports, NewLoadProjectAction(rc, pathGodot))
+	exports = append(
+		exports,
+		NewWriteExportPresetsAction(rc, x),
+		NewRemoveAllAction(rc.PathWorkspace.Join(".godot").String()),
+		NewLoadProjectAction(rc, pathGodot),
+	)
 
 	for _, preset := range presets {
 		exports = append(exports, NewExportAction(rc, preset, pathGodot))
@@ -152,6 +156,13 @@ func NewExportAction( //nolint:ireturn
 
 	cmd.Verbose = rc.Verbose
 	cmd.Directory = rc.PathWorkspace.String()
+
+	if preset.EncryptionKey != "" {
+		cmd.Environment = append(
+			cmd.Environment,
+			"GODOT_SCRIPT_ENCRYPTION_KEY="+preset.EncryptionKey,
+		)
+	}
 
 	cmd.Args = append(
 		cmd.Args,

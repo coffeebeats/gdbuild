@@ -45,6 +45,7 @@ func Action(rc *run.Context, xp *export.Export) (action.Action, error) { //nolin
 	}
 
 	return action.InOrder(
+		export.NewInstallEditorGodotAction(rc, xp.Version, rc.GodotPath()),
 		xp.RunBefore,
 		exportAction,
 		xp.RunAfter,

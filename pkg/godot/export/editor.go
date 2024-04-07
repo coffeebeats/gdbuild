@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
@@ -40,7 +41,19 @@ func NewInstallEditorGodotAction(
 			)
 		}
 
-		return engine.InstallEditor(ctx, ev, pathGodot.String())
+		if err := engine.InstallEditor(ctx, ev, pathGodot.String()); err != nil {
+			return err
+		}
+
+		// NOTE: Make the editor run in self-contained mode.
+		f, err := os.Create(filepath.Join(filepath.Dir(pathGodot.String()), "._sc_"))
+		if err != nil {
+			return err
+		}
+
+		defer f.Close()
+
+		return nil
 	}
 
 	return action.WithDescription[action.Function]{
@@ -68,8 +81,26 @@ func NewLoadProjectAction(
 		pathGodotEditor.String(),
 		"--editor",
 		"--headless",
-		"--quit",
+		"--quit-after",
+		"2",
 	}
 
 	return &cmd
+}
+
+/* -------------------------------------------------------------------------- */
+/*                        Function: NewRemoveAllAction                        */
+/* -------------------------------------------------------------------------- */
+
+// NewRemoveAllAction creates a new 'action.Action' which removes the specified
+// directory if preset.
+func NewRemoveAllAction(path string) action.WithDescription[action.Function] {
+	fn := func(_ context.Context) error {
+		return os.RemoveAll(path)
+	}
+
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "remove directory if preset: " + path,
+	}
 }

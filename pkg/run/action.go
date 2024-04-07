@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/log"
 
@@ -121,5 +122,29 @@ func NewCopyArtifactsAction( //nolint:ireturn
 	return action.WithDescription[action.Function]{
 		Action:      fn,
 		Description: "move generated artifacts to output directory: " + rc.PathOut.String(),
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+/*                           Function: NewWaitAction                          */
+/* -------------------------------------------------------------------------- */
+
+// NewWaitAction creates an 'action.Action' which blocks the thread for the
+// specified duration.
+func NewWaitAction(d time.Duration) action.WithDescription[action.Function] {
+	fn := func(ctx context.Context) error {
+		timer := time.NewTimer(d)
+
+		select {
+		case <-timer.C:
+			return nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
+	return action.WithDescription[action.Function]{
+		Action:      fn,
+		Description: "wait for the specified duration: " + d.String(),
 	}
 }

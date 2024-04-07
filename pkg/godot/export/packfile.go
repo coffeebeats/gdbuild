@@ -55,15 +55,14 @@ type PackFile struct {
 func (c *PackFile) Preset(rc *run.Context, xp *Export, index int) (Preset, error) {
 	var preset Preset
 
-	preset.Platform = rc.Platform
 	preset.Arch = xp.Arch
 	preset.Embed = config.Dereference(c.Embed)
-	preset.PathTemplate = xp.PathTemplate
 	preset.Features = slices.Clone(rc.Features)
-
-	name := c.Filename(rc.Platform, rc.Target, index)
-
-	preset.Name = name
+	preset.Name = c.Filename(rc.Platform, rc.Target, index)
+	preset.PathTemplate = xp.PathTemplate
+	preset.Platform = rc.Platform
+	preset.Runnable = xp.Runnable
+	preset.Server = xp.Server
 
 	if config.Dereference(c.Encrypt) {
 		preset.Encrypt = true
@@ -72,19 +71,33 @@ func (c *PackFile) Preset(rc *run.Context, xp *Export, index int) (Preset, error
 		preset.EncryptionKey = xp.EncryptionKey
 	}
 
-	if !xp.Server || !c.StripVisuals() {
-		preset.ExportMode = "resources"
-		preset.Include = strings.Join(c.Glob, ",")
-	} else {
-		preset.ExportMode = "customized"
+	ff, err := c.Files(rc.PathWorkspace)
+	if err != nil {
+		return Preset{}, err
+	}
 
-		ff, err := c.Files(rc.PathWorkspace)
-		if err != nil {
-			return Preset{}, err
-		}
+	shouldStripVisuals := c.StripVisuals()
+
+	if !xp.Server && !shouldStripVisuals {
+		preset.ExportMode = ModeResources
 
 		for _, f := range ff {
-			preset.ExportedFiles = append(preset.ExportedFiles, f.String())
+			if err := preset.AddFile(rc, f); err != nil {
+				return Preset{}, err
+			}
+		}
+	} else {
+		preset.ExportMode = ModeCustomized
+
+		for _, f := range ff {
+			visuals := FileVisualMode(FileVisualModeKeep)
+			if shouldStripVisuals {
+				visuals = FileVisualModeStrip
+			}
+
+			if err := preset.AddServerFile(rc, f, visuals); err != nil {
+				return Preset{}, err
+			}
 		}
 	}
 
@@ -199,8 +212,8 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyc
 
 		baseGlob := filepath.Base(pattern)
 
-		for _, path := range mm {
-			baseMatch := filepath.Base(path)
+		for _, m := range mm {
+			baseMatch := filepath.Base(m)
 
 			// Ignore hidden files unless explicitly searched for.
 			if !strings.HasPrefix(baseGlob, ".") &&
@@ -208,7 +221,7 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyc
 				continue
 			}
 
-			files[osutil.Path(path)] = struct{}{}
+			files[osutil.Path(m)] = struct{}{}
 		}
 	}
 

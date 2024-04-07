@@ -80,6 +80,30 @@ func (p Path) CheckIsFileOrEmpty() error {
 	return nil
 }
 
+/* ------------------------------ Method: Join ------------------------------ */
+
+// Join creates a new 'Path' with the provided elements appended.
+func (p *Path) Join(elem ...string) Path {
+	if p == nil {
+		return Path(filepath.Join(elem...))
+	}
+
+	parts := append([]string{string(*p)}, elem...)
+
+	return Path(filepath.Join(parts...))
+}
+
+/* ------------------------------- Method: Dir ------------------------------ */
+
+// Dir creates a new 'Path' pointing to the directory of this 'Path'.
+func (p *Path) Dir() Path {
+	if p == nil {
+		return Path("")
+	}
+
+	return Path(filepath.Dir(p.String()))
+}
+
 /* ------------------------------ Method: RelTo ----------------------------- */
 
 // RelTo converts the underlying path into a cleaned, absolute path. If the path
