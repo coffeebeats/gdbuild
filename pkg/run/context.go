@@ -68,7 +68,7 @@ func (c *Context) GodotPath() osutil.Path {
 		return ""
 	}
 
-	return osutil.Path(filepath.Join(pathTmp, "godot"))
+	return osutil.Path(filepath.Join(pathTmp, engine.EditorName()))
 }
 
 /* --------------------------- Method: HasTempDir --------------------------- */

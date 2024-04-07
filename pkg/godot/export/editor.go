@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
@@ -23,12 +22,10 @@ import (
 func NewInstallEditorGodotAction(
 	_ *run.Context,
 	ev engine.Version,
-	path osutil.Path,
+	pathGodot osutil.Path,
 ) action.WithDescription[action.Function] {
-	pathGodot := filepath.Join(path.String(), engine.EditorName())
-
 	fn := func(ctx context.Context) error {
-		info, err := os.Stat(pathGodot)
+		info, err := os.Stat(pathGodot.String())
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) {
 				return err
@@ -43,7 +40,7 @@ func NewInstallEditorGodotAction(
 			)
 		}
 
-		return engine.InstallEditor(ctx, ev, pathGodot)
+		return engine.InstallEditor(ctx, ev, pathGodot.String())
 	}
 
 	return action.WithDescription[action.Function]{
