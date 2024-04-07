@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.9 (2024-04-07)
+
+## What's Changed
+* chore(cmd): log cached contents by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/111
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.8...v0.3.9
+
 ## 0.3.8 (2024-04-07)
 
 ## What's Changed
