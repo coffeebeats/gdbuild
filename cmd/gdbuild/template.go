@@ -25,7 +25,7 @@ import (
 var ErrPrintHashUsage = errors.New("cannot set option with '--print-hash'")
 
 // A 'urfave/cli' command to compile a Godot export template.
-func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
+func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit,gocyclo
 	return &cli.Command{
 		Name:     "template",
 		Category: "Build",
@@ -135,6 +135,13 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit
 			}
 
 			log.Debugf("using store at path: %s", storePath)
+
+			entries, err := store.ListTemplates(storePath)
+			if err == nil {
+				for _, entry := range entries {
+					log.Debugf("found template in store: %s", entry)
+				}
+			}
 
 			// Determine output path.
 			pathOut, err := parseOutDir(c.Path("out"), dryRun)

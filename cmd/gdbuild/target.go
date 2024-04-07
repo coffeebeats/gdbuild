@@ -25,7 +25,7 @@ import (
 var ErrTargetUsageProfiles = errors.New("cannot specify more than one of '--debug', '--release_debug', and '--release'")
 
 // A 'urfave/cli' command to compile and export a Godot project target.
-func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,maintidx
+func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,gocyclo,maintidx
 	return &cli.Command{
 		Name:     "target",
 		Category: "Build",
@@ -140,6 +140,20 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,maintidx
 			}
 
 			log.Debugf("using store at path: %s", storePath)
+
+			entries, err := store.ListTemplates(storePath)
+			if err == nil {
+				for _, entry := range entries {
+					log.Debugf("found template in store: %s", entry)
+				}
+			}
+
+			entries, err = store.ListExports(storePath)
+			if err == nil {
+				for _, entry := range entries {
+					log.Debugf("found target export in store: %s", entry)
+				}
+			}
 
 			// Determine output path.
 			pathOut, err := parseOutDir(c.Path("out"), dryRun)
