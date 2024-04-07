@@ -37,6 +37,9 @@ inputs:
     default: true
 
 outputs:
+  command:
+    description: "The 'gdbuild' command to build the template."
+    value: ${{ steps.build.outputs.command }}
   hash:
     description: "The unique hash of the export template."
     value: ${{ steps.config.outputs.template-hash }}
@@ -95,9 +98,14 @@ runs:
           scons-${{ runner.os }}-${{ inputs.platform }}-${{ inputs.profile }}-
 
     - name: Execute the build command
+      id: build
       shell: bash
-      run: >
-        echo "${{ steps.config.outputs.args }}"
-        $([[ '${{ inputs.execute }}' != 'true' ]] && echo '--dry-run')
-        ${{ inputs.platform }}
-        | xargs gdbuild
+      run: |
+        CMD="$(
+          echo "${{ steps.config.outputs.args }}" \
+          $([[ '${{ inputs.execute }}' != 'true' ]] && echo '--dry-run') \
+          ${{ inputs.platform }}
+        )"
+
+        echo command="gdbuild $(echo "$CMD" | xargs)" >> "$GITHUB_OUTPUT"
+        echo "$CMD" | xargs gdbuild
