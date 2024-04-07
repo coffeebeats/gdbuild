@@ -34,6 +34,10 @@ inputs:
     description: "Whether to skip caching the target export."
     required: false
     default: false
+  skip-hash:
+    description: "Whether to skip calculating the target export unique hash."
+    required: false
+    default: false
   execute:
     description: "Whether to actually run the command."
     required: false
@@ -78,6 +82,7 @@ runs:
 
     - name: Determine unique target hash
       id: print-hash
+      if: inputs.skip-hash != 'true'
       shell: bash
       run: echo value="$(echo "${{ steps.config.outputs.args }} --print-hash  ${{ inputs.target }}" | xargs gdbuild)" >> "$GITHUB_OUTPUT"
 
