@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.13 (2024-04-07)
+
+## What's Changed
+* chore(checksum): log incremental checksums by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/125
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.12...v0.3.13
+
 ## 0.3.12 (2024-04-07)
 
 ## What's Changed
