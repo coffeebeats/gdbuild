@@ -56,7 +56,7 @@ func (c *PackFile) Preset(rc *run.Context, xp *Export, index int) (Preset, error
 	var preset Preset
 
 	preset.Platform = rc.Platform
-	preset.Arch = xp.Template.Arch
+	preset.Arch = xp.Arch
 	preset.Embed = config.Dereference(c.Embed)
 	preset.PathTemplate = xp.PathTemplate
 	preset.Features = slices.Clone(rc.Features)

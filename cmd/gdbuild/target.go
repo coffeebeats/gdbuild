@@ -196,6 +196,15 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,maintidx
 				return err
 			}
 
+			pathTemplateArchive, err := templateArchivePath(c, storePath, tl)
+			if err != nil {
+				return err
+			}
+
+			if c.IsSet("template-archive") {
+				xp.PathTemplateArchive = pathTemplateArchive
+			}
+
 			if printHash {
 				return printTargetHash(&ec, xp)
 			}
@@ -219,11 +228,6 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,maintidx
 				xp,
 				force,
 			)
-			if err != nil {
-				return err
-			}
-
-			pathTemplateArchive, err := templateArchivePath(c, storePath, tl)
 			if err != nil {
 				return err
 			}
@@ -373,6 +377,15 @@ func templateArchivePath(c *cli.Context, storePath string, tl *template.Template
 		path := osutil.Path(c.Path("template-archive"))
 
 		if err := path.CheckIsFile(); err != nil {
+			return "", err
+		}
+
+		wd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+
+		if err := path.RelTo(osutil.Path(wd)); err != nil {
 			return "", err
 		}
 

@@ -75,8 +75,13 @@ func Export( //nolint:cyclop,funlen,gocognit
 			return nil, err
 		}
 
+		tr, ok := cfg.manifest.Target[target]
+		if !ok {
+			continue
+		}
+
 		// Build 'Target' properties.
-		t, err := cfg.manifest.Target[target].Combine(&rc)
+		t, err := tr.Combine(&rc)
 		if err != nil {
 			return nil, err
 		}
@@ -96,6 +101,10 @@ func Export( //nolint:cyclop,funlen,gocognit
 		if err := t.MergeInto(mr.target); err != nil {
 			return nil, err
 		}
+	}
+
+	if mr.target == nil {
+		return nil, fmt.Errorf("%w: no target found: %s", ErrInvalidInput, target)
 	}
 
 	if err := mr.Validate(rc); err != nil {

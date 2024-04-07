@@ -30,6 +30,8 @@ var (
 // Export specifies a single, platform-agnostic exportable artifact within the
 // Godot project.
 type Export struct {
+	// Arch is the architecture of the exported artifacts.
+	Arch platform.Arch
 	// EncryptionKey is an encryption key used to encrypt game assets with.
 	EncryptionKey string
 	// Features contains the slice of Godot project feature tags to build with.
@@ -41,6 +43,10 @@ type Export struct {
 	PackFiles []PackFile
 	// PathTemplate is a path to the export template to use during exporting.
 	PathTemplate osutil.Path `hash:"ignore"`
+	// PathTemplateArchive is an optional path to a non-cached export template
+	// archive containing the export template to use. If specified, this will
+	// take priority over 'Template'.
+	PathTemplateArchive osutil.Path `hash:"ignore"`
 	// Template specifies the export template to use.
 	Template *template.Template `hash:"string"`
 	// RunBefore contains an ordered list of actions to execute prior to

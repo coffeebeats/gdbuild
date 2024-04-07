@@ -61,17 +61,19 @@ func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Versi
 	ff = append(ff, rc.Features...)
 
 	return &export.Export{
-		EncryptionKey: encryptionKey,
-		Features:      ff,
-		Options:       t.Options,
-		PackFiles:     t.PackFiles,
-		PathTemplate:  "",
-		RunBefore:     t.Hook.PreActions(rc),
-		RunAfter:      t.Hook.PostActions(rc),
-		Runnable:      config.Dereference(t.Runnable),
-		Server:        config.Dereference(t.Server),
-		Template:      tl,
-		Version:       ev,
+		Arch:                tl.Arch,
+		EncryptionKey:       encryptionKey,
+		Features:            ff,
+		Options:             t.Options,
+		PackFiles:           t.PackFiles,
+		PathTemplate:        "",
+		PathTemplateArchive: "",
+		RunBefore:           t.Hook.PreActions(rc),
+		RunAfter:            t.Hook.PostActions(rc),
+		Runnable:            config.Dereference(t.Runnable),
+		Server:              config.Dereference(t.Server),
+		Template:            tl,
+		Version:             ev,
 	}
 }
 
