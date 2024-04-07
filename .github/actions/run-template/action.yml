@@ -23,10 +23,6 @@ inputs:
   manifest-path:
     description: "A specific 'gdbuild' manifest filename (relative to 'project-dir')."
     required: false
-  scons-cache-path:
-    description: "A path to the SCons cache."
-    required: false
-    default: "$HOME/.scons"
   verbose:
     description: "Whether to run the command with increased log output."
     required: false
@@ -47,10 +43,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Export the 'SCONS_CACHE' environment variable
-      shell: bash
-      run: echo "SCONS_CACHE=${{ inputs.scons-cache-path }}" >> $GITHUB_ENV
-
     - name: Build template args
       id: config
       shell: bash
@@ -86,16 +78,6 @@ runs:
       with:
         path: ${{ env.GDBUILD_HOME }}/templates
         key: templates-${{ runner.os }}-${{ steps.print-hash.outputs.value }}
-
-    - name: Cache the 'SCons' build directory
-      if: inputs.execute != 'false' && steps.cache-templates.outputs.cache-hit != 'true'
-      id: cache-scons
-      uses: actions/cache@v4
-      with:
-        path: ${{ inputs.scons-cache-path }}
-        key: scons-${{ runner.os }}-${{ inputs.platform }}-${{ inputs.profile }}-${{ steps.config.outputs.template-hash }}
-        restore-keys: |
-          scons-${{ runner.os }}-${{ inputs.platform }}-${{ inputs.profile }}-
 
     - name: Execute the build command
       id: build
