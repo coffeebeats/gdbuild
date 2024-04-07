@@ -92,4 +92,7 @@ runs:
         CMD="${{ steps.config.outputs.args }} --out ${{ inputs.out-dir }} ${{ inputs.platform }}"
 
         echo command="gdbuild $(echo "$CMD" | xargs)" >> "$GITHUB_OUTPUT"
-        echo "$CMD" | xargs gdbuild
+
+        if [[ "${{ inputs.execute }}" == 'true' ]]; then
+          echo "$CMD" | xargs gdbuild
+        fi
