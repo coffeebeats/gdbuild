@@ -329,6 +329,8 @@ func printTemplateHash(_ *run.Context, tl *godottemplate.Template) error {
 		return err
 	}
 
+	fmt.Printf("%##v\n\n", tl) //nolint:forbidigo
+
 	fmt.Println(cs) //nolint:forbidigo
 
 	return nil
