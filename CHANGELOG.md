@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.18 (2024-04-07)
+
+## What's Changed
+* fix(export): numerous fixes to encryption, pack files, and presets by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/135
+* chore: run `go mod tidy` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/137
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.17...v0.3.18
+
 ## 0.3.17 (2024-04-07)
 
 ## What's Changed
