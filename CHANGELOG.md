@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.14 (2024-04-07)
+
+## What's Changed
+* fix(template): don't hash template file paths (just hash contents) by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/127
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.13...v0.3.14
+
 ## 0.3.13 (2024-04-07)
 
 ## What's Changed
