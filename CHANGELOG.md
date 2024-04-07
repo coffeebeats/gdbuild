@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.12 (2024-04-07)
+
+## What's Changed
+* feat(ci): mount template cache if `run-target` action isn't given a template archive by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/121
+* fix(ci): refer to internal action in externally compatible way by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/123
+* feat(cmd): log hash of encryption keys used by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/124
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.11...v0.3.12
+
 ## 0.3.11 (2024-04-07)
 
 ## What's Changed
