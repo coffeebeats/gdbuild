@@ -263,7 +263,6 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,gocyclo,maintidx
 			exportAction = action.InOrder(
 				templateAction,
 				extractTemplateAction,
-				export.NewInstallEditorGodotAction(&ec, xp.Version, ec.GodotPath()),
 				exportAction,
 			)
 
