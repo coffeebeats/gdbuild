@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/log"
 	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/coffeebeats/gdbuild/internal/osutil"
@@ -55,6 +56,11 @@ func Checksum(rc *run.Context, x *Export) (string, error) { //nolint:funlen
 		return "", err
 	}
 
+	log.Debugf(
+		"target export hash before file dependencies: %s",
+		strconv.FormatUint(cs.Sum64(), 16),
+	)
+
 	files := make([]osutil.Path, 0)
 	pathRoot := osutil.Path(filepath.Dir(rc.PathManifest.String()))
 
@@ -75,6 +81,12 @@ func Checksum(rc *run.Context, x *Export) (string, error) { //nolint:funlen
 		if err := osutil.HashFiles(cs, path.String()); err != nil {
 			return "", err
 		}
+
+		log.Debugf(
+			"target export hash after file dependency: %s: %s",
+			path.String(),
+			strconv.FormatUint(cs.Sum64(), 16),
+		)
 	}
 
 	// Include the optional 'PathTemplateArchive' in the checksum.
@@ -82,6 +94,12 @@ func Checksum(rc *run.Context, x *Export) (string, error) { //nolint:funlen
 		if err := osutil.HashFile(cs, xp.PathTemplateArchive.String()); err != nil {
 			return "", err
 		}
+
+		log.Debugf(
+			"target export hash after file dependency: %s: %s",
+			xp.PathTemplateArchive.String(),
+			strconv.FormatUint(cs.Sum64(), 16),
+		)
 	}
 
 	return strconv.FormatUint(cs.Sum64(), 16), nil

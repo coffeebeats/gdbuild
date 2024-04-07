@@ -44,6 +44,11 @@ func Checksum(t *Template) (string, error) {
 		return "", err
 	}
 
+	log.Debugf(
+		"template hash before file dependencies: %s",
+		strconv.FormatUint(cs.Sum64(), 16),
+	)
+
 	for _, p := range uniquePaths(t) {
 		root := p.String()
 
@@ -52,6 +57,12 @@ func Checksum(t *Template) (string, error) {
 		if err := osutil.HashFiles(cs, root); err != nil {
 			return "", err
 		}
+
+		log.Debugf(
+			"template hash after file dependency: %s: %s",
+			root,
+			strconv.FormatUint(cs.Sum64(), 16),
+		)
 	}
 
 	return strconv.FormatUint(cs.Sum64(), 16), nil
