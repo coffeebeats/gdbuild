@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.6 (2024-04-07)
+
+## What's Changed
+* fix(ci): only cache the `gdbuild` binary directory by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/100
+* fix(exec): quote arguments passed to shell by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/102
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.5...v0.3.6
+
 ## 0.3.5 (2024-04-07)
 
 ## What's Changed
