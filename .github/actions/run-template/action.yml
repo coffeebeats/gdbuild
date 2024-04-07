@@ -79,7 +79,7 @@ runs:
 
     - name: Cache the 'gdbuild' store's template artifact directory
       id: cache-templates
-      if: inputs.skip-cache != 'false'
+      if: inputs.skip-cache != 'true'
       uses: actions/cache@v4
       with:
         path: ${{ env.GDBUILD_HOME }}/templates
