@@ -132,6 +132,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,gocyclo,maintidx
 			dryRun := c.Bool("dry-run")
 			force := c.Bool("force")
 			printHash := c.Bool("print-hash")
+			hasTemplateArchive := c.IsSet("template-archive")
 
 			// Determine path to store.
 			storePath, err := touchStore()
@@ -215,7 +216,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,gocyclo,maintidx
 				return err
 			}
 
-			if c.IsSet("template-archive") {
+			if hasTemplateArchive {
 				xp.PathTemplateArchive = pathTemplateArchive
 			}
 
@@ -223,15 +224,21 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,gocyclo,maintidx
 				return printTargetHash(&ec, xp)
 			}
 
-			templateAction, err := exportTemplate(
-				c.Context,
-				&rc,
-				storePath,
-				tl,
-				/* force= */ false,
-			)
-			if err != nil {
-				return err
+			templateAction := action.Action(action.NoOp{})
+
+			if !hasTemplateArchive {
+				action, err := exportTemplate(
+					c.Context,
+					&rc,
+					storePath,
+					tl,
+					/* force= */ false,
+				)
+				if err != nil {
+					return err
+				}
+
+				templateAction = action
 			}
 
 			exportAction, err := exportProject(
