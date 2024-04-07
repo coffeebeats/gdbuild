@@ -80,7 +80,14 @@ runs:
       id: print-hash
       if: inputs.skip-hash != 'true'
       shell: bash
-      run: echo value="$(echo "${{ steps.config.outputs.args }} --print-hash ${{ inputs.platform }}" | xargs gdbuild)" >> "$GITHUB_OUTPUT"
+      run: |
+        value="$(echo "${{ steps.config.outputs.args }} --print-hash ${{ inputs.platform }}" | xargs gdbuild)"
+        if [[ $? -ne 0 ]]; then
+          echo "Failed to compute template hash."
+          exit 1
+        fi
+
+        echo value="$value" >> "$GITHUB_OUTPUT"
 
     - name: Cache the 'gdbuild' store's template artifact directory
       id: cache-templates
