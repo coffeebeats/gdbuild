@@ -48,7 +48,6 @@ func TestTargetCombine(t *testing.T) {
 			doc: `
 			[target.target]
 			default_features = ["feature1", "feature2"]
-			encryption_key = "abcdefg"
 			hook = { run_before = ["echo before"] }
 			options = {option-name = "option-value"}
 			pack_files = [{glob = ["*"], encrypt = true}]
@@ -59,7 +58,6 @@ func TestTargetCombine(t *testing.T) {
 			want: &windows.Target{
 				Target: &common.Target{
 					DefaultFeatures: []string{"feature1", "feature2"},
-					EncryptionKey:   "abcdefg",
 					Hook:            run.Hook{Pre: []action.Command{"echo before"}},
 					Options:         map[string]any{"option-name": "option-value"},
 					PackFiles: []export.PackFile{
