@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.17 (2024-04-07)
+
+## What's Changed
+* refactor(config): only allow setting encryption key via environment variable by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/133
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.16...v0.3.17
+
 ## 0.3.16 (2024-04-07)
 
 ## What's Changed
