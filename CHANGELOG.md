@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.5 (2024-04-07)
+
+## What's Changed
+* fix(cmd): correctly hash template archives passed via `--template-archive` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/98
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.4...v0.3.5
+
 ## 0.3.4 (2024-04-06)
 
 ## What's Changed
