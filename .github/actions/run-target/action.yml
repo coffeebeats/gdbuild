@@ -1,7 +1,10 @@
-name: "🤖 gdbuild: Run 'template' command"
-description: "Runs the 'gdbuild' template command."
+name: "🤖 gdbuild: Run 'target' command"
+description: "Runs the 'gdbuild' target command."
 
 inputs:
+  target:
+    description: "The name of the target to export."
+    required: true
   platform:
     description: "The platform to build the export template for."
     required: true
@@ -12,12 +15,8 @@ inputs:
     description: "A space-, comma- or new line-separated list of features to enable."
     required: false
     default: ""
-  template-archive-path:
-    description: "A path to a specific template archive containing an export template."
-    required: false
-    default: ""
   out-dir:
-    description: "The directory in which to place the export templates."
+    description: "The directory in which to place the exported artifacts."
     required: false
     default: "dist"
   project-dir:
@@ -32,11 +31,11 @@ inputs:
     required: false
     default: false
   skip-cache:
-    description: "Whether to skip caching the export template."
+    description: "Whether to skip caching the target export."
     required: false
     default: false
   skip-hash:
-    description: "Whether to skip calculating the export template unique hash."
+    description: "Whether to skip calculating the target export unique hash."
     required: false
     default: false
   execute:
@@ -46,19 +45,19 @@ inputs:
 
 outputs:
   cache-hit:
-    description: "Whether a cached export template was found."
-    value: ${{ steps.cache-templates.outputs.cache-hit }}
+    description: "Whether a cached target was found."
+    value: ${{ steps.cache-exports.outputs.cache-hit }}
   command:
-    description: "The 'gdbuild' command to build the template."
+    description: "The 'gdbuild' command to export the target."
     value: ${{ steps.run.outputs.command }}
   hash:
-    description: "The unique hash of the export template."
-    value: ${{ steps.config.outputs.template-hash }}
+    description: "The unique hash of the target export."
+    value: ${{ steps.config.outputs.target-hash }}
 
 runs:
   using: "composite"
   steps:
-    - name: Build template args
+    - name: Build target args
       id: config
       shell: bash
       run: |
@@ -67,39 +66,39 @@ runs:
           FEATURES+=(--feature $f)
         done
 
-        TEMPLATE_ARGS=$(
-          echo template \
+        TARGET_ARGS=$(
+          echo target \
             ${FEATURES[@]} \
+            --platform ${{ inputs.platform }} \
             --project ${{ inputs.project-dir }} \
             $([[ '${{ inputs.verbose }}' != 'false' ]] && echo '--verbose') \
             $([[ '${{ inputs.profile }}' == 'debug' ]] && echo '--debug') \
             $([[ '${{ inputs.profile }}' == 'release' ]] && echo '--release') \
             $([[ '${{ inputs.profile }}' == 'release_debug' ]] && echo '--release_debug') \
-            $([[ '${{ inputs.manifest-path }}' != '' ]] && echo --config '${{ inputs.project-dir }}/${{ inputs.manifest-path }}') \
-            $([[ '${{ inputs.template-archive-path }}' != '' ]] && echo --template-archive ${{ inputs.template-archive-path }}) \
+            $([[ '${{ inputs.manifest-path }}' != '' ]] && echo --config '${{ inputs.project-dir }}/${{ inputs.manifest-path }}')
         )
 
-        echo args="$TEMPLATE_ARGS" >> "$GITHUB_OUTPUT"
+        echo args="$TARGET_ARGS" >> "$GITHUB_OUTPUT"
 
-    - name: Determine unique template hash
+    - name: Determine unique target hash
       id: print-hash
       if: inputs.skip-hash != 'true'
       shell: bash
-      run: echo value="$(echo "${{ steps.config.outputs.args }} --print-hash ${{ inputs.platform }}" | xargs gdbuild)" >> "$GITHUB_OUTPUT"
+      run: echo value="$(echo "${{ steps.config.outputs.args }} --print-hash  ${{ inputs.target }}" | xargs gdbuild)" >> "$GITHUB_OUTPUT"
 
-    - name: Cache the 'gdbuild' store's template artifact directory
-      id: cache-templates
+    - name: Cache the 'gdbuild' store's export artifact directory
+      id: cache-exports
       if: inputs.skip-cache != 'true'
       uses: actions/cache@v4
       with:
-        path: ${{ env.GDBUILD_HOME }}/templates
-        key: templates-${{ runner.os }}-${{ steps.print-hash.outputs.value }}
+        path: ${{ env.GDBUILD_HOME }}/exports
+        key: exports-${{ runner.os }}-${{ steps.print-hash.outputs.value }}
 
-    - name: Execute the build command
+    - name: Execute the export command
       id: run
       shell: bash
       run: |
-        CMD="${{ steps.config.outputs.args }} --out ${{ inputs.out-dir }} ${{ inputs.platform }}"
+        CMD="${{ steps.config.outputs.args }} --out ${{ inputs.out-dir }} ${{ inputs.target }}"
 
         echo command="gdbuild $(echo "$CMD" | xargs)" >> "$GITHUB_OUTPUT"
 
