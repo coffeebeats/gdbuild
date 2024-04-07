@@ -24,6 +24,8 @@ import (
 // NOTE: This implementation relies on producers of 'Template' to correctly
 // register all file system dependencies within 'Paths'.
 func Checksum(t *Template) (string, error) {
+	log.Debugf("template: %##v", t)
+
 	hash, err := hashstructure.Hash(
 		t,
 		hashstructure.FormatV2,
