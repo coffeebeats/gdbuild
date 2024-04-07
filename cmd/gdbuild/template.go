@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha512"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -267,7 +269,7 @@ func buildTemplateContext(
 
 /* ---------------------- Function: buildExportTemplate --------------------- */
 
-func exportTemplate( //nolint:ireturn
+func exportTemplate( //nolint:funlen,ireturn
 	_ context.Context,
 	rc *run.Context,
 	storePath string,
@@ -280,6 +282,28 @@ func exportTemplate( //nolint:ireturn
 	}
 
 	log.Infof("computed checksum for export template: %s", cs)
+
+	encryptionKey := ""
+	for _, build := range tl.Builds {
+		if encryptionKey != "" && build.EncryptionKey == "" {
+			return nil, fmt.Errorf("%w: builds have incompatible encryption keys", ErrInvalidInput)
+		}
+
+		if build.EncryptionKey == "" {
+			continue
+		}
+
+		encryptionKey = build.EncryptionKey
+	}
+
+	if encryptionKey != "" {
+		sum := sha512.Sum512_224([]byte(encryptionKey))
+
+		log.Infof(
+			"compiling export template with encryption: %s (SHA-512/224 sum)",
+			hex.EncodeToString(sum[:]),
+		)
+	}
 
 	hasTemplate, err := store.HasTemplate(storePath, cs)
 	if err != nil {
