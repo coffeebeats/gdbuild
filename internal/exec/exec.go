@@ -52,7 +52,7 @@ func (p Process) args() ([]string, error) {
 		return nil, fmt.Errorf("%w: unsupported shell: %s", ErrUnrecognizedShell, p.Shell)
 	}
 
-	return []string{shell.String(), flag, strings.Join(p.Args, " ")}, nil
+	return []string{shell.String(), flag, fmt.Sprintf(`"%s"`, strings.Join(p.Args, " "))}, nil
 }
 
 /* ------------------------------ Impl: Runner ------------------------------ */
