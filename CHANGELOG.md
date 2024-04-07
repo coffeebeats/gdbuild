@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.8 (2024-04-07)
+
+## What's Changed
+* feat(ci): define a `run-target` action to export targets by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/106
+* fix(ci): define `template-archive-path` on correct action by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/108
+* fix(ci): exit on print hash error by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/109
+* chore(cmd): log the newly computed hash by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/110
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.7...v0.3.8
+
 ## 0.3.7 (2024-04-07)
 
 ## What's Changed
