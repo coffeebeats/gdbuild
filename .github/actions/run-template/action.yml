@@ -12,10 +12,6 @@ inputs:
     description: "A space-, comma- or new line-separated list of features to enable."
     required: false
     default: ""
-  template-archive-path:
-    description: "A path to a specific template archive containing an export template."
-    required: false
-    default: ""
   out-dir:
     description: "The directory in which to place the export templates."
     required: false
@@ -75,8 +71,7 @@ runs:
             $([[ '${{ inputs.profile }}' == 'debug' ]] && echo '--debug') \
             $([[ '${{ inputs.profile }}' == 'release' ]] && echo '--release') \
             $([[ '${{ inputs.profile }}' == 'release_debug' ]] && echo '--release_debug') \
-            $([[ '${{ inputs.manifest-path }}' != '' ]] && echo --config '${{ inputs.project-dir }}/${{ inputs.manifest-path }}') \
-            $([[ '${{ inputs.template-archive-path }}' != '' ]] && echo --template-archive ${{ inputs.template-archive-path }}) \
+            $([[ '${{ inputs.manifest-path }}' != '' ]] && echo --config '${{ inputs.project-dir }}/${{ inputs.manifest-path }}')
         )
 
         echo args="$TEMPLATE_ARGS" >> "$GITHUB_OUTPUT"
