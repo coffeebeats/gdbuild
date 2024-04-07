@@ -56,7 +56,7 @@ outputs:
     value: ${{ steps.run.outputs.command }}
   hash:
     description: "The unique hash of the target export."
-    value: ${{ steps.config.outputs.target-hash }}
+    value: ${{ steps.print-hash.outputs.value }}
 
 runs:
   using: "composite"
@@ -90,13 +90,13 @@ runs:
       if: inputs.skip-hash != 'true'
       shell: bash
       run: |
-        value="$(echo "${{ steps.config.outputs.args }} --print-hash  ${{ inputs.target }}" | xargs gdbuild)"
-        if [[ $? -ne 0 ]]; then
+        HASH_VALUE="$(echo "${{ steps.config.outputs.args }} --print-hash  ${{ inputs.target }}" | xargs gdbuild)"
+        if [[ $? -ne 0 || -z "$HASH_VALUE" ]]; then
           echo "Failed to compute target hash."
           exit 1
         fi
 
-        echo value="$value" >> "$GITHUB_OUTPUT"
+        echo value="$HASH_VALUE" >> "$GITHUB_OUTPUT"
 
     - name: Cache the 'gdbuild' store's export artifact directory
       id: cache-exports
