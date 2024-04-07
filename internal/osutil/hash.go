@@ -43,7 +43,7 @@ func HashFiles(h hash.Hash, root string) error {
 		path = filepath.Join(root, path)
 
 		// Hash the file.
-		return HashFile(h, path)
+		return HashFileWithName(h, root, path)
 	}); err != nil {
 		return err
 	}
@@ -51,16 +51,11 @@ func HashFiles(h hash.Hash, root string) error {
 	return nil
 }
 
-/* --------------------------- Function: hashFile --------------------------- */
+/* --------------------------- Function: HashFile --------------------------- */
 
 func HashFile(h hash.Hash, path string) error {
 	if !filepath.IsAbs(path) {
 		return fmt.Errorf("%w: expected an absolute path: %s", ErrInvalidInput, path)
-	}
-
-	// Hash the filename.
-	if _, err := io.Copy(h, strings.NewReader(path)); err != nil {
-		return err
 	}
 
 	// Hash the file contents.
@@ -76,4 +71,15 @@ func HashFile(h hash.Hash, path string) error {
 	}
 
 	return nil
+}
+
+/* ----------------------- Function: HashFileWithName ----------------------- */
+
+func HashFileWithName(h hash.Hash, root, path string) error {
+	// Hash the filename.
+	if _, err := io.Copy(h, strings.NewReader(path)); err != nil {
+		return err
+	}
+
+	return HashFile(h, filepath.Join(root, path))
 }
