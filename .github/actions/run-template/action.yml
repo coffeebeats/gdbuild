@@ -90,11 +90,7 @@ runs:
       id: build
       shell: bash
       run: |
-        CMD="$(
-          echo "${{ steps.config.outputs.args }}" \
-          $([[ '${{ inputs.execute }}' != 'true' ]] && echo '--dry-run') \
-          ${{ inputs.platform }}
-        )"
+        CMD="${{ steps.config.outputs.args }} ${{ inputs.platform }}"
 
         echo command="gdbuild $(echo "$CMD" | xargs)" >> "$GITHUB_OUTPUT"
         echo "$CMD" | xargs gdbuild
