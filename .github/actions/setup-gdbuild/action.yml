@@ -1,4 +1,4 @@
-name: "🤖 Set up: 'gdbuild' executable"
+name: "🤖 gdbuild: Install executable"
 description: "Install the specified version of 'gdbuild'."
 
 inputs:

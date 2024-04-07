@@ -1,0 +1,103 @@
+name: "🤖 gdbuild: Run 'template' command"
+description: "Runs the 'gdbuild' template command."
+
+inputs:
+  platform:
+    description: "The platform to build the export template for."
+    required: true
+  profile:
+    description: "The template profile to build."
+    required: false
+  features:
+    description: "A space-, comma- or new line-separated list of features to enable."
+    required: false
+    default: ""
+  out-dir:
+    description: "The directory in which to place the export templates."
+    required: false
+    default: "dist"
+  project-dir:
+    description: "The path to the game project directory."
+    required: false
+    default: "."
+  manifest-path:
+    description: "A specific 'gdbuild' manifest filename (relative to 'project-dir')."
+    required: false
+  scons-cache-path:
+    description: "A path to the SCons cache."
+    required: false
+    default: "$HOME/.scons"
+  verbose:
+    description: "Whether to run the command with increased log output."
+    required: false
+    default: false
+  execute:
+    description: "Whether to actually run the command."
+    required: false
+    default: true
+
+outputs:
+  hash:
+    description: "The unique hash of the export template."
+    value: ${{ steps.config.outputs.template-hash }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Export the 'SCONS_CACHE' environment variable
+      shell: bash
+      run: echo "SCONS_CACHE=${{ inputs.scons-cache-path }}" >> $GITHUB_ENV
+
+    - name: Build template args
+      id: config
+      shell: bash
+      run: |
+        FEATURES=()
+        for f in $(printf "${{ inputs.features }}" | tr -s ', ' \\n); do
+          FEATURES+=(--feature $f)
+        done
+
+        TEMPLATE_ARGS=$(
+          echo template \
+            ${FEATURES[@]} \
+            --project ${{ inputs.project-dir }} \
+            --out ${{ inputs.out-dir }} \
+            $([[ '${{ inputs.verbose }}' != 'false' ]] && echo '--verbose') \
+            $([[ '${{ inputs.profile }}' == 'debug' ]] && echo '--debug') \
+            $([[ '${{ inputs.profile }}' == 'release' ]] && echo '--release') \
+            $([[ '${{ inputs.profile }}' == 'release_debug' ]] && echo '--release_debug') \
+            $([[ '${{ inputs.manifest-path }}' != '' ]] && echo --config '${{ inputs.project-dir }}/${{ inputs.manifest-path }}')
+        )
+
+        echo args="$TEMPLATE_ARGS" >> "$GITHUB_OUTPUT"
+
+    - name: Determine unique template hash
+      id: print-hash
+      shell: bash
+      run: echo value="$(echo "${{ steps.config.outputs.args }}" --print-hash ${{ inputs.platform }} | xargs gdbuild)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache the 'gdbuild' template cache directory
+      id: cache-templates
+      if: inputs.execute != 'false'
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.GDBUILD_HOME }}/templates
+        key: templates-${{ runner.os }}-${{ steps.print-hash.outputs.value }}
+
+    - name: Cache the 'SCons' build directory
+      if: inputs.execute != 'false' && steps.cache-templates.outputs.cache-hit != 'true'
+      id: cache-scons
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.scons-cache-path }}
+        key: scons-${{ runner.os }}-${{ inputs.platform }}-${{ inputs.profile }}-${{ steps.config.outputs.template-hash }}
+        restore-keys: |
+          scons-${{ runner.os }}-${{ inputs.platform }}-${{ inputs.profile }}-
+
+    - name: Execute the build command
+      shell: bash
+      run: >
+        echo "${{ steps.config.outputs.args }}"
+        $([[ '${{ inputs.execute }}' != 'true' ]] && echo '--dry-run')
+        ${{ inputs.platform }}
+        | xargs gdbuild
