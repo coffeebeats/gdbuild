@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha512"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -330,7 +332,7 @@ func buildExportContext(rc run.Context, targetName, pathProject, pathOut string)
 
 /* ------------------------- Function: exportProject ------------------------ */
 
-func exportProject( //nolint:ireturn
+func exportProject( //nolint:funlen,ireturn
 	_ context.Context,
 	rc *run.Context,
 	storePath string,
@@ -344,6 +346,15 @@ func exportProject( //nolint:ireturn
 	}
 
 	log.Infof("computed checksum for target export: %s", cs)
+
+	if xp.EncryptionKey != "" {
+		sum := sha512.Sum512_224([]byte(xp.EncryptionKey))
+
+		log.Infof(
+			"exporting target with encryption: %s (SHA-512/224 sum)",
+			hex.EncodeToString(sum[:]),
+		)
+	}
 
 	pathTmp, err := rc.TempDir()
 	if err != nil {
