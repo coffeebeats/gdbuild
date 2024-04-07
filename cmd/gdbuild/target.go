@@ -322,6 +322,8 @@ func exportProject( //nolint:ireturn
 		return nil, err
 	}
 
+	log.Infof("computed checksum for target export: %s", cs)
+
 	pathTmp, err := rc.TempDir()
 	if err != nil {
 		return nil, err
