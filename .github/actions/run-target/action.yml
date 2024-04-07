@@ -110,7 +110,7 @@ runs:
     # cache using the 'run-template' action.
     - name: Determine template hash
       if: inputs.template-archive-path == ''
-      uses: "./.github/actions/run-template"
+      uses: coffeebeats/gdbuild/.github/actions/run-template@main
       with:
         platform: ${{ inputs.platform }}
         profile: ${{ inputs.profile }}
