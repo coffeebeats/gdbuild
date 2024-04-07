@@ -76,7 +76,7 @@ runs:
     - name: Determine unique template hash
       id: print-hash
       shell: bash
-      run: echo value="$(echo "${{ steps.config.outputs.args }}" --print-hash ${{ inputs.platform }} | xargs gdbuild)" >> "$GITHUB_OUTPUT"
+      run: echo value="$(echo "${{ steps.config.outputs.args }} --print-hash ${{ inputs.platform }}" | xargs gdbuild)" >> "$GITHUB_OUTPUT"
 
     - name: Cache the 'gdbuild' template cache directory
       id: cache-templates
