@@ -30,7 +30,7 @@ runs:
       id: cache-gdbuild
       uses: actions/cache@v4
       with:
-        path: ${{ env.GDBUILD_HOME }}
+        path: ${{ env.GDBUILD_HOME }}/bin
         key: gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ env.GDBUILD_HOME }}-${{ hashFiles(format('{0}/**/*.toml', inputs.project-dir)) }}
         restore-keys: |
           gdbuild-${{ runner.os }}-${{ inputs.version }}-${{ env.GDBUILD_HOME }}-
