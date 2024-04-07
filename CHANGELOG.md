@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.7 (2024-04-07)
+
+## What's Changed
+* Revert "fix(exec): quote arguments passed to shell (#102)" by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/103
+* feat(ci): define an action to run the `template` command by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/104
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.6...v0.3.7
+
 ## 0.3.6 (2024-04-07)
 
 ## What's Changed
