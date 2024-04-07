@@ -31,8 +31,6 @@ type Target struct {
 	DefaultFeatures []string `toml:"default_features"`
 	// Encrypt sets whether the exported artifacts will be encrypted or not.
 	Encrypt *bool `toml:"encrypt"`
-	// EncryptionKey is the encryption key to encrypt game assets with.
-	EncryptionKey string `toml:"encryption_key"`
 	// Hook defines commands to be run before or after the target artifact is
 	// generated.
 	Hook run.Hook `toml:"hook"`
@@ -54,7 +52,7 @@ type Target struct {
 func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Version) *export.Export {
 	// Set the encryption key environment variable; see
 	// https://docs.godotengine.org/en/stable/contributing/development/compiling/compiling_with_script_encryption_key.html.
-	encryptionKey, _ := resolveEncryptionKey(t.EncryptionKey)
+	encryptionKey := template.EncryptionKeyFromEnv()
 
 	ff := make([]string, 0, len(t.DefaultFeatures)+len(rc.Features))
 	ff = append(ff, t.DefaultFeatures...)
@@ -96,10 +94,8 @@ func (t *Target) Configure(rc *run.Context) error {
 		pf.Encrypt = &encrypt
 	}
 
-	if t.EncryptionKey != "" && !isEncrypted {
+	if template.EncryptionKeyFromEnv() != "" && !isEncrypted {
 		log.Warn("ignoring encryption key because encryption is disabled.")
-
-		t.EncryptionKey = ""
 	}
 
 	if isEncrypted && !hasEncrypt {
@@ -107,7 +103,6 @@ func (t *Target) Configure(rc *run.Context) error {
 
 		disable := false
 		t.Encrypt = &disable
-		t.EncryptionKey = ""
 	}
 
 	return nil
@@ -117,11 +112,6 @@ func (t *Target) Configure(rc *run.Context) error {
 
 func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 	if err := t.Hook.Validate(rc); err != nil {
-		return err
-	}
-
-	encryptionKey, err := resolveEncryptionKey(t.EncryptionKey)
-	if err != nil {
 		return err
 	}
 
@@ -201,7 +191,7 @@ func (t *Target) Validate(rc *run.Context) error { //nolint:cyclop,funlen
 		)
 	}
 
-	if config.Dereference(t.Encrypt) && encryptionKey == "" {
+	if config.Dereference(t.Encrypt) && template.EncryptionKeyFromEnv() == "" {
 		return fmt.Errorf(
 			"%w: encryption is enabled but no encryption key is set",
 			ErrInvalidInput,

@@ -25,8 +25,6 @@ type Template struct {
 	CustomModules []osutil.Path `toml:"custom_modules"`
 	// DoublePrecision enables double floating-point precision.
 	DoublePrecision *bool `toml:"double_precision"`
-	// EncryptionKey is the encryption key to embed in the export template.
-	EncryptionKey string `toml:"encryption_key"`
 	// Env is a map of environment variables to set during the build step.
 	Env map[string]string `toml:"env"`
 	// Hook defines commands to be run before or after a build step.
@@ -58,8 +56,6 @@ func (t Template) Collect(src engine.Source, rc *run.Context) *template.Template
 		s.CacheSizeLimit = csl
 	}
 
-	encryptionKey, _ := resolveEncryptionKey(t.EncryptionKey)
-
 	return &template.Template{
 		Arch: t.Arch,
 		Builds: []template.Build{
@@ -68,7 +64,7 @@ func (t Template) Collect(src engine.Source, rc *run.Context) *template.Template
 				CustomModules:   t.CustomModules,
 				CustomPy:        t.PathCustomPy,
 				DoublePrecision: config.Dereference(t.DoublePrecision),
-				EncryptionKey:   encryptionKey,
+				EncryptionKey:   template.EncryptionKeyFromEnv(),
 				Env:             t.Env,
 				Source:          src,
 				Optimize:        t.Optimize,
@@ -113,10 +109,6 @@ func (t *Template) Validate(rc *run.Context) error {
 		if err := m.CheckIsDirOrEmpty(); err != nil {
 			return err
 		}
-	}
-
-	if _, err := resolveEncryptionKey(t.EncryptionKey); err != nil {
-		return err
 	}
 
 	if err := t.PathCustomPy.CheckIsFileOrEmpty(); err != nil {
