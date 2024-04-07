@@ -52,7 +52,7 @@ func main() { //nolint:funlen
 
 	app := &cli.App{
 		Name:    "gdbuild",
-		Version: "v0.3.11", // x-release-please-version
+		Version: "v0.3.12", // x-release-please-version
 
 		Suggest:                true,
 		UseShortOptionHandling: true,
