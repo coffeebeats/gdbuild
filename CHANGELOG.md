@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.16 (2024-04-07)
+
+## What's Changed
+* chore(cmd): remove logging primarily included for testing by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/131
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.15...v0.3.16
+
 ## 0.3.15 (2024-04-07)
 
 ## What's Changed
