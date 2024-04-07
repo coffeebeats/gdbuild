@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.10 (2024-04-07)
+
+## What's Changed
+* fix(ci): update step output for hashes by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/113
+* chore(cmd): log template for temporary debugging by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/115
+* fix(ci): correctly check for empty hashes by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/116
+* fix(osutil): only hash portion of file name relative to root by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/117
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.9...v0.3.10
+
 ## 0.3.9 (2024-04-07)
 
 ## What's Changed

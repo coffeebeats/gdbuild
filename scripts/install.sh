@@ -110,7 +110,7 @@ parse_params "$@"
 
 # ------------------------------ Define: Version ----------------------------- #
 
-GDBUILD_VERSION="${GDBUILD_VERSION:-0.3.9}" # x-release-please-version
+GDBUILD_VERSION="${GDBUILD_VERSION:-0.3.10}" # x-release-please-version
 GDBUILD_VERSION="v${GDBUILD_VERSION#v}"
 
 # ----------------------------- Define: Platform ----------------------------- #
