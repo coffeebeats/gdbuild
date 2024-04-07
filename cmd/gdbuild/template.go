@@ -285,7 +285,7 @@ func exportTemplate( //nolint:funlen,ireturn
 
 	encryptionKey := ""
 	for _, build := range tl.Builds {
-		if encryptionKey != "" && build.EncryptionKey == "" {
+		if encryptionKey != "" && build.EncryptionKey != encryptionKey {
 			return nil, fmt.Errorf("%w: builds have incompatible encryption keys", ErrInvalidInput)
 		}
 
