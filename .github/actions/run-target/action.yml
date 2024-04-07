@@ -91,7 +91,7 @@ runs:
       shell: bash
       run: |
         HASH_VALUE="$(echo "${{ steps.config.outputs.args }} --print-hash  ${{ inputs.target }}" | xargs gdbuild)"
-        if [[ $? -ne 0 || -z "$HASH_VALUE" ]]; then
+        if [[ $? -ne 0 ]] || [[ -z "$HASH_VALUE" ]]; then
           echo "Failed to compute target hash."
           exit 1
         fi

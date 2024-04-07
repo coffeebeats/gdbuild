@@ -82,7 +82,7 @@ runs:
       shell: bash
       run: |
         HASH_VALUE="$(echo "${{ steps.config.outputs.args }} --print-hash ${{ inputs.platform }}" | xargs gdbuild)"
-        if [[ $? -ne 0 || -z "$HASH_VALUE" ]]; then
+        if [[ $? -ne 0 ]] || [[ -z "$HASH_VALUE" ]]; then
           echo "Failed to compute template hash."
           exit 1
         fi
