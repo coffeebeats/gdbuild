@@ -103,6 +103,62 @@ func HasTemplate(storePath string, checksum string) (bool, error) {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                            Function: ListExports                           */
+/* -------------------------------------------------------------------------- */
+
+// ListExports lists all exported targets cached in the store.
+func ListExports(storePath string) ([]osutil.Path, error) {
+	if storePath == "" {
+		return nil, ErrMissingStore
+	}
+
+	entries, err := os.ReadDir(filepath.Join(storePath, storeDirExport))
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]osutil.Path, 0, len(entries))
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		out = append(out, osutil.Path(filepath.Join(storePath, entry.Name())))
+	}
+
+	return out, nil
+}
+
+/* -------------------------------------------------------------------------- */
+/*                           Function: ListTemplates                          */
+/* -------------------------------------------------------------------------- */
+
+// ListTemplates lists all templates cached in the store.
+func ListTemplates(storePath string) ([]osutil.Path, error) {
+	if storePath == "" {
+		return nil, ErrMissingStore
+	}
+
+	entries, err := os.ReadDir(filepath.Join(storePath, storeDirTemplate))
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]osutil.Path, 0, len(entries))
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		out = append(out, osutil.Path(filepath.Join(storePath, entry.Name())))
+	}
+
+	return out, nil
+}
+
+/* -------------------------------------------------------------------------- */
 /*                              Function: Remove                              */
 /* -------------------------------------------------------------------------- */
 
