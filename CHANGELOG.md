@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.15 (2024-04-07)
+
+## What's Changed
+* chore(template): log structure before hashing by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/129
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.14...v0.3.15
+
 ## 0.3.14 (2024-04-07)
 
 ## What's Changed
