@@ -272,6 +272,8 @@ func exportTemplate( //nolint:ireturn
 		return nil, err
 	}
 
+	log.Infof("computed checksum for export template: %s", cs)
+
 	hasTemplate, err := store.HasTemplate(storePath, cs)
 	if err != nil {
 		return nil, err
