@@ -56,11 +56,6 @@ func Checksum(rc *run.Context, x *Export) (string, error) { //nolint:funlen
 		return "", err
 	}
 
-	log.Debugf(
-		"target export hash before file dependencies: %s",
-		strconv.FormatUint(cs.Sum64(), 16),
-	)
-
 	files := make([]osutil.Path, 0)
 	pathRoot := osutil.Path(filepath.Dir(rc.PathManifest.String()))
 
@@ -78,28 +73,24 @@ func Checksum(rc *run.Context, x *Export) (string, error) { //nolint:funlen
 	files = slices.Compact(files)
 
 	for _, path := range files {
-		if err := osutil.HashFiles(cs, path.String()); err != nil {
+		root := path.String()
+
+		log.Debugf("hashing files rooted at path: %s", root)
+
+		if err := osutil.HashFiles(cs, root); err != nil {
 			return "", err
 		}
-
-		log.Debugf(
-			"target export hash after file dependency: %s: %s",
-			path.String(),
-			strconv.FormatUint(cs.Sum64(), 16),
-		)
 	}
 
 	// Include the optional 'PathTemplateArchive' in the checksum.
 	if xp.PathTemplateArchive != "" {
-		if err := osutil.HashFile(cs, xp.PathTemplateArchive.String()); err != nil {
+		root := xp.PathTemplateArchive.String()
+
+		log.Debugf("hashing files rooted at path: %s", root)
+
+		if err := osutil.HashFile(cs, root); err != nil {
 			return "", err
 		}
-
-		log.Debugf(
-			"target export hash after file dependency: %s: %s",
-			xp.PathTemplateArchive.String(),
-			strconv.FormatUint(cs.Sum64(), 16),
-		)
 	}
 
 	return strconv.FormatUint(cs.Sum64(), 16), nil
