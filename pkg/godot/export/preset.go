@@ -2,6 +2,7 @@ package export
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"maps"
@@ -11,6 +12,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/osutil"
@@ -23,23 +26,46 @@ import (
 const resourcePathPrefix = "res://"
 
 /* -------------------------------------------------------------------------- */
+/*                                 Enum: Mode                                 */
+/* -------------------------------------------------------------------------- */
+
+type Mode string
+
+const (
+	ModeUnknown    = ""
+	ModeResources  = "resources"
+	ModeCustomized = "customized"
+)
+
+/* -------------------------- Enum: FileVisualMode -------------------------- */
+
+type FileVisualMode string
+
+const (
+	FileVisualModeUnknown = ""
+	FileVisualModeKeep    = "keep"
+	FileVisualModeRemove  = "remove"
+	FileVisualModeStrip   = "strip"
+)
+
+/* -------------------------------------------------------------------------- */
 /*                               Struct: Preset                               */
 /* -------------------------------------------------------------------------- */
 
 // Preset defines the parameters used in a Godot export preset.
 type Preset struct {
 	Arch            platform.Arch     `ini:"-"`
-	CustomizedFiles map[string]string `ini:"customized_files,omitempty"`
+	CustomizedFiles map[string]string `ini:"-"`
 	Embed           bool              `ini:"-"`
 	Encrypt         bool              `ini:"encrypt_pck"`
 	EncryptIndex    bool              `ini:"encrypt_directory"`
 	Encrypted       []string          `ini:"encryption_include_filters"`
-	EncryptionKey   string            `ini:"script_encryption_key,omitempty"`
+	EncryptionKey   string            `ini:"-"`
 	Exclude         string            `ini:"exclude_filter"`
 	ExportedFiles   []string          `ini:"export_files"`
 	// ExportMode sets the type of export to use. Should be 'resources' for a
 	// standard pack file and 'customized' for dedicated server pack files.
-	ExportMode   string      `ini:"export_filter"`
+	ExportMode   Mode        `ini:"export_filter"`
 	Features     []string    `ini:"custom_features"`
 	Include      string      `ini:"include_filter"`
 	Name         string      `ini:"name"`
@@ -66,10 +92,46 @@ func (p *Preset) AddFile(rc *run.Context, path osutil.Path) error {
 	pathString = strings.TrimPrefix(filepath.Clean("./"+pathString), "./")
 	pathString = resourcePathPrefix + strings.TrimPrefix(pathString, resourcePathPrefix)
 
+	log.Debugf("adding file to preset: %s", pathString)
+
 	p.ExportedFiles = append(p.ExportedFiles, pathString)
 
 	slices.Sort(p.ExportedFiles)
 	p.ExportedFiles = slices.Compact(p.ExportedFiles)
+
+	return nil
+}
+
+/* ----------------------------- Method: AddFile ---------------------------- */
+
+func (p *Preset) AddServerFile(rc *run.Context, path osutil.Path, visuals FileVisualMode) error {
+	if visuals == FileVisualModeUnknown {
+		return fmt.Errorf("%w: visuals", ErrMissingInput)
+	}
+
+	if err := path.CheckIsFile(); err != nil {
+		return err
+	}
+
+	if err := path.RelTo(rc.PathWorkspace); err != nil {
+		return err
+	}
+
+	pathString := strings.TrimPrefix(path.String(), rc.PathWorkspace.String())
+	pathString = strings.TrimPrefix(filepath.Clean("./"+pathString), "./")
+	pathString = resourcePathPrefix + strings.TrimPrefix(pathString, resourcePathPrefix)
+
+	log.Debugf("adding server file to preset: %s", pathString)
+
+	if p.CustomizedFiles == nil {
+		p.CustomizedFiles = map[string]string{}
+	}
+
+	if _, ok := p.CustomizedFiles[pathString]; ok {
+		return fmt.Errorf("%w: path already present: %s", ErrConflictingValue, pathString)
+	}
+
+	p.CustomizedFiles[pathString] = string(visuals)
 
 	return nil
 }
@@ -91,11 +153,13 @@ func (p *Preset) exportPlatform() string {
 
 /* ----------------------------- Method: Marshal ---------------------------- */
 
-func (p *Preset) Marshal(w io.Writer, index int) error {
+func (p *Preset) Marshal(w io.Writer, index int) error { //nolint:funlen
 	// Don't write anything for an empty 'Preset'.
 	if reflect.DeepEqual(p, new(Preset)) {
 		return nil
 	}
+
+	preset := p
 
 	lo := ini.LoadOptions{PreserveSurroundedQuote: true} //nolint:exhaustruct
 
@@ -108,34 +172,43 @@ func (p *Preset) Marshal(w io.Writer, index int) error {
 	section.Key("platform").SetValue(valueMapper(p.exportPlatform()))
 
 	// Initially hydrate the 'ini' file.
-	if err := section.ReflectFrom(p); err != nil {
+	if err := section.ReflectFrom(preset); err != nil {
 		return err
 	}
 
 	// Unmarshal the file back into the struct to trigger the value mapper.
-	if err := section.MapTo(p); err != nil {
+	if err := section.MapTo(preset); err != nil {
 		return err
 	}
 
 	// Finally, re-populate the file with the updated values.
-	if err := section.ReflectFrom(p); err != nil {
+	if err := section.ReflectFrom(preset); err != nil {
 		return err
+	}
+
+	if len(preset.CustomizedFiles) > 0 {
+		customizedFiles, err := json.Marshal(preset.CustomizedFiles)
+		if err != nil {
+			return err
+		}
+
+		section.Key("customized_files").SetValue(string(customizedFiles))
 	}
 
 	section = cfg.Section(presetName + ".options")
 
-	options := maps.Clone(p.Options)
+	options := maps.Clone(preset.Options)
 	if options == nil {
 		options = map[string]string{}
 	}
 
 	if p.Embed {
-		options["binary_format/embed_pck"] = strconv.FormatBool(p.Embed)
+		options["binary_format/embed_pck"] = strconv.FormatBool(preset.Embed)
 	}
 
-	options["binary_format/architecture"] = p.Arch.String()
-	options["custom_template/debug"] = p.PathTemplate.String()
-	options["custom_template/release"] = p.PathTemplate.String()
+	options["binary_format/architecture"] = preset.Arch.String()
+	options["custom_template/debug"] = preset.PathTemplate.String()
+	options["custom_template/release"] = preset.PathTemplate.String()
 
 	for key, value := range options {
 		if value == "" {
@@ -162,7 +235,7 @@ func valueMapper(s string) string {
 	// NOTE: There doesn't seem to be a way to apply this value mapper to
 	// specific fields, so this is the best way to match the 'export_files'
 	// field. This may need to be updated in the future.
-	if strings.Contains(s, resourcePathPrefix) && strings.Contains(s, ",") {
+	if strings.Contains(s, resourcePathPrefix) {
 		paths := strings.Split(s, ",")
 
 		elements := make([]string, len(paths))
