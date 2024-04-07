@@ -36,7 +36,7 @@ type Template struct {
 	// Paths is a list of additional files and folders which this template
 	// depends on. Useful for recording dependencies which are defined in
 	// otherwise opaque properties like 'Hook'.
-	Paths []osutil.Path `hash:"set"`
+	Paths []osutil.Path `hash:"ignore"`
 
 	// Prebuild contains an ordered list of actions to execute prior to
 	// compilation of the export templates.
