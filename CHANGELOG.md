@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.11 (2024-04-07)
+
+## What's Changed
+* fix(cmd): skip building template when archive is passed via `--template-archive` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/118
+* chore: upgrade direct dependencies by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/119
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.10...v0.3.11
+
 ## 0.3.10 (2024-04-07)
 
 ## What's Changed
