@@ -37,6 +37,9 @@ inputs:
     default: true
 
 outputs:
+  cache-hit:
+    description: "Whether a cached export template was found."
+    value: ${{ steps.cache-templates.outputs.cache-hit }}
   command:
     description: "The 'gdbuild' command to build the template."
     value: ${{ steps.build.outputs.command }}
