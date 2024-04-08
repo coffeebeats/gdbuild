@@ -1,13 +1,10 @@
-package windows
+package linux
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
-	"github.com/coffeebeats/gdbuild/internal/osutil"
-	"github.com/coffeebeats/gdbuild/pkg/config/platform/common"
+	"github.com/coffeebeats/gdbuild/pkg/config/common"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/godot/template"
@@ -15,25 +12,22 @@ import (
 )
 
 /* -------------------------------------------------------------------------- */
-/*                              Struct: Template                              */
+/*                                Struct: Template                               */
 /* -------------------------------------------------------------------------- */
 
 type Template struct {
 	*common.Template
 
-	// UseMinGW determines whether the MinGW compiler is used.
-	UseMinGW *bool `toml:"use_mingw"`
-
-	// PathIcon is a path to a Windows application icon.
-	PathIcon osutil.Path `toml:"icon_path"`
+	// UseLLVM determines whether the LLVM compiler is used.
+	UseLLVM *bool `toml:"use_llvm"`
 }
 
-/* ----------------------------- Impl: Template ----------------------------- */
+/* ------------------------- Impl: config.Templater ------------------------- */
 
 func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template {
 	out := t.Template.Collect(g, rc)
 
-	out.Builds[0].Platform = platform.OSWindows
+	out.Builds[0].Platform = platform.OSLinux
 
 	if t.Arch == platform.ArchUnknown {
 		out.Arch = platform.ArchAmd64
@@ -41,26 +35,11 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 	}
 
 	scons := &out.Builds[0].SCons
-	if rc.Profile.IsRelease() {
+	if config.Dereference(t.UseLLVM) {
+		scons.ExtraArgs = append(scons.ExtraArgs, "use_llvm=yes")
+	} else if rc.Profile.IsRelease() { // Only valid with GCC.
 		scons.ExtraArgs = append(scons.ExtraArgs, "lto=full")
 	}
-
-	if config.Dereference(t.UseMinGW) {
-		scons.ExtraArgs = append(scons.ExtraArgs, "use_mingw=yes")
-	}
-
-	if t.PathIcon != "" {
-		out.RegisterDependencyPath(t.PathIcon)
-
-		// Copy the icon file to the correct location.
-		out.Prebuild = action.InOrder(out.Prebuild, NewCopyImageFileAction(t.PathIcon, rc))
-	}
-
-	// Register the additional console artifact.
-	out.ExtraArtifacts = append(
-		out.ExtraArtifacts,
-		strings.TrimSuffix(out.Builds[0].Filename(), ".exe")+".console.exe",
-	)
 
 	return out
 }
@@ -69,10 +48,6 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 
 func (t *Template) Configure(rc *run.Context) error {
 	if err := t.Template.Configure(rc); err != nil {
-		return err
-	}
-
-	if err := t.PathIcon.RelTo(rc.PathManifest); err != nil {
 		return err
 	}
 
@@ -86,12 +61,15 @@ func (t *Template) Validate(rc *run.Context) error {
 		return err
 	}
 
-	if !t.Arch.IsOneOf(platform.ArchAmd64, platform.ArchI386, platform.ArchUnknown) {
+	if !t.Arch.IsOneOf(platform.ArchI386, platform.ArchAmd64, platform.ArchUnknown) {
 		return fmt.Errorf("%w: unsupport architecture: %s", config.ErrInvalidInput, t.Arch)
 	}
 
-	if err := t.PathIcon.CheckIsFileOrEmpty(); err != nil {
-		return err
+	switch t.Arch {
+	case platform.ArchI386, platform.ArchAmd64:
+	case platform.ArchUnknown:
+	default:
+		return fmt.Errorf("%w: unsupport architecture: %s", config.ErrInvalidInput, t.Arch)
 	}
 
 	return nil

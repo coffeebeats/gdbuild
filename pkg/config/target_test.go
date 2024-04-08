@@ -1,4 +1,4 @@
-package platform_test
+package config_test
 
 import (
 	"testing"
@@ -8,12 +8,11 @@ import (
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/pkg/config"
-	"github.com/coffeebeats/gdbuild/pkg/config/platform"
-	"github.com/coffeebeats/gdbuild/pkg/config/platform/common"
-	"github.com/coffeebeats/gdbuild/pkg/config/platform/windows"
+	"github.com/coffeebeats/gdbuild/pkg/config/common"
+	"github.com/coffeebeats/gdbuild/pkg/config/windows"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/export"
-	host "github.com/coffeebeats/gdbuild/pkg/godot/platform"
+	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
@@ -24,27 +23,27 @@ func TestTargetCombine(t *testing.T) {
 		doc string
 		rc  run.Context
 
-		want platform.Exporter
+		want config.Exporter
 		err  error
 	}{
 		{
 			name: "invalid platform returns an error",
 
-			rc: run.Context{Platform: host.OSUnknown},
+			rc: run.Context{Platform: platform.OSUnknown},
 
 			err: config.ErrInvalidInput,
 		},
 		{
 			name: "an empty document returns an empty template",
 
-			rc: run.Context{Platform: host.OSWindows},
+			rc: run.Context{Platform: platform.OSWindows},
 
 			want: &windows.Target{Target: &common.Target{}},
 		},
 		{
 			name: "base properties are correctly populated",
 
-			rc: run.Context{Platform: host.OSWindows},
+			rc: run.Context{Platform: platform.OSWindows},
 			doc: `
 			[target.target]
 			default_features = ["feature1", "feature2"]
@@ -76,7 +75,7 @@ func TestTargetCombine(t *testing.T) {
 
 			rc: run.Context{
 				Features: []string{"test"},
-				Platform: host.OSWindows,
+				Platform: platform.OSWindows,
 				Profile:  engine.ProfileReleaseDebug,
 			},
 			doc: `
@@ -103,7 +102,7 @@ func TestTargetCombine(t *testing.T) {
 
 			rc: run.Context{
 				Features: []string{"test"},
-				Platform: host.OSWindows,
+				Platform: platform.OSWindows,
 				Profile:  engine.ProfileReleaseDebug,
 			},
 			doc: `
