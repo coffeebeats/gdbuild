@@ -40,8 +40,6 @@ func HashFiles(h hash.Hash, root string) error {
 			return nil
 		}
 
-		path = filepath.Join(root, path)
-
 		// Hash the file.
 		return HashFileWithName(h, root, path)
 	}); err != nil {
