@@ -80,6 +80,7 @@ func TestBuildTemplate(t *testing.T) {
 								Profile:  engine.ProfileDebug,
 							},
 						},
+						Name:      "godot.linuxbsd.template_debug.x86_64",
 						Paths:     nil,
 						Prebuild:  nil,
 						Postbuild: nil,
@@ -105,6 +106,7 @@ func TestBuildTemplate(t *testing.T) {
 					godot.version = "4.0.0"
 
 					[template.platform.macos]
+					double_precision = true
 					vulkan = { sdk_path = "$TEST_TMPDIR/vulkan" }`,
 			},
 
@@ -119,10 +121,11 @@ func TestBuildTemplate(t *testing.T) {
 						Arch: platform.ArchUniversal,
 						Builds: []template.Build{
 							{
-								Arch:     platform.ArchAmd64,
-								Source:   engine.Source{Version: mustParseVersion(t, "4.0.0")},
-								Platform: platform.OSMacOS,
-								Profile:  engine.ProfileDebug,
+								Arch:            platform.ArchAmd64,
+								DoublePrecision: true,
+								Source:          engine.Source{Version: mustParseVersion(t, "4.0.0")},
+								Platform:        platform.OSMacOS,
+								Profile:         engine.ProfileDebug,
 								SCons: template.SCons{
 									ExtraArgs: []string{
 										"use_volk=no",
@@ -131,10 +134,11 @@ func TestBuildTemplate(t *testing.T) {
 								},
 							},
 							{
-								Arch:     platform.ArchArm64,
-								Source:   engine.Source{Version: mustParseVersion(t, "4.0.0")},
-								Platform: platform.OSMacOS,
-								Profile:  engine.ProfileDebug,
+								Arch:            platform.ArchArm64,
+								DoublePrecision: true,
+								Source:          engine.Source{Version: mustParseVersion(t, "4.0.0")},
+								Platform:        platform.OSMacOS,
+								Profile:         engine.ProfileDebug,
 								SCons: template.SCons{
 									ExtraArgs: []string{
 										"use_volk=no",
@@ -143,7 +147,8 @@ func TestBuildTemplate(t *testing.T) {
 								},
 							},
 						},
-						ExtraArtifacts: []string{"godot.macos.template_debug.universal"},
+						ExtraArtifacts: []string{"godot.macos.template_debug.double.universal"},
+						Name:           "godot.macos.template_debug.double.universal",
 						Paths:          []osutil.Path{osutil.Path(filepath.Join(tmp, "vulkan"))},
 						Prebuild:       nil,
 						Postbuild: &action.Process{
@@ -152,10 +157,10 @@ func TestBuildTemplate(t *testing.T) {
 							Args: []string{
 								"lipo",
 								"-create",
-								"godot.macos.template_debug.x86_64",
-								"godot.macos.template_debug.arm64",
+								"godot.macos.template_debug.double.x86_64",
+								"godot.macos.template_debug.double.arm64",
 								"-output",
-								"godot.macos.template_debug.universal",
+								"godot.macos.template_debug.double.universal",
 							},
 						},
 					},
@@ -194,6 +199,7 @@ func TestBuildTemplate(t *testing.T) {
 								Profile:  engine.ProfileDebug,
 							},
 						},
+						Name:           "godot.windows.template_debug.x86_64.exe",
 						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
 					},
 					got,
@@ -256,6 +262,7 @@ func TestBuildTemplate(t *testing.T) {
 							},
 						},
 						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
+						Name:           "godot.windows.template_debug.x86_64.exe",
 						Paths:          []osutil.Path{image},
 					},
 					got,

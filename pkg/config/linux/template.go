@@ -32,6 +32,7 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 	if t.Arch == platform.ArchUnknown {
 		out.Arch = platform.ArchAmd64
 		out.Builds[0].Arch = platform.ArchAmd64
+		out.Name = template.Name(rc.Platform, out.Arch, rc.Profile, out.Builds[0].DoublePrecision)
 	}
 
 	scons := &out.Builds[0].SCons
