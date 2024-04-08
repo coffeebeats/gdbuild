@@ -33,6 +33,10 @@ type Template struct {
 	// the artifacts pertaining to 'Builds' do not need to be specified.
 	ExtraArtifacts []string `hash:"ignore"`
 
+	// Name is the base name of the resulting export template. This exists for
+	// convenience when exporting.
+	Name string `hash:"ignore"`
+
 	// Paths is a list of additional files and folders which this template
 	// depends on. Useful for recording dependencies which are defined in
 	// otherwise opaque properties like 'Hook'.

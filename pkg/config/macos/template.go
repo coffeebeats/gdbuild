@@ -80,6 +80,7 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 			platform.OSMacOS,
 			platform.ArchUniversal,
 			rc.Profile,
+			config.Dereference(t.DoublePrecision),
 		)
 
 		cmdLipo := &action.Process{
@@ -105,6 +106,7 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 		out := t.Template.Collect(g, rc)
 
 		out.Arch = platform.ArchUniversal
+		out.Name = templateNameUniversal
 
 		// Register the additional artifact.
 		out.ExtraArtifacts = append(out.ExtraArtifacts, templateNameUniversal)

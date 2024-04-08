@@ -360,8 +360,7 @@ func exportProject( //nolint:funlen,ireturn
 		return nil, err
 	}
 
-	templateName := template.Name(rc.Platform, tl.Arch, rc.Profile)
-	xp.PathTemplate = osutil.Path(filepath.Join(pathTmp, templateName))
+	xp.PathTemplate = osutil.Path(filepath.Join(pathTmp, tl.Name))
 
 	hasTarget, err := store.HasTarget(storePath, cs)
 	if err != nil {
