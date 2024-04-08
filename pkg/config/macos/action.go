@@ -47,11 +47,23 @@ func NewAppBundleAction(
 		}
 
 		for _, artifact := range artifacts {
+			pathSrc := rc.BinPath().Join(artifact).String()
+			pathDst := filepath.Join(pathApp, "Contents/MacOS", artifact)
+
+			info, err := os.Stat(pathSrc)
+			if err != nil {
+				return err
+			}
+
 			if err := osutil.CopyFile(
 				ctx,
 				rc.BinPath().Join(artifact).String(),
-				filepath.Join(pathApp, "Contents/MacOS", artifact),
+				pathDst,
 			); err != nil {
+				return err
+			}
+
+			if err := os.Chmod(pathDst, info.Mode().Perm()|osutil.ModeUserRWXGroupRX); err != nil {
 				return err
 			}
 		}
