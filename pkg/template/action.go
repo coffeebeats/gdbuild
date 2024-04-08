@@ -33,7 +33,7 @@ func Action(rc *run.Context, tl *template.Template) (action.Action, error) { //n
 	}
 
 	pathBin := rc.BinPath()
-	artifacts := tl.Artifacts()
+	artifacts := tl.Artifacts(rc)
 
 	cacheArtifacts, err := store.NewCacheTemplateAction(rc, pathBin, artifacts, cs)
 	if err != nil {

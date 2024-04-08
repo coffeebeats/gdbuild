@@ -38,7 +38,6 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 	if t.Arch == platform.ArchUnknown {
 		out.Arch = platform.ArchAmd64
 		out.Builds[0].Arch = platform.ArchAmd64
-		out.Name = template.Name(rc.Platform, out.Arch, rc.Profile, out.Builds[0].DoublePrecision)
 	}
 
 	scons := &out.Builds[0].SCons
@@ -60,7 +59,7 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 	// Register the additional console artifact.
 	out.ExtraArtifacts = append(
 		out.ExtraArtifacts,
-		strings.TrimSuffix(out.Builds[0].Filename(), ".exe")+".console.exe",
+		strings.TrimSuffix(out.Basename(rc), ".exe")+".console.exe",
 	)
 
 	return out

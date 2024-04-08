@@ -80,7 +80,6 @@ func TestBuildTemplate(t *testing.T) {
 								Profile:  engine.ProfileDebug,
 							},
 						},
-						Name:      "godot.linuxbsd.template_debug.x86_64",
 						Paths:     nil,
 						Prebuild:  nil,
 						Postbuild: nil,
@@ -113,6 +112,13 @@ func TestBuildTemplate(t *testing.T) {
 			assert: func(t *testing.T, rc *run.Context, tmp string, got *template.Template, err error) {
 				// Then: There's no error.
 				assert.Nil(t, err)
+
+				// FIXME: Remove once app bundle action can be asserted on.
+				seq, ok := got.Postbuild.(action.Sequence)
+				require.True(t, ok)
+
+				seq.Post = nil
+				got.Postbuild = seq
 
 				// Then: The template matches expectations.
 				assert.Equal(
@@ -147,21 +153,29 @@ func TestBuildTemplate(t *testing.T) {
 								},
 							},
 						},
-						ExtraArtifacts: []string{"godot.macos.template_debug.double.universal"},
-						Name:           "godot.macos.template_debug.double.universal",
-						Paths:          []osutil.Path{osutil.Path(filepath.Join(tmp, "vulkan"))},
-						Prebuild:       nil,
-						Postbuild: &action.Process{
-							Directory: filepath.Join(tmp, "build/bin"),
-							Shell:     exec.DefaultShell(),
-							Args: []string{
-								"lipo",
-								"-create",
-								"godot.macos.template_debug.double.x86_64",
-								"godot.macos.template_debug.double.arm64",
-								"-output",
-								"godot.macos.template_debug.double.universal",
+						ExtraArtifacts: []string{
+							"godot.macos.template_debug.double.universal",
+							"macos.zip",
+						},
+						NameOverride: "macos.zip",
+						Paths:        []osutil.Path{osutil.Path(filepath.Join(tmp, "vulkan"))},
+						Prebuild:     nil,
+						Postbuild: action.Sequence{
+							Action: &action.Process{
+								Directory: filepath.Join(tmp, "build/bin"),
+								Shell:     exec.DefaultShell(),
+								Args: []string{
+									"lipo",
+									"-create",
+									"godot.macos.template_debug.double.x86_64",
+									"godot.macos.template_debug.double.arm64",
+									"-output",
+									"godot.macos.template_debug.double.universal",
+								},
 							},
+
+							// TODO: Figure out how to test that this works.
+							// Post: macos.NewAppBundleAction(rc, []string{"godot.macos.template_debug.double.universal"}),
 						},
 					},
 					got,
@@ -199,7 +213,6 @@ func TestBuildTemplate(t *testing.T) {
 								Profile:  engine.ProfileDebug,
 							},
 						},
-						Name:           "godot.windows.template_debug.x86_64.exe",
 						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
 					},
 					got,
@@ -262,7 +275,6 @@ func TestBuildTemplate(t *testing.T) {
 							},
 						},
 						ExtraArtifacts: []string{"godot.windows.template_debug.x86_64.console.exe"},
-						Name:           "godot.windows.template_debug.x86_64.exe",
 						Paths:          []osutil.Path{image},
 					},
 					got,
