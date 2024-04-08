@@ -178,7 +178,7 @@ func NewTemplate() *cli.Command { //nolint:cyclop,funlen,gocognit,gocyclo
 			}
 
 			// Evaluate build context.
-			rc, err := buildTemplateContext(c, pathManifest, pathOut, platformInput, dryRun)
+			rc, err := buildTemplateContext(c, pathManifest, pathOut, platformInput, dryRun, printHash)
 			if err != nil {
 				return err
 			}
@@ -224,6 +224,7 @@ func buildTemplateContext(
 	pathOut,
 	platformInput string,
 	dryRun bool,
+	printHash bool,
 ) (run.Context, error) {
 	features := c.StringSlice("feature")
 
@@ -241,7 +242,7 @@ func buildTemplateContext(
 	log.Infof("platform: %s", pl)
 
 	rc := run.Context{
-		DryRun:        dryRun,
+		DryRun:        dryRun || printHash,
 		Features:      features,
 		PathManifest:  osutil.Path(pathManifest),
 		PathOut:       osutil.Path(pathOut),

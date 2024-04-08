@@ -189,7 +189,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,gocyclo,maintidx
 			}
 
 			// Evaluate build context.
-			rc, err := buildTemplateContext(c, pathManifest, "", c.String("platform"), dryRun)
+			rc, err := buildTemplateContext(c, pathManifest, "", c.String("platform"), dryRun, printHash)
 			if err != nil {
 				return err
 			}
