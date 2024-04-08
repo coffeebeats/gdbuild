@@ -62,5 +62,5 @@ func (d WithDescription[T]) Sprint() string {
 /* --------------------------- Impl: fmt.Stringer --------------------------- */
 
 func (d WithDescription[T]) String() string {
-	return d.Sprint()
+	return d.Action.String()
 }
