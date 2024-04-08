@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.19 (2024-04-08)
+
+## What's Changed
+* chore(ci): remove unused actions by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/138
+* fix(osutil): remove accidental doubling of filepath by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/140
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.18...v0.3.19
+
 ## 0.3.18 (2024-04-07)
 
 ## What's Changed
