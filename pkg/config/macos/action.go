@@ -71,7 +71,7 @@ func NewAppBundleAction(
 /* ------------------------- Function: zipAppBundle ------------------------- */
 
 func zipAppBundle(pathAppBundle, out osutil.Path) error {
-	if err := pathAppBundle.CheckIsFile(); err != nil {
+	if err := pathAppBundle.CheckIsDir(); err != nil {
 		return err
 	}
 
