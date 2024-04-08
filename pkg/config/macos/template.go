@@ -42,6 +42,7 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 
 		out.Arch = t.Arch
 		out.Builds[0].Platform = platform.OSMacOS
+		out.Name = template.Name(rc.Platform, out.Arch, rc.Profile, out.Builds[0].DoublePrecision)
 
 		scons := &out.Builds[0].SCons
 		if config.Dereference(t.Vulkan.Dynamic) {

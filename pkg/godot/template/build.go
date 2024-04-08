@@ -88,16 +88,23 @@ func (b *Build) Filename() string {
 // Name returns the base name of the export template defined by the
 // specified parameters.
 func Name(pl platform.OS, arch platform.Arch, pr engine.Profile, double bool) string {
-	name := fmt.Sprintf("godot.%s.%s.%s", pl, pr.TargetName(), arch)
+	var name strings.Builder
+
+	name.WriteString("godot")
+	name.WriteString("." + pl.String())
+	name.WriteString("." + pr.TargetName())
+
 	if double {
-		name += ".double"
+		name.WriteString(".double")
 	}
+
+	name.WriteString("." + arch.String())
 
 	if pl == platform.OSWindows {
-		name += ".exe"
+		name.WriteString(".exe")
 	}
 
-	return name
+	return name.String()
 }
 
 /* -------------------------- Method: SConsCommand -------------------------- */
