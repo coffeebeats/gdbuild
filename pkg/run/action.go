@@ -32,14 +32,15 @@ func NewVerifyArtifactsAction(
 		}
 
 		found := make(map[string]struct{})
+		pathRoot := filepath.ToSlash(root.String())
 
-		if err := fs.WalkDir(os.DirFS(root.String()), ".", func(path string, d fs.DirEntry, err error) error {
+		if err := fs.WalkDir(os.DirFS(pathRoot), ".", func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
 
 			if d.IsDir() {
-				return nil
+				found[path+"/"] = struct{}{}
 			}
 
 			found[path] = struct{}{}
@@ -60,7 +61,7 @@ func NewVerifyArtifactsAction(
 
 			log.Debugf(
 				"found required artifact: %s",
-				filepath.Join(root.String(), a),
+				filepath.Join(pathRoot, a),
 			)
 		}
 

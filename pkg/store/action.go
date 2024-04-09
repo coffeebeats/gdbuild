@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"os"
 
 	"github.com/charmbracelet/log"
 
@@ -99,5 +98,5 @@ func archiveArtifacts(_ context.Context, root osutil.Path, artifacts []string, o
 		files = append(files, a)
 	}
 
-	return archive.Create(os.DirFS(root.String()), files, out)
+	return archive.Create(root.String(), files, out)
 }

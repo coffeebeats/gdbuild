@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/log"
+
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 )
 
@@ -28,7 +30,7 @@ var (
 
 // Create writes the provided files to a compressed archive at 'out'. The
 // implementation follows from https://www.arthurkoziel.com/writing-tar-gz-files-in-go/.
-func Create(fsys fs.FS, files []string, out string) error {
+func Create(root string, files []string, out string) error {
 	if len(files) == 0 {
 		return fmt.Errorf("%w: 'files'", ErrMissingInput)
 	}
@@ -41,6 +43,8 @@ func Create(fsys fs.FS, files []string, out string) error {
 		out += FileExtension
 	}
 
+	log.Debugf("creating archive at path: %s", out)
+
 	f, err := os.Create(out)
 	if err != nil {
 		return err
@@ -48,47 +52,89 @@ func Create(fsys fs.FS, files []string, out string) error {
 
 	defer f.Close()
 
-	return addFilesToArchive(fsys, files, f)
+	return addFilesToArchive(root, files, f)
 }
 
 /* ----------------------- Function: addFilesToArchive ---------------------- */
 
-func addFilesToArchive(fsys fs.FS, files []string, w io.Writer) error {
+func addFilesToArchive(root string, files []string, w io.Writer) error {
 	gw := gzip.NewWriter(w)
 	defer gw.Close()
 
 	tw := tar.NewWriter(gw)
 	defer tw.Close()
 
-	// Iterate over files and add them to the tar archive
-	for _, filepath := range files {
-		f, err := fsys.Open(filepath)
+	// Iterate over files and add each of them to the tar archive.
+	for _, path := range files {
+		path := filepath.Clean(path)
+
+		info, err := os.Stat(filepath.Join(root, path))
 		if err != nil {
 			return err
 		}
 
-		defer f.Close()
-
-		info, err := f.Stat()
-		if err != nil {
-			return err
+		if !info.IsDir() {
+			if err := addFileToArchive(tw, root, path, info); err != nil {
+				return err
+			}
 		}
 
-		header, err := tar.FileInfoHeader(info, filepath)
-		if err != nil {
-			return err
-		}
+		if err := fs.WalkDir(os.DirFS(root), path, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
 
-		if err := tw.WriteHeader(header); err != nil {
-			return err
-		}
+			info, err := d.Info()
+			if err != nil {
+				return err
+			}
 
-		if _, err := io.Copy(tw, f); err != nil {
+			if err := addFileToArchive(tw, root, path, info); err != nil {
+				return err
+			}
+
+			return nil
+		}); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+/* ----------------------- Function: addFileToArchive ----------------------- */
+
+func addFileToArchive(tw *tar.Writer, root, path string, info fs.FileInfo) error {
+	log.Debugf("adding path to archive: %s", path)
+
+	header, err := tar.FileInfoHeader(info, path)
+	if err != nil {
+		return err
+	}
+
+	header.Name = path
+	if info.IsDir() {
+		header.Name += "/"
+	}
+
+	if err := tw.WriteHeader(header); err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+		return nil
+	}
+
+	f, err := os.Open(filepath.Join(root, path))
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	_, err = io.Copy(tw, f)
+
+	return err
 }
 
 /* -------------------------------------------------------------------------- */
