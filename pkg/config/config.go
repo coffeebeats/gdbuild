@@ -119,8 +119,7 @@ func defaultContents() string {
   pack_files = [{include = ["*"], embed = true, encrypt = true}]
 
 [target.client.profile.release]
-  # EncryptionKey is the encryption key to embed in the export template.
-  encryption_key = "$SCRIPT_AES256_ENCRYPTION_KEY"
+  # NOTE: Set the encryption key via the 'SCRIPT_AES256_ENCRYPTION_KEY' variable.
   encrypt        = true
 
 [template]
