@@ -35,11 +35,11 @@ type PackFile struct {
 	// Exclude is a slice of glob expressions to filter *out* game files for
 	// this pack file. These expressions will be evaluated from the directory
 	// containing the GDBuild manifest.
-	Exclude []string `toml:"exclude"`
+	Exclude []string `hash:"ignore" toml:"exclude"`
 	// Include is a slice of glob expressions to match game files against to
 	// include in this pack file. These expressions will be evaluated from the
 	// directory containing the GDBuild manifest.
-	Include []string `toml:"include"`
+	Include []string `hash:"ignore" toml:"include"`
 	// Name is the name of the pack file. If omitted a name will be chosen based
 	// on the pack files index within the target configuration.
 	Name osutil.Path `toml:"name"`
