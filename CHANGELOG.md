@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.21 (2024-04-09)
+
+## What's Changed
+* feat(target): add support for target-level excludes by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/147
+* fix(export): add missing exclude pattern to `Preset` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/149
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.20...v0.3.21
+
 ## 0.3.20 (2024-04-09)
 
 ## What's Changed
