@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.22 (2024-04-09)
+
+## What's Changed
+* fix(export): don't hash file exclude filters by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/150
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.21...v0.3.22
+
 ## 0.3.21 (2024-04-09)
 
 ## What's Changed
