@@ -392,6 +392,8 @@ func cleanTemporaryDirectory(rc *run.Context) {
 		return // All done.
 	}
 
+	log.Debugf("cleaning up temporary directory: %s", path)
+
 	if err := os.RemoveAll(path); err != nil {
 		log.Warn(
 			"Failed to remove temporary directory.",
