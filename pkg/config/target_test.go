@@ -49,7 +49,7 @@ func TestTargetCombine(t *testing.T) {
 			default_features = ["feature1", "feature2"]
 			hook = { run_before = ["echo before"] }
 			options = {option-name = "option-value"}
-			pack_files = [{glob = ["*"], encrypt = true}]
+			pack_files = [{include = ["*"], encrypt = true}]
 			runnable = true
 			server = false
 			`,
@@ -61,7 +61,7 @@ func TestTargetCombine(t *testing.T) {
 					Options:         map[string]any{"option-name": "option-value"},
 					PackFiles: []export.PackFile{
 						{
-							Glob:    []string{"*"},
+							Include: []string{"*"},
 							Encrypt: pointer(true),
 						},
 					},
