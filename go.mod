@@ -7,7 +7,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1
 	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/charmbracelet/log v0.4.0
-	github.com/coffeebeats/gdenv v0.6.16
+	github.com/coffeebeats/gdenv v0.6.19
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pelletier/go-toml/v2 v2.2.0
 	github.com/stretchr/testify v1.9.0
