@@ -70,6 +70,7 @@ func (c *PackFile) Preset(rc *run.Context, xp *Export, index int) (Preset, error
 
 	preset.Arch = xp.Arch
 	preset.Embed = config.Dereference(c.Embed)
+	preset.Exclude = strings.Join(c.Exclude, ",")
 	preset.Features = slices.Clone(rc.Features)
 	preset.Name = c.Filename(rc.Platform, rc.Target, index)
 	preset.PathTemplate = xp.PathTemplate
