@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.20 (2024-04-09)
+
+## What's Changed
+* chore: update deprecated property in `.goreleaser.yaml` by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/141
+* chore: remove unused third party dependency by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/143
+* chore(config): refactor package layout to remove unnecessary layer by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/144
+* fix(config): update template name after specifying double precision by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/145
+* feat(macos): correctly construct app bundle for export template by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/146
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.19...v0.3.20
+
 ## 0.3.19 (2024-04-08)
 
 ## What's Changed
