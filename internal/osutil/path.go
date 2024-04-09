@@ -83,12 +83,8 @@ func (p Path) CheckIsFileOrEmpty() error {
 /* ------------------------------ Method: Join ------------------------------ */
 
 // Join creates a new 'Path' with the provided elements appended.
-func (p *Path) Join(elem ...string) Path {
-	if p == nil {
-		return Path(filepath.Join(elem...))
-	}
-
-	parts := append([]string{string(*p)}, elem...)
+func (p Path) Join(elem ...string) Path {
+	parts := append([]string{string(p)}, elem...)
 
 	return Path(filepath.Join(parts...))
 }
@@ -96,11 +92,7 @@ func (p *Path) Join(elem ...string) Path {
 /* ------------------------------- Method: Dir ------------------------------ */
 
 // Dir creates a new 'Path' pointing to the directory of this 'Path'.
-func (p *Path) Dir() Path {
-	if p == nil {
-		return Path("")
-	}
-
+func (p Path) Dir() Path {
 	return Path(filepath.Dir(p.String()))
 }
 

@@ -94,5 +94,5 @@ func (n NoOp) Sprint() string {
 /* --------------------------- Impl: fmt.Stringer --------------------------- */
 
 func (n NoOp) String() string {
-	return n.Sprint()
+	return ""
 }

@@ -74,7 +74,7 @@ func (t Template) Collect(src engine.Source, rc *run.Context) *template.Template
 			},
 		},
 		ExtraArtifacts: nil,
-		Name:           template.Name(rc.Platform, t.Arch, rc.Profile, config.Dereference(t.DoublePrecision)),
+		NameOverride:   "",
 		Paths:          nil,
 		Prebuild:       t.Hook.PreActions(rc),
 		Postbuild:      t.Hook.PostActions(rc),

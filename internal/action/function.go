@@ -62,5 +62,9 @@ func (f Function) Sprint() string {
 /* --------------------------- Impl: fmt.Stringer --------------------------- */
 
 func (f Function) String() string {
-	return f.Sprint()
+	if f == nil {
+		return ""
+	}
+
+	return "function"
 }

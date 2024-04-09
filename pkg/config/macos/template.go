@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/config"
@@ -42,7 +43,6 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 
 		out.Arch = t.Arch
 		out.Builds[0].Platform = platform.OSMacOS
-		out.Name = template.Name(rc.Platform, out.Arch, rc.Profile, out.Builds[0].DoublePrecision)
 
 		scons := &out.Builds[0].SCons
 		if config.Dereference(t.Vulkan.Dynamic) {
@@ -77,11 +77,11 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 			lipo = append(lipo, "lipo")
 		}
 
-		templateNameUniversal := template.Name(
-			platform.OSMacOS,
-			platform.ArchUniversal,
-			rc.Profile,
-			config.Dereference(t.DoublePrecision),
+		templateNameUniversal := strings.Replace(
+			templateAmd64.Builds[0].Basename(rc),
+			platform.ArchAmd64.String(),
+			platform.ArchUniversal.String(),
+			1,
 		)
 
 		cmdLipo := &action.Process{
@@ -94,8 +94,8 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 			Args: append(
 				lipo,
 				"-create",
-				templateAmd64.Builds[0].Filename(),
-				templateArm64.Builds[0].Filename(),
+				templateAmd64.Builds[0].Basename(rc),
+				templateArm64.Builds[0].Basename(rc),
 				"-output",
 				templateNameUniversal,
 			),
@@ -107,13 +107,21 @@ func (t *Template) Collect(g engine.Source, rc *run.Context) *template.Template 
 		out := t.Template.Collect(g, rc)
 
 		out.Arch = platform.ArchUniversal
-		out.Name = templateNameUniversal
+		out.NameOverride = "macos.zip"
 
 		// Register the additional artifact.
-		out.ExtraArtifacts = append(out.ExtraArtifacts, templateNameUniversal)
+		out.ExtraArtifacts = append(
+			out.ExtraArtifacts,
+			templateNameUniversal,
+			"macos.zip",
+		)
 
 		out.Builds = []template.Build{templateAmd64.Builds[0], templateArm64.Builds[0]}
-		out.Postbuild = cmdLipo.AndThen(out.Postbuild)
+		out.Postbuild = action.InOrder(
+			cmdLipo,
+			NewAppBundleAction(rc, []string{templateNameUniversal}),
+			out.Postbuild,
+		)
 
 		// Construct a list of paths with duplicates removed. This is preferred
 		// over duplicating the code used to decide which paths are dependencies.

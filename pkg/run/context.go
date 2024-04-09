@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/charmbracelet/log"
+
 	"github.com/coffeebeats/gdbuild/internal/osutil"
 	"github.com/coffeebeats/gdbuild/pkg/godot/engine"
 	"github.com/coffeebeats/gdbuild/pkg/godot/platform"
@@ -103,6 +105,8 @@ func (c *Context) TempDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	log.Debugf("created temporary directory: %s", tmp)
 
 	c.tmp = tmp
 

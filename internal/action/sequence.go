@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"fmt"
 	"strings"
 )
 
@@ -146,5 +147,28 @@ func (s Sequence) Sprint() string {
 /* --------------------------- Impl: fmt.Stringer --------------------------- */
 
 func (s Sequence) String() string {
-	return s.Sprint()
+	cmds := make([]string, 0)
+
+	if p, ok := s.Pre.(fmt.Stringer); ok {
+		text := p.String()
+		if text != "" {
+			cmds = append(cmds, p.String())
+		}
+	}
+
+	if p, ok := s.Action.(fmt.Stringer); ok {
+		text := p.String()
+		if text != "" {
+			cmds = append(cmds, p.String())
+		}
+	}
+
+	if p, ok := s.Post.(fmt.Stringer); ok {
+		text := p.String()
+		if text != "" {
+			cmds = append(cmds, p.String())
+		}
+	}
+
+	return strings.Join(cmds, "\n")
 }

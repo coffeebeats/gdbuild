@@ -55,6 +55,14 @@ type PackFile struct {
 func (c *PackFile) Preset(rc *run.Context, xp *Export, index int) (Preset, error) {
 	var preset Preset
 
+	preset.Options = map[string]string{}
+
+	for key, value := range xp.Options {
+		if value, ok := value.(string); ok {
+			preset.Options[key] = value
+		}
+	}
+
 	preset.Arch = xp.Arch
 	preset.Embed = config.Dereference(c.Embed)
 	preset.Features = slices.Clone(rc.Features)
@@ -126,7 +134,7 @@ func (c *PackFile) Extension(pl platform.OS) string {
 	if config.Dereference(c.Embed) {
 		switch pl {
 		case platform.OSMacOS:
-			return ".app"
+			return ".app/"
 		case platform.OSWindows:
 			return ".exe"
 		default:

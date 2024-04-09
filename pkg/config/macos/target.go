@@ -1,6 +1,7 @@
 package macos
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/coffeebeats/gdbuild/internal/config"
@@ -11,18 +12,31 @@ import (
 	"github.com/coffeebeats/gdbuild/pkg/run"
 )
 
+var ErrMissingInput = errors.New("missing input")
+
 /* -------------------------------------------------------------------------- */
 /*                               Struct: Target                               */
 /* -------------------------------------------------------------------------- */
 
 type Target struct {
 	*common.Target
+
+	// PathIcon is a path to a Windows application icon.
+	BundleIdentifier string `toml:"bundle_identifier"`
 }
 
 /* ----------------------------- Impl: Exporter ----------------------------- */
 
 func (t *Target) Collect(rc *run.Context, tl *template.Template, ev engine.Version) *export.Export {
-	return t.Target.Collect(rc, tl, ev)
+	out := t.Target.Collect(rc, tl, ev)
+
+	if out.Options == nil {
+		out.Options = map[string]any{}
+	}
+
+	out.Options["application/bundle_identifier"] = t.BundleIdentifier
+
+	return out
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
@@ -34,7 +48,15 @@ func (t *Target) Configure(rc *run.Context) error {
 /* ------------------------- Impl: config.Validator ------------------------- */
 
 func (t *Target) Validate(rc *run.Context) error {
-	return t.Target.Validate(rc)
+	if err := t.Target.Validate(rc); err != nil {
+		return err
+	}
+
+	if t.BundleIdentifier == "" {
+		return fmt.Errorf("%w: 'bundle_identifier'", ErrMissingInput)
+	}
+
+	return nil
 }
 
 /* --------------------------- Impl: config.Merger -------------------------- */

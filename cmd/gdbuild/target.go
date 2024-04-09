@@ -189,7 +189,7 @@ func NewTarget() *cli.Command { //nolint:cyclop,funlen,gocognit,gocyclo,maintidx
 			}
 
 			// Evaluate build context.
-			rc, err := buildTemplateContext(c, pathManifest, "", c.String("platform"), dryRun)
+			rc, err := buildTemplateContext(c, pathManifest, "", c.String("platform"), dryRun, printHash)
 			if err != nil {
 				return err
 			}
@@ -360,7 +360,7 @@ func exportProject( //nolint:funlen,ireturn
 		return nil, err
 	}
 
-	xp.PathTemplate = osutil.Path(filepath.Join(pathTmp, tl.Name))
+	xp.PathTemplate = osutil.Path(filepath.Join(pathTmp, tl.Basename(rc)))
 
 	hasTarget, err := store.HasTarget(storePath, cs)
 	if err != nil {
