@@ -255,7 +255,7 @@ func (t Targets) Combine(rc *run.Context) (Exporter, error) { //nolint:dupl,iret
 
 		return out, nil
 	case platform.OSMacOS:
-		out := &macos.Target{Target: base}
+		out := &macos.Target{Target: base} //nolint:exhaustruct
 
 		if err := t.Platform.MacOS.Build(rc, out); err != nil {
 			return nil, err
