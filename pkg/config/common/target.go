@@ -39,6 +39,9 @@ type Target struct {
 	Options map[string]any `toml:"options"`
 	// PackFiles defines the game files exported as part of this artifact.
 	PackFiles []export.PackFile `toml:"pack_files"`
+	// ExcludeFiles are a list of file globs that specify files to exclude from
+	// this target's exports. These will be applied to *all* pack files.
+	ExcludeFiles []string `toml:"exclude_files"`
 	// Runnable is whether the export artifact should be executable. This should
 	// be true for client and server targets and false for artifacts like DLC.
 	Runnable *bool `toml:"runnable"`
@@ -81,7 +84,10 @@ func (t *Target) Configure(rc *run.Context) error {
 	hasEncrypt := false
 	isEncrypted := config.Dereference(t.Encrypt)
 
-	for _, pf := range t.PackFiles {
+	for i, pf := range t.PackFiles {
+		pf.Exclude = append(pf.Exclude, t.ExcludeFiles...)
+		t.PackFiles[i] = pf
+
 		if err := pf.Configure(rc); err != nil {
 			return err
 		}

@@ -32,6 +32,10 @@ type PackFile struct {
 	// Encrypt determines whether or not to encrypt the game files contained in
 	// the resulting '.pck' files.
 	Encrypt *bool `toml:"encrypt"`
+	// Exclude is a slice of glob expressions to filter *out* game files for
+	// this pack file. These expressions will be evaluated from the directory
+	// containing the GDBuild manifest.
+	Exclude []string `toml:"exclude"`
 	// Glob is a slice of glob expressions to match game files against. These
 	// will be evaluated from the directory containing the GDBuild manifest.
 	Glob []string `toml:"glob"`
@@ -159,7 +163,7 @@ func (c *PackFile) StripVisuals() bool {
 
 /* ------------------------------ Method: Files ----------------------------- */
 
-func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyclop,funlen
+func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:funlen
 	pathRoot, err := filepath.Abs(path.String())
 	if err != nil {
 		return nil, err
@@ -188,34 +192,12 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyc
 		for _, pathMatch := range matches {
 			pathMatch = filepath.Join(pathRoot, pathMatch)
 
-			info, err := os.Stat(pathMatch)
+			files, err := collectFilesInRoot(pathMatch)
 			if err != nil {
 				return nil, err
 			}
 
-			if !info.IsDir() {
-				mm = append(mm, pathMatch)
-
-				continue
-			}
-
-			if err := fs.WalkDir(
-				os.DirFS(pathMatch),
-				".",
-				func(path string, d fs.DirEntry, err error) error {
-					if err != nil {
-						return err
-					}
-
-					if !d.IsDir() {
-						mm = append(mm, filepath.Join(pathMatch, path))
-					}
-
-					return nil
-				},
-			); err != nil {
-				return nil, err
-			}
+			mm = append(mm, files...)
 		}
 
 		baseGlob := filepath.Base(pattern)
@@ -229,11 +211,80 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:cyc
 				continue
 			}
 
+			excluded, err := isFileExcluded(pathRoot, m, c.Exclude)
+			if err != nil {
+				return nil, err
+			}
+
+			if excluded {
+				continue
+			}
+
 			files[osutil.Path(m)] = struct{}{}
 		}
 	}
 
 	return maps.Keys(files), nil
+}
+
+/* ---------------------- Function: collectFilesInRoot ---------------------- */
+
+func collectFilesInRoot(root string) ([]string, error) {
+	var out []string
+
+	info, err := os.Stat(root)
+	if err != nil {
+		return nil, err
+	}
+
+	if !info.IsDir() {
+		out = append(out, root)
+
+		return out, nil
+	}
+
+	if err := fs.WalkDir(
+		os.DirFS(root),
+		".",
+		func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if !d.IsDir() {
+				out = append(out, filepath.Join(root, path))
+			}
+
+			return nil
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+/* ------------------------ Function: isFileExcluded ------------------------ */
+
+func isFileExcluded(root, path string, excludes []string) (bool, error) {
+	for _, pattern := range excludes {
+		pattern = filepath.Join(root, pattern)
+
+		// NOTE: See https://github.com/bmatcuk/doublestar?tab=readme-ov-file#glob.
+		pattern = filepath.Clean(pattern)
+		pattern = filepath.ToSlash(pattern)
+
+		match, err := doublestar.Match(pattern, path)
+		if err != nil {
+			return false, err
+		}
+
+		if match {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 /* ------------------------- Impl: config.Configurer ------------------------ */
