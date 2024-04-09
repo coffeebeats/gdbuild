@@ -116,7 +116,7 @@ func defaultContents() string {
   runnable         = true
   default_features = []
 
-  pack_files = [{glob = ["*"], embed = true, encrypt = true}]
+  pack_files = [{include = ["*"], embed = true, encrypt = true}]
 
 [target.client.profile.release]
   # EncryptionKey is the encryption key to embed in the export template.
