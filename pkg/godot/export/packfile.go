@@ -36,9 +36,10 @@ type PackFile struct {
 	// this pack file. These expressions will be evaluated from the directory
 	// containing the GDBuild manifest.
 	Exclude []string `toml:"exclude"`
-	// Glob is a slice of glob expressions to match game files against. These
-	// will be evaluated from the directory containing the GDBuild manifest.
-	Glob []string `toml:"glob"`
+	// Include is a slice of glob expressions to match game files against to
+	// include in this pack file. These expressions will be evaluated from the
+	// directory containing the GDBuild manifest.
+	Include []string `toml:"include"`
 	// Name is the name of the pack file. If omitted a name will be chosen based
 	// on the pack files index within the target configuration.
 	Name osutil.Path `toml:"name"`
@@ -79,7 +80,7 @@ func (c *PackFile) Preset(rc *run.Context, xp *Export, index int) (Preset, error
 	if config.Dereference(c.Encrypt) {
 		preset.Encrypt = true
 		preset.EncryptIndex = true
-		preset.Encrypted = slices.Clone(c.Glob)
+		preset.Encrypted = slices.Clone(c.Include)
 		preset.EncryptionKey = xp.EncryptionKey
 	}
 
@@ -171,7 +172,7 @@ func (c *PackFile) Files(path osutil.Path) ([]osutil.Path, error) { //nolint:fun
 
 	files := make(map[osutil.Path]struct{})
 
-	for _, pattern := range c.Glob {
+	for _, pattern := range c.Include {
 		// NOTE: See https://github.com/bmatcuk/doublestar?tab=readme-ov-file#glob.
 		pattern = filepath.Clean(pattern)
 		pattern = filepath.ToSlash(pattern)
@@ -326,7 +327,7 @@ func (c *PackFile) Validate(rc *run.Context) error {
 		}
 	}
 
-	if len(c.Glob) == 0 {
+	if len(c.Include) == 0 {
 		return fmt.Errorf(
 			"%w: missing required 'glob' property for pack file",
 			ErrInvalidInput,
@@ -342,7 +343,7 @@ func (c *PackFile) Validate(rc *run.Context) error {
 		return fmt.Errorf(
 			"%w: no files match pack file: %s",
 			ErrInvalidInput,
-			strings.Join(c.Glob, ","),
+			strings.Join(c.Include, ","),
 		)
 	}
 
