@@ -47,7 +47,16 @@ func NewAppBundleAction(
 		}
 
 		for _, artifact := range artifacts {
-			pathDst := filepath.Join(pathApp, "Contents/MacOS", artifact)
+			// Expected name for artifact [1]: 'godot_macos_release.universal',
+			// or something similar. Double precision builds should have the
+			// same naming format.
+			//
+			// [1] https://docs.godotengine.org/en/stable/contributing/development/compiling/compiling_for_macos.html.
+			target := strings.Replace(artifact, ".double", "", 1)
+			target = strings.Replace(target, "template_", "", 1)
+			target = strings.Replace(target, ".", "_", 2) //nolint:gomnd
+
+			pathDst := filepath.Join(pathApp, "Contents/MacOS", target)
 
 			if err := osutil.CopyFile(
 				ctx,
