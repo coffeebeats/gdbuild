@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.23 (2024-04-22)
+
+## What's Changed
+* chore(deps): bump github.com/coffeebeats/gdenv from 0.6.16 to 0.6.19 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/152
+* chore(deps): bump github.com/pelletier/go-toml/v2 from 2.2.0 to 2.2.1 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/153
+* fix(config): run the `run_before` hook action in the manifest's directory by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/154
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.22...v0.3.23
+
 ## 0.3.22 (2024-04-09)
 
 ## What's Changed
