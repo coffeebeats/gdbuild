@@ -3,6 +3,7 @@ package run
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/coffeebeats/gdbuild/internal/action"
 	"github.com/coffeebeats/gdbuild/internal/exec"
@@ -30,12 +31,14 @@ type Hook struct {
 
 // PreActions is a utility function to convert pre-build commands into a slice
 // of 'Action' types.
+//
+// NOTE: This action is run within the directory containing the manifest.
 func (h Hook) PreActions(rc *Context) action.Action { //nolint:ireturn
 	actions := make([]action.Action, 0, len(h.Pre))
 
 	for _, a := range h.Pre {
 		p := a.Process()
-		p.Directory = rc.PathWorkspace.String()
+		p.Directory = filepath.Dir(rc.PathManifest.String())
 		p.Shell = h.Shell
 		p.Verbose = rc.Verbose
 
@@ -49,6 +52,8 @@ func (h Hook) PreActions(rc *Context) action.Action { //nolint:ireturn
 
 // PostActions is a utility function to convert post-build commands into a slice
 // of 'Action' types.
+//
+// NOTE: This action is run within the workspace directory.
 func (h Hook) PostActions(rc *Context) action.Action { //nolint:ireturn
 	actions := make([]action.Action, 0, len(h.Post))
 
