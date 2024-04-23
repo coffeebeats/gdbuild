@@ -165,6 +165,11 @@ func (b *Build) SConsCommand(rc *run.Context) *action.Process { //nolint:cyclop,
 		args = append(args, "verbose=yes")
 	}
 
+	// Specify a 'custom.py' file.
+	if b.CustomPy != "" {
+		args = append(args, "profile="+b.CustomPy.String())
+	}
+
 	// Append 'custom_modules' argument.
 	if len(b.CustomModules) > 0 {
 		modules := make([]string, len(b.CustomModules))
