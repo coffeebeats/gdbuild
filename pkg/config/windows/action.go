@@ -24,17 +24,17 @@ func NewCopyImageFileAction(
 	pathDst := filepath.Join(rc.PathWorkspace.String(), "platform/windows/godot.ico")
 
 	fn := func(_ context.Context) error {
+		src, err := os.Open(pathImage.String())
+		if err != nil {
+			return err
+		}
+
 		dst, err := os.Create(pathDst)
 		if err != nil {
 			return err
 		}
 
 		defer dst.Close()
-
-		src, err := os.Open(pathImage.String())
-		if err != nil {
-			return err
-		}
 
 		if _, err := io.Copy(dst, src); err != nil {
 			return err
