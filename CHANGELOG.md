@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.24 (2024-04-23)
+
+## What's Changed
+* fix(template): add missing `SCons` argument for `custom.py` files by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/156
+* fix(template): don't validate icon path by @coffeebeats in https://github.com/coffeebeats/gdbuild/pull/158
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.23...v0.3.24
+
 ## 0.3.23 (2024-04-22)
 
 ## What's Changed
