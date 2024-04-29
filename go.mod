@@ -11,7 +11,7 @@ require (
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pelletier/go-toml/v2 v2.2.1
 	github.com/stretchr/testify v1.9.0
-	github.com/urfave/cli/v2 v2.27.1
+	github.com/urfave/cli/v2 v2.27.2
 	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
 	gopkg.in/ini.v1 v1.67.0
 )
