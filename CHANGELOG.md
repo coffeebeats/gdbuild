@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.25 (2024-04-29)
+
+## What's Changed
+* chore(deps): bump github.com/urfave/cli/v2 from 2.27.1 to 2.27.2 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/160
+* chore(deps): bump golangci/golangci-lint-action from 4 to 5 by @dependabot in https://github.com/coffeebeats/gdbuild/pull/159
+
+
+**Full Changelog**: https://github.com/coffeebeats/gdbuild/compare/v0.3.24...v0.3.25
+
 ## 0.3.24 (2024-04-23)
 
 ## What's Changed
